@@ -15,19 +15,12 @@ namespace memphis {
 
 uint32_t MemFs::version = 0;
 
-MemFsPtr MemFs::Record::pathLen() {
-	return offsetof(MemFs::Record, m_path) + m_data;
-}
-
 MemFsPtr MemFs::Record::size() {
-	return offsetof(MemFs::Record, m_path) + pathLen() + dataLen;
+	return offsetof(MemFs::Record, m_id) + dataLen;
 }
 
-void MemFs::Record::setPath(std::string path) {
-	char *ptr = (char*) (this + m_path);
-	for (unsigned i = 0; i < path.size(); i++) {
-		*(ptr + i) = path[i];
-	}
+void MemFs::Record::setId(RecordId id) {
+	this->m_id = id;
 }
 
 void MemFs::Record::setData(uint8_t *data, int size) {
@@ -49,15 +42,15 @@ void MemFs::init() {
 	m_version = version;
 }
 
-void MemFs::write(std::string path, uint8_t *data, MemFsPtr dataLen) {
-	const MemFsPtr size = offsetof(MemFs::Record, m_path) + path.size() + dataLen;
+void MemFs::write(RecordId id, uint8_t *data, MemFsPtr dataLen) {
+	const MemFsPtr size = offsetof(MemFs::Record, m_id) + dataLen;
 	auto rec = (Record*) alloc(size);
 	rec->dataLen = dataLen;
 	insert(m_root, rec);
 }
 
-int MemFs::read(std::string path, uint8_t **data, MemFsPtr *size) {
-	auto rec = getRecord(m_root, path.c_str(), path.size());
+int MemFs::read(RecordId id, uint8_t **data, MemFsPtr *size) {
+	auto rec = getRecord(m_root, id);
 	int retval = 1;
 	if (rec) {
 		*size = rec->dataLen;
@@ -68,24 +61,18 @@ int MemFs::read(std::string path, uint8_t **data, MemFsPtr *size) {
 	return retval;
 }
 
-MemFs::Record *MemFs::getRecord(MemFs::Record *root, const char *path, MemFsPtr pathLen) {
-	MemFsPtr len;
-	if (root->pathLen() < pathLen) {
-		len = root->pathLen();
-	} else {
-		len = pathLen;
-	}
-	auto cmp = strncmp(ptr<char*>(root->m_path), path, len);
+MemFs::Record *MemFs::getRecord(MemFs::Record *root, RecordId id) {
+	auto cmp = root->m_id > id;
 	MemFsPtr recPt;
-	if (cmp < 0) {
+	if (cmp) {
 		recPt = root->left;
-	} else if (cmp > 0) {
+	} else if (!cmp) {
 		recPt = root->right;
 	} else {
 		recPt = ptr(root);
 	}
 	if (recPt) {
-		return getRecord(ptr<Record*>(recPt), path, pathLen);
+		return getRecord(ptr<Record*>(recPt), id);
 	} else {
 		return ptr<Record*>(recPt);
 	}
@@ -121,21 +108,15 @@ void MemFs::compress() {
 }
 
 bool MemFs::insert(Record *root, Record *insertValue, MemFsPtr *rootParentPtr) {
-	MemFsPtr len;
-	if (root->pathLen() < insertValue->pathLen()) {
-		len = root->pathLen();
-	} else {
-		len = insertValue->pathLen();
-	}
-	auto cmp = strncmp(ptr<char*>(root->m_path), ptr<char*>(insertValue->m_path), len);
-	if (cmp < 0) {
+	auto cmp = root->m_id > insertValue->m_id;
+	if (cmp) {
 		if (root->left) {
 			return insert(ptr<Record*>(root->left), insertValue, &root->left);
 		} else {
 			root->left = ((uint8_t*) insertValue) - m_begin;
 			return true;
 		}
-	} else if (cmp > 0) {
+	} else if (!cmp) {
 		if (root->right) {
 			return insert(ptr<Record*>(root->right), insertValue, &root->right);
 		} else {

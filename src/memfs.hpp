@@ -15,6 +15,8 @@ namespace memphis {
 
 typedef uint32_t MemFsPtr;
 
+typedef uint32_t RecordId;
+
 class MemFs {
 	public:
 		static uint32_t version;
@@ -25,12 +27,11 @@ class MemFs {
 			MemFsPtr left, right;
 			MemFsPtr dataLen;
 			// offsets from Record this
-			MemFsPtr m_path;
+			MemFsPtr m_id;
 			MemFsPtr m_data;
 
-			MemFsPtr pathLen();
 			MemFsPtr size();
-			void setPath(std::string);
+			void setId(RecordId);
 			void setData(uint8_t *data, int size);
 		};
 
@@ -60,7 +61,7 @@ class MemFs {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-		void write(std::string path, uint8_t *data, MemFsPtr dataLen);
+		void write(RecordId path, uint8_t *data, MemFsPtr dataLen);
 
 		/**
 		 * Reads the "file" at the given path. You are responsible for freeing
@@ -70,7 +71,7 @@ class MemFs {
 		 * @param size pointer to a value that will be assigned the size of data
 		 * @return 0 if read is a success
 		 */
-		int read(std::string path, uint8_t **data, MemFsPtr *size);
+		int read(RecordId path, uint8_t **data, MemFsPtr *size);
 
 	private:
 		/**
@@ -80,7 +81,7 @@ class MemFs {
 		 * @param pathLen number of characters in pathLen
 		 * @return the requested Record, if available
 		 */
-		Record *getRecord(Record *root, const char *path, MemFsPtr pathLen);
+		Record *getRecord(Record *root, RecordId id);
 
 		/**
 		 * Gets an address for a new Record.
