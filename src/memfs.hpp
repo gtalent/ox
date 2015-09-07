@@ -8,7 +8,6 @@
 #ifndef MEMPHIS_MEMFS_HPP
 #define MEMPHIS_MEMFS_HPP
 
-#include <string>
 #include "types.hpp"
 
 namespace memphis {
@@ -46,8 +45,9 @@ class MemFs {
 		 * Constructor
 		 * @param begin pointer to the beginning of this MemFs's memory chunk
 		 * @param end pointer to the end of this MemFs's memory chunk
+		 * @param error pointer to a integer return errors into
 		 */
-		MemFs(uint8_t *begin, uint8_t *end);
+		MemFs(uint8_t *begin, uint8_t *end, uint32_t *error = nullptr);
 
 		/**
 		 * Initializes the memory chunk of this MemFs was given.

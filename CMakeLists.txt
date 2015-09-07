@@ -10,6 +10,8 @@ add_definitions(
 	-Wall
 	-Wsign-compare
 	-nostdlib
+	-fno-exceptions
+	-fno-rtti
 	#-Werror
 	#--analyze
 	#-Os # GCC size optimization flag

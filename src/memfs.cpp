@@ -5,7 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#include <string.h>
+#include <stdlib.h>
 #include "_memops.hpp"
 #include "memfs.hpp"
 
@@ -28,9 +28,18 @@ void MemFs::Record::setData(uint8_t *data, int size) {
 	m_data = size;
 }
 
-MemFs::MemFs(uint8_t *begin, uint8_t *end): m_version(*((uint32_t*) begin)), m_lastRec(*(MemFsPtr*) (begin + sizeof(m_version))) {
-	if (version != m_version) {
-		throw "MemFs version mismatch";
+
+// MemFs
+
+MemFs::MemFs(uint8_t *begin, uint8_t *end, uint32_t *error): m_version(*((uint32_t*) begin)), m_lastRec(*(MemFsPtr*) (begin + sizeof(m_version))) {
+	if (error) {
+		if (version != m_version) {
+			// version mismatch
+			*error = 1;
+		} else {
+			// ok
+			*error = 0;
+		}
 	}
 	m_begin = begin;
 	m_end = end;
