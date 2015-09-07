@@ -4,3 +4,5 @@ add_executable(
 	MemFsTest
 		test.cpp
 )
+
+target_link_libraries(MemFsTest Memphis)

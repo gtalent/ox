@@ -15,6 +15,12 @@ namespace memphis {
 
 uint32_t MemFs::version = 0;
 
+uint8_t *initFs(uint8_t *buffer, size_t size, bool hasDirectories) {
+	auto fs = (MemFsHeader*) (buffer ? buffer : malloc(size));
+	fs->version = MemFs::version;
+	return (uint8_t*) fs;
+}
+
 MemFsPtr MemFs::Record::size() {
 	return offsetof(MemFs::Record, m_id) + dataLen;
 }

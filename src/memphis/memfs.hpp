@@ -8,13 +8,17 @@
 #ifndef MEMPHIS_MEMFS_HPP
 #define MEMPHIS_MEMFS_HPP
 
-#include "types.hpp"
+#include "_types.hpp"
 
 namespace memphis {
 
 typedef uint32_t MemFsPtr;
-
 typedef uint32_t RecordId;
+
+struct MemFsHeader {
+	uint32_t version;
+	bool hasDirectories;
+};
 
 class MemFs {
 	public:
@@ -123,6 +127,8 @@ template<typename T>
 T MemFs::ptr(MemFsPtr ptr) {
 	return (T) m_begin + ptr;
 }
+
+uint8_t *initFs(uint8_t *buffer, size_t size, bool hasDirectories);
 
 }
 
