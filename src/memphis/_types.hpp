@@ -20,6 +20,8 @@ typedef  unsigned           uint_t;
 typedef  long long          int64_t;
 typedef  unsigned long long uint64_t;
 
+typedef  uint32_t Error;
+
 #ifdef _LP64
 typedef uint64_t size_t;
 #elif _LP32

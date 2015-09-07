@@ -51,7 +51,7 @@ class MemFs {
 		 * @param end pointer to the end of this MemFs's memory chunk
 		 * @param error pointer to a integer return errors into
 		 */
-		MemFs(uint8_t *begin, uint8_t *end, uint32_t *error = nullptr);
+		MemFs(uint8_t *begin, uint8_t *end, Error *error = nullptr);
 
 		/**
 		 * Initializes the memory chunk of this MemFs was given.

@@ -37,7 +37,7 @@ void MemFs::Record::setData(uint8_t *data, int size) {
 
 // MemFs
 
-MemFs::MemFs(uint8_t *begin, uint8_t *end, uint32_t *error): m_version(*((uint32_t*) begin)), m_lastRec(*(MemFsPtr*) (begin + sizeof(m_version))) {
+MemFs::MemFs(uint8_t *begin, uint8_t *end, Error *error): m_version(*((uint32_t*) begin)), m_lastRec(*(MemFsPtr*) (begin + sizeof(m_version))) {
 	if (error) {
 		if (version != m_version) {
 			// version mismatch
