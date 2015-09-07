@@ -17,4 +17,9 @@ add_definitions(
 	#-Os # GCC size optimization flag
 )
 
+enable_testing()
+
 add_subdirectory(src)
+add_subdirectory(test)
+
+add_test("MemFs" test/MemFsTest)
