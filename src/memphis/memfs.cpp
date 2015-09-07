@@ -38,18 +38,20 @@ void MemFs::Record::setData(uint8_t *data, int size) {
 // MemFs
 
 MemFs::MemFs(uint8_t *begin, uint8_t *end, Error *error): m_version(*((uint32_t*) begin)), m_lastRec(*(MemFsPtr*) (begin + sizeof(m_version))) {
-	if (error) {
-		if (version != m_version) {
-			// version mismatch
+	if (version != m_version) {
+		// version mismatch
+		if (error) {
 			*error = 1;
-		} else {
-			// ok
+		}
+	} else {
+		// ok
+		m_begin = begin;
+		m_end = end;
+		m_root = (Record*) (begin + sizeof(MemFsPtr));
+		if (error) {
 			*error = 0;
 		}
 	}
-	m_begin = begin;
-	m_end = end;
-	m_root = (Record*) (begin + sizeof(MemFsPtr));
 }
 
 void MemFs::init() {
