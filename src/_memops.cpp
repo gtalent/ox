@@ -7,7 +7,8 @@
  */
 #include "_memops.hpp"
 
-namespace memphis {
+namespace wombat {
+namespace fs {
 
 void memcpy(void *src, void *dest, int size) {
 	char *srcBuf = (char*) src;
@@ -24,4 +25,5 @@ void memset(void *ptr, char val, int size) {
 	}
 }
 
+}
 }

@@ -5,10 +5,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef MEMPHIS_TYPES_HPP
-#define MEMPHIS_TYPES_HPP
+#ifndef WOMBAT_FS_TYPES_HPP
+#define WOMBAT_FS_TYPES_HPP
 
-namespace memphis {
+#define offsetof(st, m) ((size_t)(&((st *)0)->m))
+
+namespace wombat {
+namespace fs {
 
 typedef  char               int8_t;
 typedef  unsigned char      uint8_t;
@@ -28,7 +31,7 @@ typedef uint64_t size_t;
 typedef uint32_t size_t;
 #endif
 
-
+}
 }
 
 #endif

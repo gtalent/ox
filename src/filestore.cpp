@@ -7,37 +7,36 @@
  */
 #include <stdlib.h>
 #include "_memops.hpp"
-#include "memfs.hpp"
+#include "filestore.hpp"
 
-#define offsetof(st, m) ((size_t)(&((st *)0)->m))
+namespace wombat {
+namespace fs {
 
-namespace memphis {
-
-uint32_t MemFs::version = 0;
+uint32_t FileStore::version = 0;
 
 uint8_t *initFs(uint8_t *buffer, size_t size, bool hasDirectories) {
 	auto fs = (MemFsHeader*) (buffer ? buffer : malloc(size));
-	fs->version = MemFs::version;
+	fs->version = FileStore::version;
 	return (uint8_t*) fs;
 }
 
-MemFsPtr MemFs::Record::size() {
-	return offsetof(MemFs::Record, m_id) + dataLen;
+MemFsPtr FileStore::Record::size() {
+	return offsetof(FileStore::Record, m_id) + dataLen;
 }
 
-void MemFs::Record::setId(RecordId id) {
+void FileStore::Record::setId(RecordId id) {
 	this->m_id = id;
 }
 
-void MemFs::Record::setData(uint8_t *data, int size) {
+void FileStore::Record::setData(uint8_t *data, int size) {
 	memcpy(this + m_data, data, size);
 	m_data = size;
 }
 
 
-// MemFs
+// FileStore
 
-MemFs::MemFs(uint8_t *begin, uint8_t *end, Error *error): m_version(*((uint32_t*) begin)), m_lastRec(*(MemFsPtr*) (begin + sizeof(m_version))) {
+FileStore::FileStore(uint8_t *begin, uint8_t *end, Error *error): m_version(*((uint32_t*) begin)), m_lastRec(*(MemFsPtr*) (begin + sizeof(m_version))) {
 	if (version != m_version) {
 		// version mismatch
 		if (error) {
@@ -54,19 +53,19 @@ MemFs::MemFs(uint8_t *begin, uint8_t *end, Error *error): m_version(*((uint32_t*
 	}
 }
 
-void MemFs::init() {
+void FileStore::init() {
 	memset(m_begin, 0, m_end - m_begin);
 	m_version = version;
 }
 
-void MemFs::write(RecordId id, uint8_t *data, MemFsPtr dataLen) {
-	const MemFsPtr size = offsetof(MemFs::Record, m_id) + dataLen;
+void FileStore::write(RecordId id, uint8_t *data, MemFsPtr dataLen) {
+	const MemFsPtr size = offsetof(FileStore::Record, m_id) + dataLen;
 	auto rec = (Record*) alloc(size);
 	rec->dataLen = dataLen;
 	insert(m_root, rec);
 }
 
-int MemFs::read(RecordId id, uint8_t **data, MemFsPtr *size) {
+int FileStore::read(RecordId id, uint8_t **data, MemFsPtr *size) {
 	auto rec = getRecord(m_root, id);
 	int retval = 1;
 	if (rec) {
@@ -78,7 +77,7 @@ int MemFs::read(RecordId id, uint8_t **data, MemFsPtr *size) {
 	return retval;
 }
 
-MemFs::Record *MemFs::getRecord(MemFs::Record *root, RecordId id) {
+FileStore::Record *FileStore::getRecord(FileStore::Record *root, RecordId id) {
 	auto cmp = root->m_id > id;
 	MemFsPtr recPt;
 	if (cmp) {
@@ -95,7 +94,7 @@ MemFs::Record *MemFs::getRecord(MemFs::Record *root, RecordId id) {
 	}
 }
 
-void *MemFs::alloc(MemFsPtr size) {
+void *FileStore::alloc(MemFsPtr size) {
 	const auto iterator = this->iterator();
 	if ((iterator + size) > (uint64_t) m_end) {
 		compress();
@@ -112,7 +111,7 @@ void *MemFs::alloc(MemFsPtr size) {
 	return rec;
 }
 
-void MemFs::compress() {
+void FileStore::compress() {
 	auto current = m_root;
 	while (current->next) {
 		auto prevEnd = current + current->size();
@@ -124,7 +123,7 @@ void MemFs::compress() {
 	}
 }
 
-bool MemFs::insert(Record *root, Record *insertValue, MemFsPtr *rootParentPtr) {
+bool FileStore::insert(Record *root, Record *insertValue, MemFsPtr *rootParentPtr) {
 	auto cmp = root->m_id > insertValue->m_id;
 	if (cmp) {
 		if (root->left) {
@@ -156,12 +155,13 @@ bool MemFs::insert(Record *root, Record *insertValue, MemFsPtr *rootParentPtr) {
 	return false;
 }
 
-MemFsPtr MemFs::iterator() {
+MemFsPtr FileStore::iterator() {
 	return m_lastRec + ((Record*) m_begin + m_lastRec)->size();
 }
 
-MemFsPtr MemFs::ptr(void *ptr) {
+MemFsPtr FileStore::ptr(void *ptr) {
 	return ((uint8_t*) ptr) - m_begin;
 }
 
+}
 }
