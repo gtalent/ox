@@ -5,7 +5,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#include <stdlib.h>
 #include "_memops.hpp"
 #include "filestore.hpp"
 
@@ -15,7 +14,7 @@ namespace fs {
 uint32_t FileStore::version = 0;
 
 uint8_t *initFs(uint8_t *buffer, size_t size, bool hasDirectories) {
-	auto fs = (MemFsHeader*) (buffer ? buffer : malloc(size));
+	auto fs = (MemFsHeader*) buffer;
 	fs->version = FileStore::version;
 	return (uint8_t*) fs;
 }
@@ -65,13 +64,12 @@ void FileStore::write(RecordId id, uint8_t *data, MemFsPtr dataLen) {
 	insert(m_root, rec);
 }
 
-int FileStore::read(RecordId id, uint8_t **data, MemFsPtr *size) {
+int FileStore::read(RecordId id, uint8_t *data, MemFsPtr *size) {
 	auto rec = getRecord(m_root, id);
 	int retval = 1;
 	if (rec) {
 		*size = rec->dataLen;
-		*data = (uint8_t*) malloc(*size);
-		memcpy(*data, ptr<uint8_t*>(rec->m_data), *size);
+		memcpy(data, ptr<uint8_t*>(rec->m_data), *size);
 		retval = 0;
 	}
 	return retval;

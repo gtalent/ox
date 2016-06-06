@@ -85,7 +85,7 @@ class FileStore {
 		 * @param size pointer to a value that will be assigned the size of data
 		 * @return 0 if read is a success
 		 */
-		int read(RecordId id, uint8_t **data, MemFsPtr *size);
+		int read(RecordId id, uint8_t *data, MemFsPtr *size);
 
 	private:
 		/**
