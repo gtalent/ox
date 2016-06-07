@@ -23,36 +23,31 @@ class FileStore {
 			FsSize_t rootDir = -1;
 		};
 
-		struct Inode {
-			enum class Type: uint8_t {
-				FILE,
-				DIRECTORY
-			} type;
-			FsSize_t size;
-		};
-
 		typedef FsSize_t RecordId;
 
 	private:
-		struct Record {
-			// the next Record in memory
+		struct Inode {
+			// the next Inode in memory
 			FsSize_t prev, next;
 			FsSize_t left, right;
 			FsSize_t dataLen;
-			// offsets from Record this
+			// offsets from Inode this
 			FsSize_t m_id;
 			FsSize_t m_data;
 
 			FsSize_t size();
 			void setId(RecordId);
 			void setData(uint8_t *data, int size);
+
+			private:
+				Inode() = default;
 		};
 
 		uint8_t *m_begin, *m_end;
 		uint32_t &m_version;
-		// the last Record in the FileStore's memory chunk
+		// the last Inode in the FileStore's memory chunk
 		FsSize_t &m_lastRec;
-		Record *m_root;
+		Inode *m_root;
 
 	public:
 		/**
@@ -97,13 +92,13 @@ class FileStore {
 		 * @param root the root node to start comparing on
 		 * @param id id of the "file"
 		 * @param pathLen number of characters in pathLen
-		 * @return the requested Record, if available
+		 * @return the requested Inode, if available
 		 */
-		Record *getRecord(FileStore::Record *root, RecordId id);
+		Inode *getRecord(FileStore::Inode *root, RecordId id);
 
 		/**
-		 * Gets an address for a new Record.
-		 * @param size the size of the Record
+		 * Gets an address for a new Inode.
+		 * @param size the size of the Inode
 		 */
 		void *alloc(FsSize_t size);
 
@@ -117,11 +112,11 @@ class FileStore {
 		 * If the record already exists, it replaces the old on deletes it.
 		 * @return true if the record was inserted
 		 */
-		bool insert(Record *root, Record *insertValue, FsSize_t *rootParentPtr = 0);
+		bool insert(Inode *root, Inode *insertValue, FsSize_t *rootParentPtr = 0);
 
 		/**
-		 * Gets the FsSize_t associated with the next Record to be allocated.
-		 * @retrun the FsSize_t associated with the next Record to be allocated
+		 * Gets the FsSize_t associated with the next Inode to be allocated.
+		 * @retrun the FsSize_t associated with the next Inode to be allocated
 		 */
 		FsSize_t iterator();
 
@@ -140,17 +135,17 @@ class FileStore {
 };
 
 template<typename FsSize_t>
-FsSize_t FileStore<FsSize_t>::Record::size() {
-	return offsetof(FileStore::Record, m_id) + dataLen;
+FsSize_t FileStore<FsSize_t>::Inode::size() {
+	return offsetof(FileStore::Inode, m_id) + dataLen;
 }
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::Record::setId(RecordId id) {
+void FileStore<FsSize_t>::Inode::setId(RecordId id) {
 	this->m_id = id;
 }
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::Record::setData(uint8_t *data, int size) {
+void FileStore<FsSize_t>::Inode::setData(uint8_t *data, int size) {
 	memcpy(this + m_data, data, size);
 	m_data = size;
 }
@@ -169,7 +164,7 @@ FileStore<FsSize_t>::FileStore(uint8_t *begin, uint8_t *end, Error *error): m_ve
 		// ok
 		m_begin = begin;
 		m_end = end;
-		m_root = (Record*) (begin + sizeof(FsSize_t));
+		m_root = (Inode*) (begin + sizeof(FsSize_t));
 		if (error) {
 			*error = 0;
 		}
@@ -184,8 +179,8 @@ void FileStore<FsSize_t>::init() {
 
 template<typename FsSize_t>
 void FileStore<FsSize_t>::write(RecordId id, void *data, FsSize_t dataLen) {
-	const FsSize_t size = offsetof(FileStore::Record, m_id) + dataLen;
-	auto rec = (Record*) alloc(size);
+	const FsSize_t size = offsetof(FileStore::Inode, m_id) + dataLen;
+	auto rec = (Inode*) alloc(size);
 	rec->dataLen = dataLen;
 	insert(m_root, rec);
 }
@@ -205,7 +200,7 @@ int FileStore<FsSize_t>::read(RecordId id, void *data, FsSize_t *size) {
 }
 
 template<typename FsSize_t>
-typename FileStore<FsSize_t>::Record *FileStore<FsSize_t>::getRecord(FileStore::Record *root, RecordId id) {
+typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getRecord(FileStore::Inode *root, RecordId id) {
 	auto cmp = root->m_id > id;
 	FsSize_t recPt;
 	if (cmp) {
@@ -216,9 +211,9 @@ typename FileStore<FsSize_t>::Record *FileStore<FsSize_t>::getRecord(FileStore::
 		recPt = ptr(root);
 	}
 	if (recPt) {
-		return getRecord(ptr<Record*>(recPt), id);
+		return getRecord(ptr<Inode*>(recPt), id);
 	} else {
-		return ptr<Record*>(recPt);
+		return ptr<Inode*>(recPt);
 	}
 }
 
@@ -231,11 +226,11 @@ void *FileStore<FsSize_t>::alloc(FsSize_t size) {
 			return nullptr;
 		}
 	}
-	ptr<Record*>(m_lastRec)->next = iterator;
+	ptr<Inode*>(m_lastRec)->next = iterator;
 
 	auto rec = ptr<uint8_t*>(iterator);
 	memset(rec, 0, size);
-	ptr<Record*>(iterator)->prev = m_lastRec;
+	ptr<Inode*>(iterator)->prev = m_lastRec;
 	m_lastRec = iterator;
 	return rec;
 }
@@ -245,7 +240,7 @@ void FileStore<FsSize_t>::compress() {
 	auto current = m_root;
 	while (current->next) {
 		auto prevEnd = current + current->size();
-		current = ptr<Record*>(current->next);
+		current = ptr<Inode*>(current->next);
 		if (prevEnd != current) {
 			memcpy(prevEnd, current, current->size());
 			current = prevEnd;
@@ -254,18 +249,18 @@ void FileStore<FsSize_t>::compress() {
 }
 
 template<typename FsSize_t>
-bool FileStore<FsSize_t>::insert(Record *root, Record *insertValue, FsSize_t *rootParentPtr) {
+bool FileStore<FsSize_t>::insert(Inode *root, Inode *insertValue, FsSize_t *rootParentPtr) {
 	auto cmp = root->m_id > insertValue->m_id;
 	if (cmp) {
 		if (root->left) {
-			return insert(ptr<Record*>(root->left), insertValue, &root->left);
+			return insert(ptr<Inode*>(root->left), insertValue, &root->left);
 		} else {
 			root->left = ((uint8_t*) insertValue) - m_begin;
 			return true;
 		}
 	} else if (!cmp) {
 		if (root->right) {
-			return insert(ptr<Record*>(root->right), insertValue, &root->right);
+			return insert(ptr<Inode*>(root->right), insertValue, &root->right);
 		} else {
 			root->right = ((uint8_t*) insertValue) - m_begin;
 			return true;
@@ -273,10 +268,10 @@ bool FileStore<FsSize_t>::insert(Record *root, Record *insertValue, FsSize_t *ro
 	} else {
 		auto ivAddr = ((uint8_t*) insertValue) - m_begin;
 		if (root->prev) {
-			ptr<Record*>(root->prev)->next = ivAddr;
+			ptr<Inode*>(root->prev)->next = ivAddr;
 		}
 		if (root->next) {
-			ptr<Record*>(root->next)->prev = ivAddr;
+			ptr<Inode*>(root->next)->prev = ivAddr;
 		}
 		if (rootParentPtr) {
 			*rootParentPtr = ivAddr;
@@ -288,7 +283,7 @@ bool FileStore<FsSize_t>::insert(Record *root, Record *insertValue, FsSize_t *ro
 
 template<typename FsSize_t>
 FsSize_t FileStore<FsSize_t>::iterator() {
-	return m_lastRec + ((Record*) m_begin + m_lastRec)->size();
+	return m_lastRec + ((Inode*) m_begin + m_lastRec)->size();
 }
 
 template<typename FsSize_t>
