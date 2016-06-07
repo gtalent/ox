@@ -6,9 +6,9 @@ add_executable(
 )
 
 add_executable(
-	FsStore
-		fsstore.cpp
+	FileStoreIO
+		filestoreio.cpp
 )
 
 target_link_libraries(Format WFS)
-target_link_libraries(FsStore WFS)
+target_link_libraries(FileStoreIO WFS)

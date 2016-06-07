@@ -25,4 +25,4 @@ add_subdirectory(src)
 add_subdirectory(test)
 
 add_test("Format" test/Format)
-add_test("FsStore" test/FsStore)
+add_test("FileStoreIO" test/FileStoreIO)
