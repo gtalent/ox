@@ -5,10 +5,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#include "_memops.hpp"
-#include "filestore.hpp"
+#include <filestore.hpp>
 
-namespace wombat {
-namespace fs {
-}
+using namespace wombat::fs;
+
+int main() {
+	const auto size = 1 << 16;
+	uint8_t volume[size];
+	uint32_t err;
+	FileStore32::format(volume, size, false);
+	FileStore32(volume, volume + size, &err);
+	return err;
 }

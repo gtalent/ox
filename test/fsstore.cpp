@@ -12,8 +12,10 @@ using namespace wombat::fs;
 int main() {
 	const auto size = 1 << 16;
 	uint8_t volume[size];
+	char out[6];
 	uint32_t err;
-	initFs(volume, size, false);
-	FileStore(volume, volume + size, &err);
+	FileStore32 fs(volume, volume + size, &err);
+	fs.write(42, (uint8_t*) "Hello", 6);
+	err = fs.read(42, (uint8_t*) out, nullptr);
 	return err;
 }

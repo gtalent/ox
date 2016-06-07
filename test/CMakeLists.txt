@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 2.8.8)
 
 add_executable(
-	MemFsTest
-		test.cpp
+	Format
+		format.cpp
 )
 
-target_link_libraries(MemFsTest Memphis)
+add_executable(
+	FsStore
+		fsstore.cpp
+)
+
+target_link_libraries(Format WFS)
+target_link_libraries(FsStore WFS)
