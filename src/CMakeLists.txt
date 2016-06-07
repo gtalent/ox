@@ -4,6 +4,7 @@ add_library(
 	WFS
 		filestore.cpp
 		_memops.cpp
+		_strops.cpp
 )
 
 install(

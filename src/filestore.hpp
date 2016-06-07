@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 gtalent2@gmail.com
+ * Copyright 2015 - 2016 gtalent2@gmail.com
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -75,7 +75,7 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-		void write(RecordId id, uint8_t *data, FsSize_t dataLen);
+		void write(RecordId id, void *data, FsSize_t dataLen);
 
 		/**
 		 * Reads the "file" at the given id. You are responsible for freeing
@@ -85,7 +85,7 @@ class FileStore {
 		 * @param size pointer to a value that will be assigned the size of data
 		 * @return 0 if read is a success
 		 */
-		int read(RecordId id, uint8_t *data, FsSize_t *size);
+		int read(RecordId id, void *data, FsSize_t *size);
 
 		static uint8_t version();
 
@@ -183,7 +183,7 @@ void FileStore<FsSize_t>::init() {
 }
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::write(RecordId id, uint8_t *data, FsSize_t dataLen) {
+void FileStore<FsSize_t>::write(RecordId id, void *data, FsSize_t dataLen) {
 	const FsSize_t size = offsetof(FileStore::Record, m_id) + dataLen;
 	auto rec = (Record*) alloc(size);
 	rec->dataLen = dataLen;
@@ -191,7 +191,7 @@ void FileStore<FsSize_t>::write(RecordId id, uint8_t *data, FsSize_t dataLen) {
 }
 
 template<typename FsSize_t>
-int FileStore<FsSize_t>::read(RecordId id, uint8_t *data, FsSize_t *size) {
+int FileStore<FsSize_t>::read(RecordId id, void *data, FsSize_t *size) {
 	auto rec = getRecord(m_root, id);
 	int retval = 1;
 	if (rec) {
