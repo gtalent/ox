@@ -21,9 +21,10 @@ class FileStore {
 		struct FsHeader {
 			uint32_t version;
 			FsSize_t rootDir = -1;
+			bool insertLeft = false; // crude tree balancing mechanism
 		};
 
-		typedef FsSize_t RecordId;
+		typedef uint16_t InodeId_t;
 
 	private:
 		struct Inode {
@@ -36,7 +37,7 @@ class FileStore {
 			FsSize_t m_data;
 
 			FsSize_t size();
-			void setId(RecordId);
+			void setId(InodeId_t);
 			void setData(uint8_t *data, int size);
 
 			private:
@@ -70,7 +71,15 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-		void write(RecordId id, void *data, FsSize_t dataLen);
+		void write(void *data, FsSize_t dataLen);
+
+		/**
+		 * Writes the given data to a "file" with the given id.
+		 * @param id the id of the file
+		 * @param data the contents of the file
+		 * @param dataLen the number of bytes data points to
+		 */
+		void write(InodeId_t id, void *data, FsSize_t dataLen);
 
 		/**
 		 * Reads the "file" at the given id. You are responsible for freeing
@@ -80,7 +89,7 @@ class FileStore {
 		 * @param size pointer to a value that will be assigned the size of data
 		 * @return 0 if read is a success
 		 */
-		int read(RecordId id, void *data, FsSize_t *size);
+		int read(InodeId_t id, void *data, FsSize_t *size);
 
 		static uint8_t version();
 
@@ -88,13 +97,19 @@ class FileStore {
 
 	private:
 		/**
+		 * Gets the header section of the file system.
+		 * @return the header section of the file system.
+		 */
+		FsHeader *getHeader();
+
+		/**
 		 * Gets the record at the given id.
 		 * @param root the root node to start comparing on
 		 * @param id id of the "file"
 		 * @param pathLen number of characters in pathLen
 		 * @return the requested Inode, if available
 		 */
-		Inode *getRecord(FileStore::Inode *root, RecordId id);
+		Inode *getRecord(FileStore::Inode *root, InodeId_t id);
 
 		/**
 		 * Gets an address for a new Inode.
@@ -140,7 +155,7 @@ FsSize_t FileStore<FsSize_t>::Inode::size() {
 }
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::Inode::setId(RecordId id) {
+void FileStore<FsSize_t>::Inode::setId(InodeId_t id) {
 	this->m_id = id;
 }
 
@@ -174,19 +189,19 @@ FileStore<FsSize_t>::FileStore(uint8_t *begin, uint8_t *end, Error *error): m_ve
 template<typename FsSize_t>
 void FileStore<FsSize_t>::init() {
 	memset(m_begin, 0, m_end - m_begin);
-	m_version = version;
+	m_version = version();
 }
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::write(RecordId id, void *data, FsSize_t dataLen) {
-	const FsSize_t size = offsetof(FileStore::Inode, m_id) + dataLen;
+void FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen) {
+	const FsSize_t size = offsetof(Inode, m_id) + dataLen;
 	auto rec = (Inode*) alloc(size);
 	rec->dataLen = dataLen;
 	insert(m_root, rec);
 }
 
 template<typename FsSize_t>
-int FileStore<FsSize_t>::read(RecordId id, void *data, FsSize_t *size) {
+int FileStore<FsSize_t>::read(InodeId_t id, void *data, FsSize_t *size) {
 	auto rec = getRecord(m_root, id);
 	int retval = 1;
 	if (rec) {
@@ -200,7 +215,12 @@ int FileStore<FsSize_t>::read(RecordId id, void *data, FsSize_t *size) {
 }
 
 template<typename FsSize_t>
-typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getRecord(FileStore::Inode *root, RecordId id) {
+typename FileStore<FsSize_t>::FsHeader *FileStore<FsSize_t>::getHeader() {
+	return (FsHeader*) m_begin;
+}
+
+template<typename FsSize_t>
+typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getRecord(FileStore::Inode *root, InodeId_t id) {
 	auto cmp = root->m_id > id;
 	FsSize_t recPt;
 	if (cmp) {
