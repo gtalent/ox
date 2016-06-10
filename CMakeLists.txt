@@ -6,7 +6,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 include(address_sanitizer)
 
 add_definitions(
-	-std=c++11
+	-std=c++14
 	-Wall
 	-Wsign-compare
 	-nostdlib
