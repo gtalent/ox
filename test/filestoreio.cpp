@@ -15,6 +15,7 @@ int main() {
 	uint8_t volume[size];
 	char out[6];
 	uint32_t err;
+	FileStore32::format(volume, size);
 	FileStore32 fs(volume, volume + size, &err);
 
 	fs.write(42, (void*) "Hello", 6);

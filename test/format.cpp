@@ -13,7 +13,7 @@ int main() {
 	const auto size = 1 << 16;
 	uint8_t volume[size];
 	uint32_t err;
-	FileStore32::format(volume, size, false);
+	FileStore32::format(volume, size);
 	FileStore32(volume, volume + size, &err);
 	return err;
 }

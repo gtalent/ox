@@ -20,7 +20,8 @@ class FileStore {
 	public:
 		struct FsHeader {
 			uint32_t version;
-			FsSize_t rootDir = -1;
+			FsSize_t size;
+			FsSize_t rootInode = 0;
 			bool insertLeft = false; // crude tree balancing mechanism
 		};
 
@@ -71,7 +72,7 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-		void write(void *data, FsSize_t dataLen);
+		int write(void *data, FsSize_t dataLen);
 
 		/**
 		 * Writes the given data to a "file" with the given id.
@@ -79,7 +80,7 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-		void write(InodeId_t id, void *data, FsSize_t dataLen);
+		int write(InodeId_t id, void *data, FsSize_t dataLen);
 
 		/**
 		 * Reads the "file" at the given id. You are responsible for freeing
@@ -93,7 +94,7 @@ class FileStore {
 
 		static uint8_t version();
 
-		static uint8_t *format(uint8_t *buffer, size_t size, bool hasDirectories);
+		static uint8_t *format(uint8_t *buffer, FsSize_t size);
 
 	private:
 		/**
@@ -169,7 +170,7 @@ void FileStore<FsSize_t>::Inode::setData(uint8_t *data, int size) {
 // FileStore
 
 template<typename FsSize_t>
-FileStore<FsSize_t>::FileStore(uint8_t *begin, uint8_t *end, Error *error): m_version(*((uint32_t*) begin)), m_lastRec(*(FsSize_t*) (begin + sizeof(m_version))) {
+FileStore<FsSize_t>::FileStore(uint8_t *begin, uint8_t *end, Error *error): m_version(*((uint32_t*) begin)), m_lastRec(*(FsSize_t*) (begin + sizeof(FsHeader))) {
 	if (version() != m_version) {
 		// version mismatch
 		if (error) {
@@ -179,9 +180,10 @@ FileStore<FsSize_t>::FileStore(uint8_t *begin, uint8_t *end, Error *error): m_ve
 		// ok
 		m_begin = begin;
 		m_end = end;
-		m_root = (Inode*) (begin + sizeof(FsSize_t));
+		auto header = (FsHeader*) m_begin;
+		m_root = ptr<Inode*>(header->rootInode);
 		if (error) {
-			*error = 0;
+			*error = header->size != m_end - m_begin;
 		}
 	}
 }
@@ -193,11 +195,22 @@ void FileStore<FsSize_t>::init() {
 }
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen) {
+int FileStore<FsSize_t>::write(void *data, FsSize_t dataLen) {
+	return 1;
+}
+
+template<typename FsSize_t>
+int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen) {
+	auto retval = 1;
 	const FsSize_t size = offsetof(Inode, m_id) + dataLen;
 	auto rec = (Inode*) alloc(size);
-	rec->dataLen = dataLen;
-	insert(m_root, rec);
+	if (rec) {
+		rec->dataLen = dataLen;
+		if (insert(m_root, rec)) {
+			retval = 0;
+		}
+	}
+	return retval;
 }
 
 template<typename FsSize_t>
@@ -317,10 +330,11 @@ uint8_t FileStore<FsSize_t>::version() {
 };
 
 template<typename FsSize_t>
-uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, size_t size, bool hasDirectories) {
-	auto retval = (typename FileStore<FsSize_t>::FsHeader*) buffer;
-	retval->version = FileStore<FsSize_t>::version();
-	return (uint8_t*) retval;
+uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size) {
+	auto header = (FsHeader*) buffer;
+	header->version = FileStore<FsSize_t>::version();
+	header->size = size;
+	return (uint8_t*) header;
 }
 
 typedef FileStore<uint16_t> FileStore16;
