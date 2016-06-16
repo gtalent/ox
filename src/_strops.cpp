@@ -10,14 +10,17 @@ namespace fs {
 
 int strcmp(const char *str1, const char *str2) {
 	auto retval = 0;
-	for (int i = 0; str1[i] && str2[i]; i++) {
+	auto i = 0;
+	do {
 		if (str1[i] < str2[i]) {
 			retval = -1;
 			break;
 		} else if (str1[i] > str2[i]) {
 			retval = 1;
+			break;
 		}
-	}
+		i++;
+	} while (str1[i] == str2[i] && str1[i]);
 	return retval;
 }
 

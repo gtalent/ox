@@ -17,15 +17,25 @@ int main() {
 	uint32_t err;
 	FileStore32::format(volume, size);
 	FileStore32 fs(volume, volume + size, &err);
+	uint32_t outSize;
 
-	fs.write(42, (void*) "Hello", 6);
-
-	err = fs.read(42, (char*) out, nullptr);
-	if (err) {
-		return err;
+	if (fs.write(1, (void*) "Hello", 6) ||
+		 fs.read(1, (char*) out, &outSize) ||
+		 strcmp("Hello", out)) {
+		return 1;
 	}
 
-	err = strcmp("Hello", out);
+	if (fs.write(2, (void*) "World", 6) ||
+		 fs.read(2, (char*) out, nullptr) ||
+		 strcmp("World", out)) {
+		return 1;
+	}
 
-	return err;
+	if (fs.read(1, (char*) out, &outSize) ||
+		 strcmp("Hello", out)) {
+		return 1;
+	}
+
+
+	return 0;
 }

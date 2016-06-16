@@ -21,7 +21,7 @@ class FileStore {
 		struct FsHeader {
 			uint32_t version;
 			FsSize_t size;
-			FsSize_t rootInode = 0;
+			FsSize_t rootInode;
 			bool insertLeft = false; // crude tree balancing mechanism
 		};
 
@@ -33,13 +33,15 @@ class FileStore {
 			FsSize_t prev, next;
 			FsSize_t left, right;
 			FsSize_t dataLen;
-			// offsets from Inode this
+
+			// The following variables should not be assumed to exist
 			FsSize_t m_id;
-			FsSize_t m_data;
+			// must be last item
+			uint8_t  m_data;
 
 			FsSize_t size();
 			void setId(InodeId_t);
-			void setData(uint8_t *data, int size);
+			void setData(void *data, int size);
 
 			private:
 				Inode() = default;
@@ -47,8 +49,6 @@ class FileStore {
 
 		uint8_t *m_begin, *m_end;
 		uint32_t &m_version;
-		// the last Inode in the FileStore's memory chunk
-		FsSize_t &m_lastRec;
 		Inode *m_root;
 
 	public:
@@ -128,7 +128,7 @@ class FileStore {
 		 * If the record already exists, it replaces the old on deletes it.
 		 * @return true if the record was inserted
 		 */
-		bool insert(Inode *root, Inode *insertValue, FsSize_t *rootParentPtr = 0);
+		bool insert(Inode *root, Inode *insertValue);
 
 		/**
 		 * Gets the FsSize_t associated with the next Inode to be allocated.
@@ -146,8 +146,12 @@ class FileStore {
 		 */
 		template<typename T>
 		T ptr(FsSize_t ptr) {
-			return (T) m_begin + ptr;
+			return (T) (m_begin + ptr);
 		};
+
+		Inode *firstInode();
+
+		Inode *lastInode();
 };
 
 template<typename FsSize_t>
@@ -161,16 +165,16 @@ void FileStore<FsSize_t>::Inode::setId(InodeId_t id) {
 }
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::Inode::setData(uint8_t *data, int size) {
-	memcpy(this + m_data, data, size);
-	m_data = size;
+void FileStore<FsSize_t>::Inode::setData(void *data, int size) {
+	memcpy(&m_data, data, size);
+	dataLen = size;
 }
 
 
 // FileStore
 
 template<typename FsSize_t>
-FileStore<FsSize_t>::FileStore(uint8_t *begin, uint8_t *end, Error *error): m_version(*((uint32_t*) begin)), m_lastRec(*(FsSize_t*) (begin + sizeof(FsHeader))) {
+FileStore<FsSize_t>::FileStore(uint8_t *begin, uint8_t *end, Error *error): m_version(*((uint32_t*) begin)) {
 	if (version() != m_version) {
 		// version mismatch
 		if (error) {
@@ -203,10 +207,11 @@ template<typename FsSize_t>
 int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen) {
 	auto retval = 1;
 	const FsSize_t size = offsetof(Inode, m_id) + dataLen;
-	auto rec = (Inode*) alloc(size);
-	if (rec) {
-		rec->dataLen = dataLen;
-		if (insert(m_root, rec)) {
+	auto inode = (Inode*) alloc(size);
+	if (inode) {
+		inode->m_id = id;
+		inode->setData(data, dataLen);
+		if (insert(m_root, inode) || m_root == inode) {
 			retval = 0;
 		}
 	}
@@ -221,7 +226,7 @@ int FileStore<FsSize_t>::read(InodeId_t id, void *data, FsSize_t *size) {
 		if (size) {
 			*size = rec->dataLen;
 		}
-		memcpy(data, ptr<uint8_t*>(rec->m_data), rec->dataLen);
+		memcpy(data, &rec->m_data, rec->dataLen);
 		retval = 0;
 	}
 	return retval;
@@ -234,37 +239,38 @@ typename FileStore<FsSize_t>::FsHeader *FileStore<FsSize_t>::getHeader() {
 
 template<typename FsSize_t>
 typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getRecord(FileStore::Inode *root, InodeId_t id) {
-	auto cmp = root->m_id > id;
-	FsSize_t recPt;
-	if (cmp) {
-		recPt = root->left;
-	} else if (!cmp) {
-		recPt = root->right;
-	} else {
-		recPt = ptr(root);
+	Inode *retval = nullptr;
+
+	if (root->m_id > id) {
+		if (root->left) {
+			retval = getRecord(ptr<Inode*>(root->left), id);
+		}
+	} else if (root->m_id < id) {
+		if (root->right) {
+			retval = getRecord(ptr<Inode*>(root->right), id);
+		}
+	} else if (root->m_id == id) {
+		retval = root;
 	}
-	if (recPt) {
-		return getRecord(ptr<Inode*>(recPt), id);
-	} else {
-		return ptr<Inode*>(recPt);
-	}
+
+	return retval;
 }
 
 template<typename FsSize_t>
 void *FileStore<FsSize_t>::alloc(FsSize_t size) {
-	const auto iterator = this->iterator();
-	if ((iterator + size) > (uint64_t) m_end) {
+	if ((lastInode()->next + size) > (uint64_t) m_end) {
 		compress();
-		if ((iterator + size) > (uint64_t) m_end) {
+		if ((lastInode()->next + size) > (uint64_t) m_end) {
 			return nullptr;
 		}
 	}
-	ptr<Inode*>(m_lastRec)->next = iterator;
 
-	auto rec = ptr<uint8_t*>(iterator);
+	const auto retval = lastInode()->next;
+	const auto rec = ptr<Inode*>(retval);
 	memset(rec, 0, size);
-	ptr<Inode*>(iterator)->prev = m_lastRec;
-	m_lastRec = iterator;
+	rec->prev = ptr(lastInode());
+	rec->next = retval + size;
+	firstInode()->prev = retval;
 	return rec;
 }
 
@@ -282,46 +288,46 @@ void FileStore<FsSize_t>::compress() {
 }
 
 template<typename FsSize_t>
-bool FileStore<FsSize_t>::insert(Inode *root, Inode *insertValue, FsSize_t *rootParentPtr) {
-	auto cmp = root->m_id > insertValue->m_id;
-	if (cmp) {
+bool FileStore<FsSize_t>::insert(Inode *root, Inode *insertValue) {
+	auto retval = false;
+
+	if (root->m_id > insertValue->m_id) {
 		if (root->left) {
-			return insert(ptr<Inode*>(root->left), insertValue, &root->left);
+			retval = insert(ptr<Inode*>(root->left), insertValue);
 		} else {
-			root->left = ((uint8_t*) insertValue) - m_begin;
-			return true;
+			root->left = ptr(insertValue);
+			retval = true;
 		}
-	} else if (!cmp) {
+	} else if (root->m_id < insertValue->m_id) {
 		if (root->right) {
-			return insert(ptr<Inode*>(root->right), insertValue, &root->right);
+			retval = insert(ptr<Inode*>(root->right), insertValue);
 		} else {
-			root->right = ((uint8_t*) insertValue) - m_begin;
-			return true;
+			root->right = ptr(insertValue);
+			retval = true;
 		}
-	} else {
-		auto ivAddr = ((uint8_t*) insertValue) - m_begin;
-		if (root->prev) {
-			ptr<Inode*>(root->prev)->next = ivAddr;
-		}
-		if (root->next) {
-			ptr<Inode*>(root->next)->prev = ivAddr;
-		}
-		if (rootParentPtr) {
-			*rootParentPtr = ivAddr;
-		}
-		return true;
 	}
-	return false;
+
+	return retval;
 }
 
 template<typename FsSize_t>
 FsSize_t FileStore<FsSize_t>::iterator() {
-	return m_lastRec + ((Inode*) m_begin + m_lastRec)->size();
+	return ptr(lastInode()) + lastInode()->size();
 }
 
 template<typename FsSize_t>
 FsSize_t FileStore<FsSize_t>::ptr(void *ptr) {
 	return ((uint8_t*) ptr) - m_begin;
+}
+
+template<typename FsSize_t>
+typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::firstInode() {
+	return ptr<Inode*>(sizeof(FsHeader));
+}
+
+template<typename FsSize_t>
+typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::lastInode() {
+	return ptr<Inode*>(firstInode()->prev);
 }
 
 template<typename FsSize_t>
@@ -331,9 +337,17 @@ uint8_t FileStore<FsSize_t>::version() {
 
 template<typename FsSize_t>
 uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size) {
+	memset(buffer, 0, size);
+
 	auto header = (FsHeader*) buffer;
 	header->version = FileStore<FsSize_t>::version();
 	header->size = size;
+	header->rootInode = sizeof(FsHeader);
+
+	auto inodeSection = (Inode*) (buffer + header->rootInode);
+	inodeSection->m_id = 0;
+	inodeSection->next = inodeSection->prev = (uint8_t*) inodeSection - (uint8_t*) buffer;
+
 	return (uint8_t*) header;
 }
 

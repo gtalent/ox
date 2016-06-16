@@ -10,7 +10,7 @@
 namespace wombat {
 namespace fs {
 
-void memcpy(void *src, void *dest, int size) {
+void memcpy(void *dest, void *src, int size) {
 	char *srcBuf = (char*) src;
 	char *dstBuf = (char*) dest;
 	for (int i = 0; i < size; i++) {
