@@ -27,6 +27,11 @@ class FileStore {
 
 		typedef uint16_t InodeId_t;
 
+		struct StatInfo {
+			InodeId_t inodeId;
+			FsSize_t  size;
+		};
+
 	private:
 		struct Inode {
 			// the next Inode in memory
@@ -91,6 +96,14 @@ class FileStore {
 		 * @return 0 if read is a success
 		 */
 		int read(InodeId_t id, void *data, FsSize_t *size);
+
+		/**
+		 * Reads the stat information of the inode of the given inode id.
+		 * If the returned inode id is 0, then the requested inode was not found.
+		 * @param id id of the inode to stat
+		 * @return the stat information of the inode of the given inode id
+		 */
+		StatInfo stat(InodeId_t id);
 
 		static uint8_t version();
 
@@ -230,6 +243,19 @@ int FileStore<FsSize_t>::read(InodeId_t id, void *data, FsSize_t *size) {
 		retval = 0;
 	}
 	return retval;
+}
+
+template<typename FsSize_t>
+typename FileStore<FsSize_t>::StatInfo FileStore<FsSize_t>::stat(InodeId_t id) {
+	auto inode = getRecord(m_root, id);
+	StatInfo stat;
+	if (inode) {
+		stat.size = inode->dataLen;
+		stat.inodeId = id;
+	} else {
+		stat.inodeId = 0;
+	}
+	return stat;
 }
 
 template<typename FsSize_t>

@@ -31,6 +31,7 @@ int main() {
 		return 1;
 	}
 
+	// make sure first value was not overwritten
 	if (fs.read(1, (char*) out, &outSize) ||
 		 strcmp("Hello", out)) {
 		return 1;
