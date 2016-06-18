@@ -25,10 +25,12 @@ typedef  unsigned long long uint64_t;
 
 typedef  uint32_t Error;
 
-#ifdef _LP64
+#if defined(_LP64) || defined(__ppc64__)
 typedef uint64_t size_t;
-#elif _LP32
+#elif defined(_LP32) || defined(__ppc__)
 typedef uint32_t size_t;
+#else
+#error size_t undefined
 #endif
 
 }

@@ -200,7 +200,7 @@ FileStore<FsSize_t>::FileStore(uint8_t *begin, uint8_t *end, Error *error): m_ve
 		auto header = (FsHeader*) m_begin;
 		m_root = ptr<Inode*>(header->rootInode);
 		if (error) {
-			*error = header->size != m_end - m_begin;
+			*error = header->size != (unsigned ) (m_end - m_begin);
 		}
 	}
 }
