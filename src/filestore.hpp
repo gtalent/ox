@@ -22,7 +22,6 @@ class FileStore {
 			uint32_t version;
 			FsSize_t size;
 			FsSize_t rootInode;
-			bool insertLeft = false; // crude tree balancing mechanism
 		};
 
 		typedef uint16_t InodeId_t;

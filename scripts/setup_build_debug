@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 project=`pwd`
-buildDir="build/sdl_debug"
+buildDir="build/debug"
 
 mkdir -p $buildDir
 pushd $buildDir
