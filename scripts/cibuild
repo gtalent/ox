@@ -1,0 +1,5 @@
+#! /usr/bin/env sh
+./scripts/setup_build
+./scripts/setup_build_debug
+make -j -C build/release all test
+make -j -C build/debug all test
