@@ -5,8 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef WOMBAT_FS_TYPES_HPP
-#define WOMBAT_FS_TYPES_HPP
+#pragma
 
 #define offsetof(st, m) ((size_t)(&((st *)0)->m))
 
@@ -35,5 +34,3 @@ typedef uint32_t size_t;
 
 }
 }
-
-#endif

@@ -5,8 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef WOMBAT_FS_FILESTORE_HPP
-#define WOMBAT_FS_FILESTORE_HPP
+#pragma once
 
 #include "_memops.hpp"
 #include "_types.hpp"
@@ -382,5 +381,3 @@ typedef FileStore<uint64_t> FileStore64;
 
 }
 }
-
-#endif

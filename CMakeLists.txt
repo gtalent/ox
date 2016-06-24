@@ -5,12 +5,6 @@ project(WombatFS)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 include(address_sanitizer)
 
-add_definitions(
-	#-Werror
-	#--analyze
-	#-Os # GCC size optimization flag
-)
-
 if(NOT MSVC)
 	add_definitions(
 		-std=c++11
@@ -19,6 +13,9 @@ if(NOT MSVC)
 		-fno-exceptions
 		-fno-rtti
 		-Wsign-compare
+		#-Werror
+		#--analyze
+		#-Os # GCC size optimization flag
 	)
 endif(NOT MSVC)
 
