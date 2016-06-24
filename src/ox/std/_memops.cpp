@@ -7,8 +7,8 @@
  */
 #include "_memops.hpp"
 
-namespace wombat {
-namespace fs {
+namespace ox {
+namespace std {
 
 void memcpy(void *dest, void *src, int size) {
 	char *srcBuf = (char*) src;

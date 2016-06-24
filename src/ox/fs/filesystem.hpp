@@ -7,12 +7,12 @@
  */
 #pragma once
 
-#include "_memops.hpp"
-#include "_strops.hpp"
-#include "_types.hpp"
+#include <ox/std/_memops.hpp>
+#include <ox/std/_strops.hpp>
+#include <ox/std/_types.hpp>
 #include "filestore.hpp"
 
-namespace wombat {
+namespace ox {
 namespace fs {
 
 struct FileStat {

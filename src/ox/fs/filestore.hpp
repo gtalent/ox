@@ -7,11 +7,13 @@
  */
 #pragma once
 
-#include "_memops.hpp"
-#include "_types.hpp"
+#include <ox/std/_memops.hpp>
+#include <ox/std/_types.hpp>
 
-namespace wombat {
+namespace ox {
 namespace fs {
+
+using namespace ox::std;
 
 template<typename FsT>
 class FileStore {

@@ -5,10 +5,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#include "_memops.hpp"
-#include "filestore.hpp"
+#pragma once
 
-namespace wombat {
-namespace fs {
+namespace ox {
+namespace std {
+
+int strcmp(const char *str1, const char *str2);
+
 }
 }

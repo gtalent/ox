@@ -5,10 +5,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#include <_strops.hpp>
-#include <filestore.hpp>
+#include <ox/std/_strops.hpp>
+#include <ox/fs/filestore.hpp>
 
-using namespace wombat::fs;
+using namespace ox::fs;
 
 template<typename FileStore>
 int test() {

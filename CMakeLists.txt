@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(WombatFS)
+project(Ox)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 include(address_sanitizer)
@@ -24,7 +24,3 @@ enable_testing()
 include_directories("src")
 
 add_subdirectory(src)
-add_subdirectory(test)
-
-add_test("Format" test/Format)
-add_test("FileStoreIO" test/FileStoreIO)

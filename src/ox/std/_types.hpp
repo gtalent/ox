@@ -7,8 +7,8 @@
  */
 #pragma once
 
-namespace wombat {
-namespace fs {
+namespace ox {
+namespace std {
 
 typedef  char               int8_t;
 typedef  unsigned char      uint8_t;
