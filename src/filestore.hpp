@@ -113,13 +113,13 @@ class FileStore {
 		FsHeader *getHeader();
 
 		/**
-		 * Gets the record at the given id.
+		 * Gets the inode at the given id.
 		 * @param root the root node to start comparing on
 		 * @param id id of the "file"
 		 * @param pathLen number of characters in pathLen
 		 * @return the requested Inode, if available
 		 */
-		Inode *getRecord(Inode *root, InodeId_t id);
+		Inode *getInode(Inode *root, InodeId_t id);
 
 		/**
 		 * Gets an address for a new Inode.
@@ -128,14 +128,14 @@ class FileStore {
 		void *alloc(FsSize_t size);
 
 		/**
-		 * Compresses all of the records into a contiguous space, starting at m_root.
+		 * Compresses all of the inode into a contiguous space, starting at m_root.
 		 */
 		void compress();
 
 		/**
 		 * Inserts the given insertValue into the tree of the given root.
-		 * If the record already exists, it replaces the old on deletes it.
-		 * @return true if the record was inserted
+		 * If the inode already exists, it replaces the old on deletes it.
+		 * @return true if the inode was inserted
 		 */
 		bool insert(Inode *root, Inode *insertValue);
 
@@ -229,7 +229,7 @@ int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen) {
 
 template<typename FsSize_t>
 int FileStore<FsSize_t>::read(InodeId_t id, void *data, FsSize_t *size) {
-	auto inode = getRecord(m_root, id);
+	auto inode = getInode(m_root, id);
 	int retval = 1;
 	if (inode) {
 		if (size) {
@@ -243,7 +243,7 @@ int FileStore<FsSize_t>::read(InodeId_t id, void *data, FsSize_t *size) {
 
 template<typename FsSize_t>
 typename FileStore<FsSize_t>::StatInfo FileStore<FsSize_t>::stat(InodeId_t id) {
-	auto inode = getRecord(m_root, id);
+	auto inode = getInode(m_root, id);
 	StatInfo stat;
 	if (inode) {
 		stat.size = inode->dataLen;
@@ -260,16 +260,16 @@ typename FileStore<FsSize_t>::FsHeader *FileStore<FsSize_t>::getHeader() {
 }
 
 template<typename FsSize_t>
-typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getRecord(Inode *root, InodeId_t id) {
+typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getInode(Inode *root, InodeId_t id) {
 	Inode *retval = nullptr;
 
 	if (root->m_id > id) {
 		if (root->left) {
-			retval = getRecord(ptr<Inode*>(root->left), id);
+			retval = getInode(ptr<Inode*>(root->left), id);
 		}
 	} else if (root->m_id < id) {
 		if (root->right) {
-			retval = getRecord(ptr<Inode*>(root->right), id);
+			retval = getInode(ptr<Inode*>(root->right), id);
 		}
 	} else if (root->m_id == id) {
 		retval = root;
@@ -288,12 +288,12 @@ void *FileStore<FsSize_t>::alloc(FsSize_t size) {
 	}
 
 	const auto retval = lastInode()->next;
-	const auto rec = ptr<Inode*>(retval);
-	memset(rec, 0, size);
-	rec->prev = ptr(lastInode());
-	rec->next = retval + size;
+	const auto inode = ptr<Inode*>(retval);
+	memset(inode, 0, size);
+	inode->prev = ptr(lastInode());
+	inode->next = retval + size;
 	firstInode()->prev = retval;
-	return rec;
+	return inode;
 }
 
 template<typename FsSize_t>
