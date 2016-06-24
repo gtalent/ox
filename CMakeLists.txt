@@ -8,7 +8,6 @@ include(address_sanitizer)
 add_definitions(
 	-std=c++11
 	-Wall
-	-Wsign-compare
 	-nostdlib
 	-fno-exceptions
 	-fno-rtti
@@ -16,6 +15,12 @@ add_definitions(
 	#--analyze
 	#-Os # GCC size optimization flag
 )
+
+if(NOT MSVC)
+	add_definitions(
+		-Wsign-compare
+	)
+endif(NOT MSVC)
 
 enable_testing()
 
