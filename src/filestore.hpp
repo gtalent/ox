@@ -39,8 +39,6 @@ class FileStore {
 
 			// The following variables should not be assumed to exist
 			FsSize_t m_id;
-			// must be last item
-			uint8_t  m_data;
 
 			FsSize_t size();
 			void setId(InodeId_t);
@@ -167,7 +165,7 @@ class FileStore {
 
 template<typename FsSize_t>
 FsSize_t FileStore<FsSize_t>::Inode::size() {
-	return offsetof(FileStore::Inode, m_id) + dataLen;
+	return sizeof(Inode) + dataLen;
 }
 
 template<typename FsSize_t>
@@ -177,7 +175,7 @@ void FileStore<FsSize_t>::Inode::setId(InodeId_t id) {
 
 template<typename FsSize_t>
 void FileStore<FsSize_t>::Inode::setData(void *data, int size) {
-	memcpy(&m_data, data, size);
+	memcpy(this + 1, data, size);
 	dataLen = size;
 }
 
@@ -217,7 +215,7 @@ int FileStore<FsSize_t>::write(void *data, FsSize_t dataLen) {
 template<typename FsSize_t>
 int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen) {
 	auto retval = 1;
-	const FsSize_t size = offsetof(Inode, m_id) + dataLen;
+	const FsSize_t size = sizeof(Inode) + dataLen;
 	auto inode = (Inode*) alloc(size);
 	if (inode) {
 		inode->m_id = id;
@@ -231,13 +229,13 @@ int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen) {
 
 template<typename FsSize_t>
 int FileStore<FsSize_t>::read(InodeId_t id, void *data, FsSize_t *size) {
-	auto rec = getRecord(m_root, id);
+	auto inode = getRecord(m_root, id);
 	int retval = 1;
-	if (rec) {
+	if (inode) {
 		if (size) {
-			*size = rec->dataLen;
+			*size = inode->dataLen;
 		}
-		memcpy(data, &rec->m_data, rec->dataLen);
+		memcpy(data, inode + 1, inode->dataLen);
 		retval = 0;
 	}
 	return retval;

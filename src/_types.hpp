@@ -7,8 +7,6 @@
  */
 #pragma once
 
-#define offsetof(st, m) ((size_t)(&((st *)0)->m))
-
 namespace wombat {
 namespace fs {
 
