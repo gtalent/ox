@@ -30,12 +30,20 @@ class FileSystem {
 		int read(const char *path, void *buffer);
 
 		FileStat stat(const char *path);
+
+		FileStat stat(typename FileStore::InodeId_t inode);
 };
 
 template<typename FileStore>
 FileStat FileSystem<FileStore>::stat(const char *path) {
 	FileStat stat;
-	auto s = store->stat(path);
+	return stat;
+}
+
+template<typename FileStore>
+FileStat FileSystem<FileStore>::stat(typename FileStore::InodeId_t inode) {
+	FileStat stat;
+	auto s = store->stat(inode);
 	stat.size = s.size;
 	stat.inode = s.inodeId;
 	return stat;

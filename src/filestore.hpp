@@ -13,17 +13,18 @@
 namespace wombat {
 namespace fs {
 
-template<typename FsSize_t>
+template<typename FsT>
 class FileStore {
 
 	public:
+		typedef uint16_t InodeId_t;
+		typedef FsT FsSize_t;
+
 		struct FsHeader {
 			uint32_t version;
 			FsSize_t size;
 			FsSize_t rootInode;
 		};
-
-		typedef uint16_t InodeId_t;
 
 		struct StatInfo {
 			InodeId_t inodeId;

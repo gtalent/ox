@@ -10,14 +10,15 @@
 
 using namespace wombat::fs;
 
-int main() {
-	const auto size = 1 << 16;
+template<typename FileStore>
+int test() {
+	const auto size = 65535;
 	uint8_t volume[size];
 	char out[6];
 	uint32_t err;
-	FileStore32::format(volume, size);
-	FileStore32 fs(volume, volume + size, &err);
-	uint32_t outSize;
+	typename FileStore::FsSize_t outSize;
+	FileStore::format(volume, size);
+	FileStore fs(volume, volume + size, &err);
 
 	if (fs.write(1, (void*) "Hello", 6) ||
 		 fs.read(1, (char*) out, &outSize) ||
@@ -26,7 +27,7 @@ int main() {
 	}
 
 	if (fs.write(2, (void*) "World", 6) ||
-		 fs.read(2, (char*) out, nullptr) ||
+		 fs.read(2, (char*) out, &outSize) ||
 		 strcmp("World", out)) {
 		return 1;
 	}
@@ -37,6 +38,9 @@ int main() {
 		return 1;
 	}
 
-
 	return 0;
+}
+
+int main() {
+	return test<FileStore16>() | test<FileStore32>() | test<FileStore64>();
 }
