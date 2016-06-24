@@ -122,7 +122,7 @@ class FileStore {
 		 * @param pathLen number of characters in pathLen
 		 * @return the requested Inode, if available
 		 */
-		Inode *getRecord(FileStore::Inode *root, InodeId_t id);
+		Inode *getRecord(Inode *root, InodeId_t id);
 
 		/**
 		 * Gets an address for a new Inode.
@@ -263,7 +263,7 @@ typename FileStore<FsSize_t>::FsHeader *FileStore<FsSize_t>::getHeader() {
 }
 
 template<typename FsSize_t>
-typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getRecord(FileStore::Inode *root, InodeId_t id) {
+typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getRecord(Inode *root, InodeId_t id) {
 	Inode *retval = nullptr;
 
 	if (root->m_id > id) {

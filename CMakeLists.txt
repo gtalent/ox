@@ -6,11 +6,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 include(address_sanitizer)
 
 add_definitions(
-	-std=c++11
-	-Wall
-	-nostdlib
-	-fno-exceptions
-	-fno-rtti
 	#-Werror
 	#--analyze
 	#-Os # GCC size optimization flag
@@ -18,6 +13,11 @@ add_definitions(
 
 if(NOT MSVC)
 	add_definitions(
+		-std=c++11
+		-Wall
+		-nostdlib
+		-fno-exceptions
+		-fno-rtti
 		-Wsign-compare
 	)
 endif(NOT MSVC)
