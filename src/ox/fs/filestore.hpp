@@ -7,8 +7,7 @@
  */
 #pragma once
 
-#include <ox/std/_memops.hpp>
-#include <ox/std/_types.hpp>
+#include <ox/std/std.hpp>
 
 namespace ox {
 namespace fs {

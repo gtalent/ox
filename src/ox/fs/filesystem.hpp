@@ -7,9 +7,7 @@
  */
 #pragma once
 
-#include <ox/std/_memops.hpp>
-#include <ox/std/_strops.hpp>
-#include <ox/std/_types.hpp>
+#include <ox/std/std.hpp>
 #include "filestore.hpp"
 
 namespace ox {
