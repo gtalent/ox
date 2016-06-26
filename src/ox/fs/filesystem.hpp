@@ -41,6 +41,9 @@ class FileSystem {
 			}
 		};
 
+		// static members
+		static typename FileStore::InodeId_t INODE_ROOT_DIR;
+
 		FileStore *store = nullptr;
 
 	public:
@@ -54,6 +57,9 @@ class FileSystem {
 
 		static uint8_t *format(uint8_t *buffer, typename FileStore::FsSize_t size);
 };
+
+template<typename FileStore>
+typename FileStore::InodeId_t FileSystem<FileStore>::INODE_ROOT_DIR = 2;
 
 template<typename FileStore>
 int FileSystem<FileStore>::mkdir(const char *path) {
@@ -81,7 +87,7 @@ uint8_t *FileSystem<FileStore>::format(uint8_t *buffer, typename FileStore::FsSi
 	char dirBuff[sizeof(Directory) + sizeof(Directory)];
 	Directory &dir = *((Directory*) dirBuff);
 	DirectoryEntry entry;
-	entry.inode = 2;
+	entry.inode = INODE_ROOT_DIR;
 	entry.name = '/';
 	entry.nameLen = 1;
 
