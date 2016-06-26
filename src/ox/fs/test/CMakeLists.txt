@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 2.8)
 
 add_executable(
-	Format
-		format.cpp
+	FileStoreFormat
+		filestore_format.cpp
+)
+
+add_executable(
+	FileSystemFormat
+		filesystem_format.cpp
 )
 
 add_executable(
@@ -10,8 +15,10 @@ add_executable(
 		filestoreio.cpp
 )
 
-target_link_libraries(Format OxFS OxStd)
+target_link_libraries(FileStoreFormat OxFS OxStd)
+target_link_libraries(FileSystemFormat OxFS OxStd)
 target_link_libraries(FileStoreIO OxFS OxStd)
 
-add_test("Format" Format)
+add_test("FileStoreFormat" FileStoreFormat)
+add_test("FileSystemFormat" FileSystemFormat)
 add_test("FileStoreIO" FileStoreIO)

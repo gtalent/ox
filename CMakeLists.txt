@@ -13,6 +13,7 @@ if(NOT MSVC)
 		-fno-exceptions
 		-fno-rtti
 		-Wsign-compare
+		-Wunused-variable
 		#-Werror
 		#--analyze
 		#-Os # GCC size optimization flag
