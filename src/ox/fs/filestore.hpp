@@ -45,6 +45,7 @@ class FileStore {
 			FsSize_t size();
 			void setId(InodeId_t);
 			void setData(void *data, int size);
+			void *data();
 
 			private:
 				Inode() = default;
@@ -177,8 +178,14 @@ void FileStore<FsSize_t>::Inode::setId(InodeId_t id) {
 
 template<typename FsSize_t>
 void FileStore<FsSize_t>::Inode::setData(void *data, int size) {
-	memcpy(this + 1, data, size);
+	memcpy(this->data(), data, size);
 	dataLen = size;
+}
+
+
+template<typename FsSize_t>
+void *FileStore<FsSize_t>::Inode::data() {
+	return this + 1;
 }
 
 
@@ -237,7 +244,7 @@ int FileStore<FsSize_t>::read(InodeId_t id, void *data, FsSize_t *size) {
 		if (size) {
 			*size = inode->dataLen;
 		}
-		memcpy(data, inode + 1, inode->dataLen);
+		memcpy(data, inode->data(), inode->dataLen);
 		retval = 0;
 	}
 	return retval;
