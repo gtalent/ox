@@ -26,8 +26,17 @@ class FileSystem {
 	private:
 		struct DirectoryEntry {
 			typename FileStore::InodeId_t inode;
-			uint8_t nameLen;
-			char name;
+
+			char *getName() {
+				return (char*) (this + 1);
+			}
+
+			void setName(const char *name) {
+				auto data = getName();
+				auto nameLen = strlen(name);
+				memcpy(data, &name, nameLen);
+				data[nameLen] = 0;
+			}
 		};
 
 		struct Directory {
@@ -88,8 +97,7 @@ uint8_t *FileSystem<FileStore>::format(uint8_t *buffer, typename FileStore::FsSi
 	Directory &dir = *((Directory*) dirBuff);
 	DirectoryEntry entry;
 	entry.inode = INODE_ROOT_DIR;
-	entry.name = '/';
-	entry.nameLen = 1;
+	entry.setName("/");
 
 	if (buffer) {
 		uint32_t err;
