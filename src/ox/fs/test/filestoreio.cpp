@@ -9,10 +9,11 @@
 #include <ox/fs/filestore.hpp>
 
 using namespace ox::fs;
+using namespace ox::std;
 
 template<typename FileStore>
 int test() {
-	const auto size = 65535;
+	const uint16_t size = ~0;
 	uint8_t volume[size];
 	char out[6];
 	uint32_t err;

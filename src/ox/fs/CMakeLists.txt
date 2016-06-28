@@ -4,12 +4,14 @@ add_library(
 	OxFS
 		filestore.cpp
 		filesystem.cpp
+		inodemgr.cpp
 )
 
 install(
 	FILES
 		filestore.hpp
 		filesystem.hpp
+		inodemgr.hpp
 	DESTINATION
 		include/ox/fs
 )

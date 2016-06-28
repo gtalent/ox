@@ -6,12 +6,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 #include <ox/fs/filesystem.hpp>
+#include <ox/fs/inodemgr.hpp>
 
 using namespace ox::fs;
+using namespace ox::std;
 
 template<typename FileSystem>
 int test() {
-	const auto size = 65535;
+	const uint16_t size = ~0;
 	uint8_t volume[size];
 	FileSystem::format(volume, size);
 	return 0;

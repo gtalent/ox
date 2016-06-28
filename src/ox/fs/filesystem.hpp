@@ -94,7 +94,7 @@ template<typename FileStore>
 uint8_t *FileSystem<FileStore>::format(uint8_t *buffer, typename FileStore::FsSize_t size) {
 	buffer = FileStore::format(buffer, size);
 	char dirBuff[sizeof(Directory) + sizeof(Directory)];
-	Directory &dir = *((Directory*) dirBuff);
+	auto *dir = (Directory*) dirBuff;
 	DirectoryEntry entry;
 	entry.inode = INODE_ROOT_DIR;
 	entry.setName("/");
@@ -102,7 +102,7 @@ uint8_t *FileSystem<FileStore>::format(uint8_t *buffer, typename FileStore::FsSi
 	if (buffer) {
 		uint32_t err;
 		FileStore fs(buffer, buffer + size, &err);
-		dir.files();
+		dir->files();
 	}
 
 	return buffer;
