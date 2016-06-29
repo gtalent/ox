@@ -377,7 +377,7 @@ uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size) {
 
 	auto inodeSection = (Inode*) (buffer + header->rootInode);
 	inodeSection->m_id = 0;
-	inodeSection->next = inodeSection->prev = (uint8_t*) inodeSection - (uint8_t*) buffer;
+	inodeSection->next = inodeSection->prev = (FsSize_t) ((uint8_t*) inodeSection - (uint8_t*) buffer);
 
 	return (uint8_t*) header;
 }

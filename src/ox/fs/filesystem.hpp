@@ -93,11 +93,8 @@ FileStat FileSystem<FileStore>::stat(typename FileStore::InodeId_t inode) {
 template<typename FileStore>
 uint8_t *FileSystem<FileStore>::format(uint8_t *buffer, typename FileStore::FsSize_t size) {
 	buffer = FileStore::format(buffer, size);
-	char dirBuff[sizeof(Directory) + sizeof(Directory)];
+	char dirBuff[sizeof(Directory) + sizeof(DirectoryEntry) + 2];
 	auto *dir = (Directory*) dirBuff;
-	DirectoryEntry entry;
-	entry.inode = INODE_ROOT_DIR;
-	entry.setName("/");
 
 	if (buffer) {
 		uint32_t err;
