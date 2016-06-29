@@ -25,6 +25,7 @@ class FileStore {
 			uint32_t version;
 			FsSize_t size;
 			FsSize_t rootInode;
+			FsSize_t lastInode;
 		};
 
 		struct StatInfo {
@@ -35,12 +36,12 @@ class FileStore {
 	private:
 		struct Inode {
 			// the next Inode in memory
-			FsSize_t prev, next;
+			FsSize_t next;
 			FsSize_t left, right;
 			FsSize_t dataLen;
 
 			// The following variables should not be assumed to exist
-			FsSize_t m_id;
+			InodeId_t m_id;
 
 			FsSize_t size();
 			void setId(InodeId_t);
@@ -299,9 +300,8 @@ void *FileStore<FsSize_t>::alloc(FsSize_t size) {
 	const auto retval = lastInode()->next;
 	const auto inode = ptr<Inode*>(retval);
 	memset(inode, 0, size);
-	inode->prev = ptr(lastInode());
 	inode->next = retval + size;
-	firstInode()->prev = retval;
+	getHeader()->lastInode = retval;
 	return inode;
 }
 
@@ -358,7 +358,7 @@ typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::firstInode() {
 
 template<typename FsSize_t>
 typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::lastInode() {
-	return ptr<Inode*>(firstInode()->prev);
+	return ptr<Inode*>(getHeader()->lastInode);
 }
 
 template<typename FsSize_t>
@@ -374,10 +374,11 @@ uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size) {
 	header->version = FileStore<FsSize_t>::version();
 	header->size = size;
 	header->rootInode = sizeof(FsHeader);
+	header->lastInode = sizeof(FsHeader);
 
 	auto inodeSection = (Inode*) (buffer + header->rootInode);
 	inodeSection->m_id = 0;
-	inodeSection->next = inodeSection->prev = (FsSize_t) ((uint8_t*) inodeSection - (uint8_t*) buffer);
+	inodeSection->next = (FsSize_t) ((uint8_t*) inodeSection - (uint8_t*) buffer);
 
 	return (uint8_t*) header;
 }
