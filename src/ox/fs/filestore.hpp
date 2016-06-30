@@ -30,9 +30,9 @@ class FileStore {
 		struct Inode {
 			// the next Inode in memory
 			FsSize_t next;
-			FsSize_t dataLen;
 
 			// The following variables should not be assumed to exist
+			FsSize_t dataLen;
 			InodeId_t m_id;
 			uint8_t refs;
 			FsSize_t left, right;
