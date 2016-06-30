@@ -16,25 +16,24 @@ int test() {
 	const uint16_t size = ~0;
 	uint8_t volume[size];
 	char out[6];
-	uint32_t err;
 	typename FileStore::FsSize_t outSize;
 	FileStore::format(volume, size);
-	FileStore fs(volume, volume + size, &err);
+	FileStore *fs = (FileStore*) volume;
 
-	if (fs.write(1, (void*) "Hello", 6) ||
-		 fs.read(1, (char*) out, &outSize) ||
+	if (fs->write(1, (void*) "Hello", 6) ||
+		 fs->read(1, (char*) out, &outSize) ||
 		 strcmp("Hello", out)) {
 		return 1;
 	}
 
-	if (fs.write(2, (void*) "World", 6) ||
-		 fs.read(2, (char*) out, &outSize) ||
+	if (fs->write(2, (void*) "World", 6) ||
+		 fs->read(2, (char*) out, &outSize) ||
 		 strcmp("World", out)) {
 		return 1;
 	}
 
 	// make sure first value was not overwritten
-	if (fs.read(1, (char*) out, &outSize) ||
+	if (fs->read(1, (char*) out, &outSize) ||
 		 strcmp("Hello", out)) {
 		return 1;
 	}
@@ -43,5 +42,5 @@ int test() {
 }
 
 int main() {
-	return test<FileStore16>() | test<FileStore32>() | test<FileStore64>();
+	return test<FileStore16>() || test<FileStore32>() | test<FileStore64>();
 }

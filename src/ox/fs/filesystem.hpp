@@ -97,8 +97,6 @@ uint8_t *FileSystem<FileStore>::format(uint8_t *buffer, typename FileStore::FsSi
 	auto *dir = (Directory*) dirBuff;
 
 	if (buffer) {
-		uint32_t err;
-		FileStore fs(buffer, buffer + size, &err);
 		dir->files();
 	}
 

@@ -12,8 +12,7 @@ using namespace ox::fs;
 int main() {
 	const auto size = 65535;
 	uint8_t volume[size];
-	uint32_t err;
+	uint32_t err = 0;
 	FileStore32::format(volume, size);
-	FileStore32(volume, volume + size, &err);
 	return err;
 }
