@@ -272,7 +272,10 @@ void FileStore<FsSize_t>::compress() {
 	auto current = ptr<Inode*>(m_firstInode);
 	while (current->next) {
 		auto prevEnd = current + current->size();
+		auto prev = ptr(current);
+		current->next = ptr(current) + current->size();
 		current = ptr<Inode*>(current->next);
+		current->prev = prev;
 		if (prevEnd != current) {
 			memcpy(prevEnd, current, current->size());
 			current = prevEnd;
