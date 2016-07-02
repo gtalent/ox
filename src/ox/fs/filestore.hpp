@@ -46,7 +46,7 @@ class FileStore {
 				Inode() = default;
 		};
 
-		uint32_t m_version;
+		uint32_t m_fsType;
 		FsSize_t m_size;
 		FsSize_t m_firstInode;
 		FsSize_t m_rootInode;
@@ -94,7 +94,7 @@ class FileStore {
 
 		static uint8_t version();
 
-		static uint8_t *format(uint8_t *buffer, FsSize_t size);
+		static uint8_t *format(uint8_t *buffer, FsSize_t size, uint32_t fsType = 0);
 
 	private:
 		/**
@@ -328,11 +328,11 @@ uint8_t FileStore<FsSize_t>::version() {
 };
 
 template<typename FsSize_t>
-uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size) {
+uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size, uint32_t fsType) {
 	memset(buffer, 0, size);
 
 	auto *fs = (FileStore*) buffer;
-	fs->m_version = FileStore<FsSize_t>::version();
+	fs->m_fsType = fsType;
 	fs->m_size = size;
 	fs->m_rootInode = sizeof(FileStore<FsSize_t>);
 	fs->m_firstInode = sizeof(FileStore<FsSize_t>);
