@@ -191,6 +191,7 @@ template<typename FsSize_t>
 int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen) {
 	auto retval = 1;
 	const FsSize_t size = sizeof(Inode) + dataLen;
+	//printf("%d\n", m_rootInode);
 	auto inode = (Inode*) alloc(size);
 	if (inode) {
 		auto root = ptr<Inode*>(m_rootInode);
@@ -336,7 +337,7 @@ uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size) {
 	fs->m_size = size;
 	fs->m_rootInode = sizeof(FileStore<FsSize_t>);
 	fs->m_firstInode = sizeof(FileStore<FsSize_t>);
-	fs->lastInode()->m_id = 0;
+	fs->firstInode()->prev = fs->m_firstInode;
 	fs->lastInode()->next = sizeof(FileStore<FsSize_t>);
 
 	return (uint8_t*) buffer;
