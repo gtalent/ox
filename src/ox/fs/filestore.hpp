@@ -48,6 +48,7 @@ class FileStore {
 
 		uint32_t m_version;
 		FsSize_t m_size;
+		FsSize_t m_firstInode;
 		FsSize_t m_rootInode;
 
 	public:
@@ -112,7 +113,7 @@ class FileStore {
 		void *alloc(FsSize_t size);
 
 		/**
-		 * Compresses all of the inode into a contiguous space, starting at m_rootInode.
+		 * Compresses all of the inode into a contiguous space, starting at m_firstInode.
 		 */
 		void compress();
 
@@ -261,14 +262,13 @@ void *FileStore<FsSize_t>::alloc(FsSize_t size) {
 	const auto inode = ptr<Inode*>(retval);
 	memset(inode, 0, size);
 	inode->next = retval + size;
-	ptr<Inode*>(m_rootInode)->prev = retval;
-	ptr<Inode*>(inode->next)->prev = retval;
+	ptr<Inode*>(m_firstInode)->prev = retval;
 	return inode;
 }
 
 template<typename FsSize_t>
 void FileStore<FsSize_t>::compress() {
-	auto current = ptr<Inode*>(m_rootInode);
+	auto current = ptr<Inode*>(m_firstInode);
 	while (current->next) {
 		auto prevEnd = current + current->size();
 		current = ptr<Inode*>(current->next);
@@ -319,7 +319,7 @@ typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::firstInode() {
 
 template<typename FsSize_t>
 typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::lastInode() {
-	return ptr<Inode*>(ptr<Inode*>(m_rootInode)->prev);
+	return ptr<Inode*>(ptr<Inode*>(m_firstInode)->prev);
 }
 
 template<typename FsSize_t>
@@ -335,6 +335,7 @@ uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size) {
 	fs->m_version = FileStore<FsSize_t>::version();
 	fs->m_size = size;
 	fs->m_rootInode = sizeof(FileStore<FsSize_t>);
+	fs->m_firstInode = sizeof(FileStore<FsSize_t>);
 	fs->lastInode()->m_id = 0;
 	fs->lastInode()->next = sizeof(FileStore<FsSize_t>);
 
