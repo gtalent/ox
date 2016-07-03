@@ -53,12 +53,6 @@ class FileStore {
 
 	public:
 		/**
-		 * Initializes the memory chunk of this FileStore was given.
-		 * This clears the previous contents.
-		 */
-		void init();
-
-		/**
 		 * Writes the given data to a "file" with the given id.
 		 * @param id the id of the file
 		 * @param data the contents of the file
@@ -73,6 +67,12 @@ class FileStore {
 		 * @param dataLen the number of bytes data points to
 		 */
 		int write(InodeId_t id, void *data, FsSize_t dataLen);
+
+		/**
+		 * Removes the inode of the given ID.
+		 * @param id the id of the file
+		 */
+		int remove(InodeId_t id);
 
 		/**
 		 * Reads the "file" at the given id. You are responsible for freeing
@@ -105,6 +105,18 @@ class FileStore {
 		 * @return the requested Inode, if available
 		 */
 		Inode *getInode(Inode *root, InodeId_t id);
+
+		/**
+		 * Removes the inode of the given ID.
+		 * @param id the id of the file
+		 */
+		int remove(Inode *root, InodeId_t id);
+
+		/**
+		 * Removes the given node from the linked list.
+		 * @param node node to remove
+		 */
+		void unlink(Inode *node);
 
 		/**
 		 * Gets an address for a new Inode.
@@ -191,7 +203,6 @@ template<typename FsSize_t>
 int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen) {
 	auto retval = 1;
 	const FsSize_t size = sizeof(Inode) + dataLen;
-	//printf("%d\n", m_rootInode);
 	auto inode = (Inode*) alloc(size);
 	if (inode) {
 		auto root = ptr<Inode*>(m_rootInode);
@@ -202,6 +213,69 @@ int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen) {
 		}
 	}
 	return retval;
+}
+
+template<typename FsSize_t>
+int FileStore<FsSize_t>::remove(InodeId_t id) {
+	return remove(ptr<Inode*>(m_rootInode), id);
+}
+
+template<typename FsSize_t>
+int FileStore<FsSize_t>::remove(Inode *root, InodeId_t id) {
+	auto err = 1;
+
+	if (root->m_id > id) {
+		if (root->left) {
+			auto node = ptr<Inode*>(root->left);
+			if (node->m_id != id) {
+				err = remove(node, id);
+			} else {
+				root->left = node->left;
+				if (node->right) {
+					insert(root, ptr<Inode*>(node->right));
+				}
+				if (node->left) {
+					insert(root, ptr<Inode*>(node->left));
+				}
+				unlink(node);
+				err = 0;
+			}
+		}
+	} else if (root->m_id < id) {
+		if (root->right) {
+			auto node = ptr<Inode*>(root->right);
+			if (node->m_id != id) {
+				err = remove(node, id);
+			} else {
+				root->right = node->right;
+				if (node->right) {
+					insert(root, ptr<Inode*>(node->right));
+				}
+				if (node->left) {
+					insert(root, ptr<Inode*>(node->left));
+				}
+				unlink(node);
+				err = 0;
+			}
+		}
+	} else {
+		m_rootInode = root->right;
+		if (root->left) {
+			insert(ptr<Inode*>(m_rootInode), ptr<Inode*>(root->left));
+		}
+		unlink(root);
+		err = 0;
+	}
+
+	return err;
+}
+
+template<typename FsSize_t>
+void FileStore<FsSize_t>::unlink(Inode *node) {
+	auto next = ptr<Inode*>(node->next);
+	auto prev = ptr<Inode*>(node->prev);
+	prev->next = ptr(next);
+	next->prev = ptr(prev);
 }
 
 template<typename FsSize_t>
@@ -328,7 +402,7 @@ typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::lastInode() {
 
 template<typename FsSize_t>
 uint8_t FileStore<FsSize_t>::version() {
-	return 0;
+	return 1;
 };
 
 template<typename FsSize_t>

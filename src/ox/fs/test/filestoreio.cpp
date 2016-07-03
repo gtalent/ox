@@ -29,13 +29,29 @@ int test() {
 	if (fs->write(2, (void*) "World", 6) ||
 		 fs->read(2, (char*) out, &outSize) ||
 		 strcmp("World", out)) {
-		return 1;
+		return 2;
 	}
 
 	// make sure first value was not overwritten
 	if (fs->read(1, (char*) out, &outSize) ||
 		 strcmp("Hello", out)) {
-		return 1;
+		return 3;
+	}
+
+	if (fs->remove(1)) {
+		return 4;
+	}
+
+	// make sure inode is not found
+	if (fs->read(1, (char*) out, &outSize) == 0) {
+		return 5;
+	}
+
+	// make sure 2 is still available
+	if (fs->write(2, (void*) "World", 6) ||
+		 fs->read(2, (char*) out, &outSize) ||
+		 strcmp("World", out)) {
+		return 6;
 	}
 
 	return 0;
