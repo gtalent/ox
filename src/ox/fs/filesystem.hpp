@@ -15,6 +15,12 @@ namespace fs {
 
 using namespace std;
 
+enum FsType {
+	OxFS16 = 1,
+	OxFS32 = 2,
+	OxFS64 = 3
+};
+
 struct FileStat {
 	uint64_t inode;
 	uint64_t size;

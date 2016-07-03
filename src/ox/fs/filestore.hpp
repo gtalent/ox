@@ -12,13 +12,11 @@
 namespace ox {
 namespace fs {
 
-using namespace ox::std;
-
 template<typename FsT>
 class FileStore {
 
 	public:
-		typedef uint16_t InodeId_t;
+		typedef ox::std::uint16_t InodeId_t;
 		typedef FsT FsSize_t;
 
 		struct StatInfo {
@@ -34,7 +32,7 @@ class FileStore {
 			// The following variables should not be assumed to exist
 			FsSize_t dataLen;
 			InodeId_t m_id;
-			uint8_t refs;
+			ox::std::uint8_t refs;
 			FsSize_t left, right;
 
 			FsSize_t size();
@@ -46,7 +44,7 @@ class FileStore {
 				Inode() = default;
 		};
 
-		uint32_t m_fsType;
+		ox::std::uint32_t m_fsType;
 		FsSize_t m_size;
 		FsSize_t m_firstInode;
 		FsSize_t m_rootInode;
@@ -92,9 +90,9 @@ class FileStore {
 		 */
 		StatInfo stat(InodeId_t id);
 
-		static uint8_t version();
+		static ox::std::uint8_t version();
 
-		static uint8_t *format(uint8_t *buffer, FsSize_t size, uint32_t fsType = 0);
+		static ox::std::uint8_t *format(ox::std::uint8_t *buffer, FsSize_t size, ox::std::uint32_t fsType = 0);
 
 	private:
 		/**
@@ -146,11 +144,11 @@ class FileStore {
 
 		Inode *lastInode();
 
-		uint8_t *begin() {
-			return (uint8_t*) this;
+		ox::std::uint8_t *begin() {
+			return (ox::std::uint8_t*) this;
 		}
 
-		uint8_t *end() {
+		ox::std::uint8_t *end() {
 			return begin() + this->m_size;
 		}
 
@@ -181,7 +179,7 @@ void FileStore<FsSize_t>::Inode::setId(InodeId_t id) {
 
 template<typename FsSize_t>
 void FileStore<FsSize_t>::Inode::setData(void *data, int size) {
-	memcpy(this->data(), data, size);
+	ox::std::memcpy(this->data(), data, size);
 	dataLen = size;
 }
 
@@ -286,7 +284,7 @@ int FileStore<FsSize_t>::read(InodeId_t id, void *data, FsSize_t *size) {
 		if (size) {
 			*size = inode->dataLen;
 		}
-		memcpy(data, inode->data(), inode->dataLen);
+		ox::std::memcpy(data, inode->data(), inode->dataLen);
 		retval = 0;
 	}
 	return retval;
@@ -326,16 +324,16 @@ typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getInode(Inode *root, 
 
 template<typename FsSize_t>
 void *FileStore<FsSize_t>::alloc(FsSize_t size) {
-	if ((lastInode()->next + size) > (uint64_t) end()) {
+	if ((lastInode()->next + size) > (ox::std::uint64_t) end()) {
 		compress();
-		if ((lastInode()->next + size) > (uint64_t) end()) {
+		if ((lastInode()->next + size) > (ox::std::uint64_t) end()) {
 			return nullptr;
 		}
 	}
 
 	const auto retval = lastInode()->next;
 	const auto inode = ptr<Inode*>(retval);
-	memset(inode, 0, size);
+	ox::std::memset(inode, 0, size);
 	inode->next = retval + size;
 	ptr<Inode*>(m_firstInode)->prev = retval;
 	return inode;
@@ -351,7 +349,7 @@ void FileStore<FsSize_t>::compress() {
 		current = ptr<Inode*>(current->next);
 		current->prev = prev;
 		if (prevEnd != current) {
-			memcpy(prevEnd, current, current->size());
+			ox::std::memcpy(prevEnd, current, current->size());
 			current = prevEnd;
 		}
 	}
@@ -387,7 +385,7 @@ FsSize_t FileStore<FsSize_t>::iterator() {
 
 template<typename FsSize_t>
 FsSize_t FileStore<FsSize_t>::ptr(void *ptr) {
-	return ((uint8_t*) ptr) - begin();
+	return ((ox::std::uint8_t*) ptr) - begin();
 }
 
 template<typename FsSize_t>
@@ -401,13 +399,13 @@ typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::lastInode() {
 }
 
 template<typename FsSize_t>
-uint8_t FileStore<FsSize_t>::version() {
+ox::std::uint8_t FileStore<FsSize_t>::version() {
 	return 1;
 };
 
 template<typename FsSize_t>
-uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size, uint32_t fsType) {
-	memset(buffer, 0, size);
+ox::std::uint8_t *FileStore<FsSize_t>::format(ox::std::uint8_t *buffer, FsSize_t size, ox::std::uint32_t fsType) {
+	ox::std::memset(buffer, 0, size);
 
 	auto *fs = (FileStore*) buffer;
 	fs->m_fsType = fsType;
@@ -417,12 +415,12 @@ uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size, uint32_t fs
 	fs->firstInode()->prev = fs->m_firstInode;
 	fs->lastInode()->next = sizeof(FileStore<FsSize_t>);
 
-	return (uint8_t*) buffer;
+	return (ox::std::uint8_t*) buffer;
 }
 
-typedef FileStore<uint16_t> FileStore16;
-typedef FileStore<uint32_t> FileStore32;
-typedef FileStore<uint64_t> FileStore64;
+typedef FileStore<ox::std::uint16_t> FileStore16;
+typedef FileStore<ox::std::uint32_t> FileStore32;
+typedef FileStore<ox::std::uint64_t> FileStore64;
 
 }
 }

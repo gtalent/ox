@@ -30,6 +30,17 @@ int strlen(const char *str1) {
 	return len;
 }
 
-}
+int atoi(const char *str) {
+	int total = 0;
+	int multiplier = 1;
+
+	for (int i = strlen(str) - 1; i >= 0; i--) {
+		total += (str[i] - '0') * multiplier;
+		multiplier *= 10;
+	}
+
+	return total;
 }
 
+}
+}

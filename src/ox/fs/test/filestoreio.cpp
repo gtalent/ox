@@ -13,8 +13,8 @@ using namespace ox::std;
 
 template<typename FileStore>
 int test() {
-	const uint16_t size = ~0;
-	uint8_t volume[size];
+	const ox::std::uint16_t size = ~0;
+	ox::std::uint8_t volume[size];
 	char out[6];
 	typename FileStore::FsSize_t outSize;
 	FileStore::format(volume, size);
