@@ -5,7 +5,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ox/std/strops.hpp>
@@ -13,8 +12,22 @@
 
 using namespace ox::fs;
 
-const char *usage = "usage options:\n"
-"\toxfs format [16,32,64] <size> <path>";
+const char *usage = "usage:\n"
+"\toxfs format [16,32,64] <size> <path>"
+"\toxfs write <FS file> <inode> <insertion file>";
+
+char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
+	FILE *file = fopen(path, "rw");
+	fseek(file, 0, SEEK_END);
+	const auto size = ftell(file);
+	auto buff = (char*) malloc(size);
+	fread(buff, size, 1, file);
+	fclose(file);
+	if (sizeOut) {
+		*sizeOut = size;
+	}
+	return buff;
+}
 
 int format(int argc, char **args) {
 	printf("Creating file system...\n");
@@ -60,12 +73,50 @@ int format(int argc, char **args) {
 	return err;
 }
 
+int write(int argc, char **args) {
+	auto err = 0;
+	if (argc >= 5) {
+		auto fsPath = args[2];
+		auto inode = ox::std::atoi(args[3]);
+		auto srcPath = args[4];
+		::size_t srcSize;
+
+		FILE *fsFile = fopen(fsPath, "rw");
+		fseek(fsFile, 0, SEEK_END);
+
+		const auto fsSize = ftell(fsFile);
+		auto fs = (char*) malloc(fsSize);
+		fread(fs, fsSize, 1, fsFile);
+
+		auto srcBuff = loadFileBuff(srcPath, &srcSize);
+
+		auto type = *((ox::std::uint32_t*) fs);
+		switch (type) {
+			case ox::fs::OxFS16:
+				((FileStore16*) fs)->write(inode, srcBuff, srcSize);
+				break;
+			case ox::fs::OxFS32:
+				((FileStore32*) fs)->write(inode, srcBuff, srcSize);
+				break;
+			case ox::fs::OxFS64:
+				((FileStore64*) fs)->write(inode, srcBuff, srcSize);
+				break;
+		}
+
+		fwrite(fs, fsSize, 1, fsFile);
+		err = fclose(fsFile);
+	}
+	return err;
+}
+
 int main(int argc, char **args) {
 	auto err = 0;
 	if (argc > 1) {
 		auto cmd = args[1];
 		if (::strcmp(cmd, "format") == 0) {
 			err = format(argc, args);
+		} else if (::strcmp(cmd, "write") == 0) {
+			err = write(argc, args);
 		} else if (::strcmp(cmd, "help") == 0) {
 			printf("%s\n", usage);
 		} else {
