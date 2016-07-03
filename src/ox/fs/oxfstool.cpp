@@ -13,7 +13,7 @@
 
 using namespace ox::fs;
 
-const char *usage = "Usage:\n"
+const char *usage = "usage options:\n"
 "\toxfs format [16,32,64] <size> <path>";
 
 int format(int argc, char **args) {
@@ -64,8 +64,10 @@ int main(int argc, char **args) {
 	auto err = 0;
 	if (argc > 1) {
 		auto cmd = args[1];
-		if (ox::std::strcmp(cmd, "format") == 0) {
+		if (::strcmp(cmd, "format") == 0) {
 			err = format(argc, args);
+		} else if (::strcmp(cmd, "help") == 0) {
+			printf("%s\n", usage);
 		} else {
 			printf("Command '%s' not recognized.\n", cmd);
 			err = 1;
