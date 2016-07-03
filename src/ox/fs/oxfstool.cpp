@@ -50,13 +50,13 @@ int format(int argc, char **args) {
 		// format
 		switch (type) {
 			case 16:
-				FileStore16::format(buff, size, ox::fs::OxFS16);
+				FileStore16::format(buff, size, ox::fs::OxFS_16);
 				break;
 			case 32:
-				FileStore32::format(buff, size, ox::fs::OxFS32);
+				FileStore32::format(buff, size, ox::fs::OxFS_32);
 				break;
 			case 64:
-				FileStore64::format(buff, size, ox::fs::OxFS64);
+				FileStore64::format(buff, size, ox::fs::OxFS_64);
 				break;
 		}
 		createFileSystem(buff);
@@ -88,16 +88,23 @@ int read(int argc, char **args) {
 		::size_t fsSize;
 		ox::std::uint64_t fileSize;
 
-		auto fs = createFileSystem(loadFileBuff(fsPath, &fsSize));
+		auto fsBuff = loadFileBuff(fsPath, &fsSize);
+		
+		if (fsBuff) {
+			auto fs = createFileSystem(fsBuff);
 
-		auto output = fs->read(inode, &fileSize);
+			auto output = fs->read(inode, &fileSize);
 
-		if (output) {
-			fwrite(output, fileSize, 1, stdout);
-			err = 0;
+			if (output) {
+				fwrite(output, fileSize, 1, stdout);
+				err = 0;
+			}
+
+			delete fs;
+			delete fsBuff;
+		} else {
+			fprintf(stderr, "Could not open file: %s\n", fsPath);
 		}
-
-		delete fs;
 	}
 	return err;
 }
@@ -110,7 +117,7 @@ int write(int argc, char **args) {
 		auto srcPath = args[4];
 		::size_t srcSize;
 
-		auto fsFile = fopen(fsPath, "rwb");
+		auto fsFile = fopen(fsPath, "rb");
 		if (fsFile) {
 			fseek(fsFile, 0, SEEK_END);
 

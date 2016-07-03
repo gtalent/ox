@@ -16,9 +16,9 @@ namespace fs {
 using namespace std;
 
 enum FsType {
-	OxFS16 = 1,
-	OxFS32 = 2,
-	OxFS64 = 3
+	OxFS_16 = 1,
+	OxFS_32 = 2,
+	OxFS_64 = 3
 };
 
 struct FileStat {

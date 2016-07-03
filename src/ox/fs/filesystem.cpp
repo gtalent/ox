@@ -15,13 +15,13 @@ FileSystem *createFileSystem(void *buff) {
 	FileSystem *fs = nullptr;
 
 	switch (type) {
-		case ox::fs::OxFS16:
+		case ox::fs::OxFS_16:
 			fs = new FileSystem16(buff);
 			break;
-		case ox::fs::OxFS32:
+		case ox::fs::OxFS_32:
 			fs = new FileSystem32(buff);
 			break;
-		case ox::fs::OxFS64:
+		case ox::fs::OxFS_64:
 			fs = new FileSystem64(buff);
 			break;
 	}
