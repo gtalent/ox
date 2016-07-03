@@ -14,13 +14,15 @@ using namespace ox::fs;
 
 const char *usage = "usage:\n"
 "\toxfs format [16,32,64] <size> <path>\n"
+"\toxfs read <FS file> <inode>\n"
 "\toxfs write <FS file> <inode> <insertion file>";
 
 char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
-	FILE *file = fopen(path, "rw");
+	FILE *file = fopen(path, "rb");
 	if (file) {
 		fseek(file, 0, SEEK_END);
 		const auto size = ftell(file);
+		rewind(file);
 		auto buff = (char*) malloc(size);
 		fread(buff, size, 1, file);
 		fclose(file);
@@ -57,8 +59,9 @@ int format(int argc, char **args) {
 				FileStore64::format(buff, size, ox::fs::OxFS64);
 				break;
 		}
+		createFileSystem(buff);
 
-		FILE *file = fopen(path, "w");
+		auto file = fopen(path, "wb");
 		if (file) {
 			fwrite(buff, size, 1, file);
 			err = fclose(file);
@@ -77,6 +80,28 @@ int format(int argc, char **args) {
 	return err;
 }
 
+int read(int argc, char **args) {
+	auto err = 1;
+	if (argc >= 4) {
+		auto fsPath = args[2];
+		auto inode = ox::std::atoi(args[3]);
+		::size_t fsSize;
+		ox::std::uint64_t fileSize;
+
+		auto fs = createFileSystem(loadFileBuff(fsPath, &fsSize));
+
+		auto output = fs->read(inode, &fileSize);
+
+		if (output) {
+			fwrite(output, fileSize, 1, stdout);
+			err = 0;
+		}
+
+		delete fs;
+	}
+	return err;
+}
+
 int write(int argc, char **args) {
 	auto err = 0;
 	if (argc >= 5) {
@@ -85,50 +110,46 @@ int write(int argc, char **args) {
 		auto srcPath = args[4];
 		::size_t srcSize;
 
-		FILE *fsFile = fopen(fsPath, "rw");
+		auto fsFile = fopen(fsPath, "rwb");
 		if (fsFile) {
 			fseek(fsFile, 0, SEEK_END);
 
-			const auto fsSize = ftell(fsFile);
-			auto fs = (char*) malloc(fsSize);
-			fread(fs, fsSize, 1, fsFile);
+			const auto fsSize = (::size_t) ftell(fsFile);
+			rewind(fsFile);
+			auto fsBuff = (char*) malloc(fsSize);
+			fread(fsBuff, fsSize, 1, fsFile);
+			fclose(fsFile);
 
 			auto srcBuff = loadFileBuff(srcPath, &srcSize);
 			if (srcBuff) {
-				auto type = *((ox::std::uint32_t*) fs);
-				switch (type) {
-					case ox::fs::OxFS16:
-						err |= ((FileStore16*) fs)->write(inode, srcBuff, srcSize);
-						break;
-					case ox::fs::OxFS32:
-						err |= ((FileStore32*) fs)->write(inode, srcBuff, srcSize);
-						break;
-					case ox::fs::OxFS64:
-						err |= ((FileStore64*) fs)->write(inode, srcBuff, srcSize);
-						break;
+				auto fs = createFileSystem(fsBuff);
+				if (fs) {
+					err |= fs->write(inode, srcBuff, srcSize);
+				} else {
+					fprintf(stderr, "Invalid file system.\n");
+				}
+
+				if (err) {
+					fprintf(stderr, "Could not write to file system.\n");
+				} else {
+					fsFile = fopen(fsPath, "wb");
+
+					if (fsFile) {
+						err = fwrite(fsBuff, fsSize, 1, fsFile) != 1;
+						err |= fclose(fsFile);
+						if (err) {
+							fprintf(stderr, "Could not write to file system file.\n");
+						}
+					} else {
+						err = 1;
+					}
 				}
 			} else {
 				err = 1;
 				fprintf(stderr, "Could not load source file.\n");
 			}
 
-			if (err) {
-				fprintf(stderr, "Could not write to file system.\n");
-				err = 0;
-			} else {
-				err = fwrite(fs, fsSize, 1, fsFile);
-				if (err) {
-					fprintf(stderr, "Could not write to file system.\n");
-				}
-			}
-
-			err = fclose(fsFile);
-
-			if (err) {
-				fprintf(stderr, "Could not write to file system file.\n");
-			}
-
-			free(fs);
+			free(fsBuff);
 			free(srcBuff);
 		} else {
 			fprintf(stderr, "Could not open file system\n");
@@ -143,6 +164,8 @@ int main(int argc, char **args) {
 		auto cmd = args[1];
 		if (::strcmp(cmd, "format") == 0) {
 			err = format(argc, args);
+		} else if (::strcmp(cmd, "read") == 0) {
+			err = read(argc, args);
 		} else if (::strcmp(cmd, "write") == 0) {
 			err = write(argc, args);
 		} else if (::strcmp(cmd, "help") == 0) {

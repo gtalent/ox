@@ -26,8 +26,21 @@ struct FileStat {
 	uint64_t size;
 };
 
-template<typename FileStore>
 class FileSystem {
+	public:
+		virtual ~FileSystem() {};
+
+		virtual int read(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) = 0;
+
+		virtual ox::std::uint8_t *read(ox::std::uint64_t inode, ox::std::uint64_t *size) = 0;
+
+		virtual int write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) = 0;
+
+		virtual FileStat stat(ox::std::uint64_t inode) = 0;
+};
+
+template<typename FileStore>
+class FileSystemTemplate: public FileSystem {
 
 	private:
 		struct DirectoryEntry {
@@ -62,33 +75,46 @@ class FileSystem {
 		FileStore *store = nullptr;
 
 	public:
+		FileSystemTemplate(void *buff);
+
 		int mkdir(const char *path);
 
 		int read(const char *path, void *buffer);
 
+		ox::std::uint8_t *read(ox::std::uint64_t inode, ox::std::uint64_t *size) override;
+
+		int read(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) override;
+
+		int write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) override;
+
 		FileStat stat(const char *path);
 
-		FileStat stat(typename FileStore::InodeId_t inode);
+		FileStat stat(ox::std::uint64_t inode) override;
 
-		static uint8_t *format(uint8_t *buffer, typename FileStore::FsSize_t size);
+		static ox::std::uint8_t *format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories);
 };
 
 template<typename FileStore>
-typename FileStore::InodeId_t FileSystem<FileStore>::INODE_ROOT_DIR = 2;
+FileSystemTemplate<FileStore>::FileSystemTemplate(void *buff) {
+	store = (FileStore*) buff;
+}
 
 template<typename FileStore>
-int FileSystem<FileStore>::mkdir(const char *path) {
+typename FileStore::InodeId_t FileSystemTemplate<FileStore>::INODE_ROOT_DIR = 2;
+
+template<typename FileStore>
+int FileSystemTemplate<FileStore>::mkdir(const char *path) {
 	return 0;
 }
 
 template<typename FileStore>
-FileStat FileSystem<FileStore>::stat(const char *path) {
+FileStat FileSystemTemplate<FileStore>::stat(const char *path) {
 	FileStat stat;
 	return stat;
 }
 
 template<typename FileStore>
-FileStat FileSystem<FileStore>::stat(typename FileStore::InodeId_t inode) {
+FileStat FileSystemTemplate<FileStore>::stat(ox::std::uint64_t inode) {
 	FileStat stat;
 	auto s = store->stat(inode);
 	stat.size = s.size;
@@ -97,21 +123,52 @@ FileStat FileSystem<FileStore>::stat(typename FileStore::InodeId_t inode) {
 }
 
 template<typename FileStore>
-uint8_t *FileSystem<FileStore>::format(uint8_t *buffer, typename FileStore::FsSize_t size) {
-	buffer = FileStore::format(buffer, size);
-	char dirBuff[sizeof(Directory) + sizeof(DirectoryEntry) + 2];
-	auto *dir = (Directory*) dirBuff;
+int FileSystemTemplate<FileStore>::read(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) {
+	auto err = 1;
+	auto s = store->stat(inode);
+	if (size == s.size) {
+		err = store->read(inode, buffer, nullptr);
+	}
+	return err;
+}
 
-	if (buffer) {
+template<typename FileStore>
+ox::std::uint8_t *FileSystemTemplate<FileStore>::read(ox::std::uint64_t inode, ox::std::uint64_t *size) {
+	auto s = store->stat(inode);
+	auto buff = new ox::std::uint8_t[s.size];
+	if (size) {
+		*size = s.size;
+	}
+	if (store->read(inode, buff, nullptr)) {
+		delete []buff;
+		buff = nullptr;
+	}
+	return buff;
+}
+
+template<typename FileStore>
+int FileSystemTemplate<FileStore>::write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) {
+	return store->write(inode, buffer, size);
+}
+
+template<typename FileStore>
+ox::std::uint8_t *FileSystemTemplate<FileStore>::format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories) {
+	buffer = FileStore::format((ox::std::uint8_t*) buffer, size);
+
+	if (buffer && useDirectories) {
+		char dirBuff[sizeof(Directory) + sizeof(DirectoryEntry) + 2];
+		auto *dir = (Directory*) dirBuff;
 		dir->files();
 	}
 
-	return buffer;
+	return (ox::std::uint8_t*) buffer;
 }
 
-typedef FileSystem<FileStore16> FileSystem16;
-typedef FileSystem<FileStore32> FileSystem32;
-typedef FileSystem<FileStore64> FileSystem64;
+typedef FileSystemTemplate<FileStore16> FileSystem16;
+typedef FileSystemTemplate<FileStore32> FileSystem32;
+typedef FileSystemTemplate<FileStore64> FileSystem64;
+
+FileSystem *createFileSystem(void *buff);
 
 }
 }
