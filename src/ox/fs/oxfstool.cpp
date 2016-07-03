@@ -18,15 +18,19 @@ const char *usage = "usage:\n"
 
 char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
 	FILE *file = fopen(path, "rw");
-	fseek(file, 0, SEEK_END);
-	const auto size = ftell(file);
-	auto buff = (char*) malloc(size);
-	fread(buff, size, 1, file);
-	fclose(file);
-	if (sizeOut) {
-		*sizeOut = size;
+	if (file) {
+		fseek(file, 0, SEEK_END);
+		const auto size = ftell(file);
+		auto buff = (char*) malloc(size);
+		fread(buff, size, 1, file);
+		fclose(file);
+		if (sizeOut) {
+			*sizeOut = size;
+		}
+		return buff;
+	} else {
+		return nullptr;
 	}
-	return buff;
 }
 
 int format(int argc, char **args) {
@@ -82,29 +86,53 @@ int write(int argc, char **args) {
 		::size_t srcSize;
 
 		FILE *fsFile = fopen(fsPath, "rw");
-		fseek(fsFile, 0, SEEK_END);
+		if (fsFile) {
+			fseek(fsFile, 0, SEEK_END);
 
-		const auto fsSize = ftell(fsFile);
-		auto fs = (char*) malloc(fsSize);
-		fread(fs, fsSize, 1, fsFile);
+			const auto fsSize = ftell(fsFile);
+			auto fs = (char*) malloc(fsSize);
+			fread(fs, fsSize, 1, fsFile);
 
-		auto srcBuff = loadFileBuff(srcPath, &srcSize);
+			auto srcBuff = loadFileBuff(srcPath, &srcSize);
+			if (srcBuff) {
+				auto type = *((ox::std::uint32_t*) fs);
+				switch (type) {
+					case ox::fs::OxFS16:
+						err |= ((FileStore16*) fs)->write(inode, srcBuff, srcSize);
+						break;
+					case ox::fs::OxFS32:
+						err |= ((FileStore32*) fs)->write(inode, srcBuff, srcSize);
+						break;
+					case ox::fs::OxFS64:
+						err |= ((FileStore64*) fs)->write(inode, srcBuff, srcSize);
+						break;
+				}
+			} else {
+				err = 1;
+				fprintf(stderr, "Could not load source file.\n");
+			}
 
-		auto type = *((ox::std::uint32_t*) fs);
-		switch (type) {
-			case ox::fs::OxFS16:
-				((FileStore16*) fs)->write(inode, srcBuff, srcSize);
-				break;
-			case ox::fs::OxFS32:
-				((FileStore32*) fs)->write(inode, srcBuff, srcSize);
-				break;
-			case ox::fs::OxFS64:
-				((FileStore64*) fs)->write(inode, srcBuff, srcSize);
-				break;
+			if (err) {
+				fprintf(stderr, "Could not write to file system.\n");
+				err = 0;
+			} else {
+				err = fwrite(fs, fsSize, 1, fsFile);
+				if (err) {
+					fprintf(stderr, "Could not write to file system.\n");
+				}
+			}
+
+			err = fclose(fsFile);
+
+			if (err) {
+				fprintf(stderr, "Could not write to file system file.\n");
+			}
+
+			free(fs);
+			free(srcBuff);
+		} else {
+			fprintf(stderr, "Could not open file system\n");
 		}
-
-		fwrite(fs, fsSize, 1, fsFile);
-		err = fclose(fsFile);
 	}
 	return err;
 }
