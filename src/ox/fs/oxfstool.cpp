@@ -13,6 +13,9 @@
 
 using namespace ox::fs;
 
+const char *usage = "Usage:\n"
+"\toxfs format [16,32,64] <size> <path>";
+
 int format(int argc, char **args) {
 	printf("Creating file system...\n");
 	auto err = 1;
@@ -67,6 +70,8 @@ int main(int argc, char **args) {
 			printf("Command '%s' not recognized.\n", cmd);
 			err = 1;
 		}
+	} else {
+		printf("%s\n", usage);
 	}
 	return err;
 }
