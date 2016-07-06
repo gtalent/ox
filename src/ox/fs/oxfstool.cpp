@@ -94,15 +94,19 @@ int read(int argc, char **args) {
 		if (fsBuff) {
 			auto fs = createFileSystem(fsBuff);
 
-			auto output = fs->read(inode, &fileSize);
+			if (fs) {
+				auto output = fs->read(inode, &fileSize);
 
-			if (output) {
-				fwrite(output, fileSize, 1, stdout);
-				err = 0;
+				if (output) {
+					fwrite(output, fileSize, 1, stdout);
+					err = 0;
+				}
+
+				delete fs;
+				free(fsBuff);
+			} else {
+				fprintf(stderr, "Invalid file system type: %d.\n", *(ox::std::uint32_t*) fsBuff);
 			}
-
-			delete fs;
-			delete fsBuff;
 		} else {
 			fprintf(stderr, "Could not open file: %s\n", fsPath);
 		}
@@ -133,13 +137,15 @@ int write(int argc, char **args) {
 				auto fs = createFileSystem(fsBuff);
 				if (fs) {
 					err |= fs->write(inode, srcBuff, srcSize);
+					if (err) {
+						fprintf(stderr, "Could not write to file system.\n");
+					}
 				} else {
-					fprintf(stderr, "Invalid file system.\n");
+					fprintf(stderr, "Invalid file system type: %d.\n", *(ox::std::uint32_t*) fsBuff);
+					err = 1;
 				}
 
-				if (err) {
-					fprintf(stderr, "Could not write to file system.\n");
-				} else {
+				if (!err) {
 					fsFile = fopen(fsPath, "wb");
 
 					if (fsFile) {
@@ -166,6 +172,49 @@ int write(int argc, char **args) {
 	return err;
 }
 
+int remove(int argc, char **args) {
+	auto err = 1;
+	if (argc >= 4) {
+		auto fsPath = args[2];
+		auto inode = ox::std::atoi(args[3]);
+		::size_t fsSize;
+
+		auto fsBuff = loadFileBuff(fsPath, &fsSize);
+		if (fsBuff) {
+			auto fs = createFileSystem(fsBuff);
+
+			if (fs) {
+				err = fs->remove(inode);
+			} else {
+				fprintf(stderr, "Invalid file system.\n");
+			}
+
+			if (err) {
+				fprintf(stderr, "Could not write to file system.\n");
+			} else {
+				auto fsFile = fopen(fsPath, "wb");
+				if (fsFile) {
+					err = fwrite(fsBuff, fsSize, 1, fsFile) != 1;
+					err |= fclose(fsFile);
+					if (err) {
+						fprintf(stderr, "Could not write to file system file.\n");
+					}
+				} else {
+					err = 1;
+				}
+			}
+
+			delete fs;
+			free(fsBuff);
+		} else {
+			fprintf(stderr, "Could not open file: %s\n", fsPath);
+		}
+	} else {
+		fprintf(stderr, "Insufficient arguments\n");
+	}
+	return err;
+}
+
 int main(int argc, char **args) {
 	auto err = 0;
 	if (argc > 1) {
@@ -176,6 +225,8 @@ int main(int argc, char **args) {
 			err = read(argc, args);
 		} else if (::strcmp(cmd, "write") == 0) {
 			err = write(argc, args);
+		} else if (::strcmp(cmd, "rm") == 0) {
+			err = remove(argc, args);
 		} else if (::strcmp(cmd, "help") == 0) {
 			printf("%s\n", usage);
 		} else {

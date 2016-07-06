@@ -34,6 +34,8 @@ class FileSystem {
 
 		virtual ox::std::uint8_t *read(ox::std::uint64_t inode, ox::std::uint64_t *size) = 0;
 
+		virtual int remove(ox::std::uint64_t inode) = 0;
+
 		virtual int write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) = 0;
 
 		virtual FileStat stat(ox::std::uint64_t inode) = 0;
@@ -84,6 +86,8 @@ class FileSystemTemplate: public FileSystem {
 		ox::std::uint8_t *read(ox::std::uint64_t inode, ox::std::uint64_t *size) override;
 
 		int read(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) override;
+
+		int remove(ox::std::uint64_t inode);
 
 		int write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) override;
 
@@ -144,6 +148,11 @@ ox::std::uint8_t *FileSystemTemplate<FileStore>::read(ox::std::uint64_t inode, o
 		buff = nullptr;
 	}
 	return buff;
+}
+
+template<typename FileStore>
+int FileSystemTemplate<FileStore>::remove(ox::std::uint64_t inode) {
+	return store->remove(inode);
 }
 
 template<typename FileStore>
