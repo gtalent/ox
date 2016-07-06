@@ -22,17 +22,17 @@ class FileStore {
 		struct StatInfo {
 			InodeId_t inodeId;
 			FsSize_t  size;
+			ox::std::uint8_t fileType;
 		};
 
 	private:
 		struct Inode {
 			// the next Inode in memory
 			FsSize_t prev, next;
-
-			// The following variables should not be assumed to exist
 			FsSize_t dataLen;
 			InodeId_t m_id;
 			ox::std::uint8_t refs;
+			ox::std::uint8_t fileType;
 			FsSize_t left, right;
 
 			FsSize_t size();
@@ -55,7 +55,7 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-		int write(void *data, FsSize_t dataLen);
+		int write(void *data, FsSize_t dataLen, ox::std::uint8_t fileType = 0);
 
 		/**
 		 * Writes the given data to a "file" with the given id.
@@ -63,7 +63,7 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-		int write(InodeId_t id, void *data, FsSize_t dataLen);
+		int write(InodeId_t id, void *data, FsSize_t dataLen, ox::std::uint8_t fileType = 0);
 
 		/**
 		 * Removes the inode of the given ID.
@@ -212,18 +212,19 @@ void *FileStore<FsSize_t>::Inode::data() {
 // FileStore
 
 template<typename FsSize_t>
-int FileStore<FsSize_t>::write(void *data, FsSize_t dataLen) {
+int FileStore<FsSize_t>::write(void *data, FsSize_t dataLen, ox::std::uint8_t fileType) {
 	return 1;
 }
 
 template<typename FsSize_t>
-int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen) {
+int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen, ox::std::uint8_t fileType) {
 	auto retval = 1;
 	const FsSize_t size = sizeof(Inode) + dataLen;
 	auto inode = (Inode*) alloc(size);
 	if (inode) {
 		remove(id);
 		inode->m_id = id;
+		inode->fileType = fileType;
 		inode->setData(data, dataLen);
 		auto root = ptr<Inode*>(m_rootInode);
 		if (insert(root, inode) || root == inode) {

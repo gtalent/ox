@@ -21,6 +21,11 @@ enum FsType {
 	OxFS_64 = 3
 };
 
+enum FileType {
+	NormalFile = 1,
+	Directory  = 2
+};
+
 struct FileStat {
 	uint64_t inode;
 	uint64_t size;
@@ -36,7 +41,7 @@ class FileSystem {
 
 		virtual int remove(ox::std::uint64_t inode) = 0;
 
-		virtual int write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) = 0;
+		virtual int write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size, ox::std::uint8_t fileType = NormalFile) = 0;
 
 		virtual FileStat stat(ox::std::uint64_t inode) = 0;
 };
@@ -89,7 +94,7 @@ class FileSystemTemplate: public FileSystem {
 
 		int remove(ox::std::uint64_t inode);
 
-		int write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) override;
+		int write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size, ox::std::uint8_t fileType) override;
 
 		FileStat stat(const char *path);
 
@@ -156,8 +161,8 @@ int FileSystemTemplate<FileStore>::remove(ox::std::uint64_t inode) {
 }
 
 template<typename FileStore>
-int FileSystemTemplate<FileStore>::write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) {
-	return store->write(inode, buffer, size);
+int FileSystemTemplate<FileStore>::write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size, ox::std::uint8_t fileType) {
+	return store->write(inode, buffer, size, fileType);
 }
 
 template<typename FileStore>
