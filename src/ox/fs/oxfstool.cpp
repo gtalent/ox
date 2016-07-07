@@ -16,6 +16,7 @@ using namespace ox::fs;
 const char *usage = "usage:\n"
 "\toxfs format [16,32,64] <size> <path>\n"
 "\toxfs read <FS file> <inode>\n"
+"\toxfs rm <FS file> <inode>\n"
 "\toxfs write <FS file> <inode> <insertion file>";
 
 char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
