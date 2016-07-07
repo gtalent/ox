@@ -22,17 +22,17 @@ class FileStore {
 		struct StatInfo {
 			InodeId_t inodeId;
 			FsSize_t  size;
+			ox::std::uint8_t fileType;
 		};
 
 	private:
 		struct Inode {
 			// the next Inode in memory
 			FsSize_t prev, next;
-
-			// The following variables should not be assumed to exist
 			FsSize_t dataLen;
 			InodeId_t m_id;
 			ox::std::uint8_t refs;
+			ox::std::uint8_t fileType;
 			FsSize_t left, right;
 
 			FsSize_t size();
@@ -46,7 +46,6 @@ class FileStore {
 
 		ox::std::uint32_t m_fsType;
 		FsSize_t m_size;
-		FsSize_t m_firstInode;
 		FsSize_t m_rootInode;
 
 	public:
@@ -56,7 +55,7 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-		int write(void *data, FsSize_t dataLen);
+		int write(void *data, FsSize_t dataLen, ox::std::uint8_t fileType = 0);
 
 		/**
 		 * Writes the given data to a "file" with the given id.
@@ -64,7 +63,7 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-		int write(InodeId_t id, void *data, FsSize_t dataLen);
+		int write(InodeId_t id, void *data, FsSize_t dataLen, ox::std::uint8_t fileType = 0);
 
 		/**
 		 * Removes the inode of the given ID.
@@ -105,6 +104,15 @@ class FileStore {
 		Inode *getInode(Inode *root, InodeId_t id);
 
 		/**
+		 * Gets the inode at the given id.
+		 * @param root the root node to start comparing on
+		 * @param id id of the "file"
+		 * @param pathLen number of characters in pathLen
+		 * @return the requested Inode, if available
+		 */
+		Inode *getInodeParent(Inode *root, InodeId_t id);
+
+		/**
 		 * Removes the inode of the given ID.
 		 * @param id the id of the file
 		 */
@@ -117,15 +125,21 @@ class FileStore {
 		void unlink(Inode *node);
 
 		/**
+		 * Gets the address of the next available inode, assuming there is a next
+		 * available inode.
+		 */
+		FsSize_t nextInodeAddr();
+
+		/**
 		 * Gets an address for a new Inode.
 		 * @param size the size of the Inode
 		 */
 		void *alloc(FsSize_t size);
 
 		/**
-		 * Compresses all of the inode into a contiguous space, starting at m_firstInode.
+		 * Compresses all of the inode into a contiguous space, starting at the first inode.
 		 */
-		void compress();
+		void compress(FsSize_t firstInode);
 
 		/**
 		 * Inserts the given insertValue into the tree of the given root.
@@ -140,9 +154,14 @@ class FileStore {
 		 */
 		FsSize_t iterator();
 
-		Inode *firstInode();
+		FsSize_t firstInode();
 
 		Inode *lastInode();
+
+		/**
+		 * Updates the address of the inode in the tree.
+		 */
+		void updateInodeAddress(InodeId_t id, FsSize_t addr);
 
 		ox::std::uint8_t *begin() {
 			return (ox::std::uint8_t*) this;
@@ -193,19 +212,21 @@ void *FileStore<FsSize_t>::Inode::data() {
 // FileStore
 
 template<typename FsSize_t>
-int FileStore<FsSize_t>::write(void *data, FsSize_t dataLen) {
+int FileStore<FsSize_t>::write(void *data, FsSize_t dataLen, ox::std::uint8_t fileType) {
 	return 1;
 }
 
 template<typename FsSize_t>
-int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen) {
+int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen, ox::std::uint8_t fileType) {
 	auto retval = 1;
 	const FsSize_t size = sizeof(Inode) + dataLen;
 	auto inode = (Inode*) alloc(size);
 	if (inode) {
-		auto root = ptr<Inode*>(m_rootInode);
+		remove(id);
 		inode->m_id = id;
+		inode->fileType = fileType;
 		inode->setData(data, dataLen);
+		auto root = ptr<Inode*>(m_rootInode);
 		if (insert(root, inode) || root == inode) {
 			retval = 0;
 		}
@@ -228,7 +249,7 @@ int FileStore<FsSize_t>::remove(Inode *root, InodeId_t id) {
 			if (node->m_id != id) {
 				err = remove(node, id);
 			} else {
-				root->left = node->left;
+				root->left = 0;
 				if (node->right) {
 					insert(root, ptr<Inode*>(node->right));
 				}
@@ -236,6 +257,9 @@ int FileStore<FsSize_t>::remove(Inode *root, InodeId_t id) {
 					insert(root, ptr<Inode*>(node->left));
 				}
 				unlink(node);
+				node->m_id = 0;
+				node->left = 0;
+				node->right = 0;
 				err = 0;
 			}
 		}
@@ -245,7 +269,7 @@ int FileStore<FsSize_t>::remove(Inode *root, InodeId_t id) {
 			if (node->m_id != id) {
 				err = remove(node, id);
 			} else {
-				root->right = node->right;
+				root->right = 0;
 				if (node->right) {
 					insert(root, ptr<Inode*>(node->right));
 				}
@@ -253,15 +277,21 @@ int FileStore<FsSize_t>::remove(Inode *root, InodeId_t id) {
 					insert(root, ptr<Inode*>(node->left));
 				}
 				unlink(node);
+				node->m_id = 0;
+				node->left = 0;
+				node->right = 0;
 				err = 0;
 			}
 		}
-	} else {
+	} else if (ptr<Inode*>(m_rootInode)->m_id == id) {
 		m_rootInode = root->right;
 		if (root->left) {
 			insert(ptr<Inode*>(m_rootInode), ptr<Inode*>(root->left));
 		}
 		unlink(root);
+		root->m_id = 0;
+		root->left = 0;
+		root->right = 0;
 		err = 0;
 	}
 
@@ -269,11 +299,27 @@ int FileStore<FsSize_t>::remove(Inode *root, InodeId_t id) {
 }
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::unlink(Inode *node) {
-	auto next = ptr<Inode*>(node->next);
-	auto prev = ptr<Inode*>(node->prev);
+void FileStore<FsSize_t>::unlink(Inode *inode) {
+	auto next = ptr<Inode*>(inode->next);
+	auto prev = ptr<Inode*>(inode->prev);
 	prev->next = ptr(next);
 	next->prev = ptr(prev);
+
+	ox::std::memset(inode, 0, inode->size());
+	inode->prev = firstInode();
+	inode->next = firstInode();
+}
+
+template<typename FsSize_t>
+void FileStore<FsSize_t>::updateInodeAddress(InodeId_t id, FsSize_t addr) {
+	auto parent = getInodeParent(ptr<Inode*>(m_rootInode), id);
+	if (parent) {
+		if (parent->left && ptr<Inode*>(parent->left)->m_id == id) {
+			parent->left = addr;
+		} else if (parent->right && ptr<Inode*>(parent->right)->m_id == id) {
+			parent->right = addr;
+		}
+	}
 }
 
 template<typename FsSize_t>
@@ -296,6 +342,7 @@ typename FileStore<FsSize_t>::StatInfo FileStore<FsSize_t>::stat(InodeId_t id) {
 	StatInfo stat;
 	if (inode) {
 		stat.size = inode->dataLen;
+		stat.fileType = inode->fileType;
 		stat.inodeId = id;
 	} else {
 		stat.inodeId = 0;
@@ -323,35 +370,78 @@ typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getInode(Inode *root, 
 }
 
 template<typename FsSize_t>
+typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getInodeParent(Inode *root, InodeId_t id) {
+	Inode *retval = nullptr;
+
+	if (root->m_id > id) {
+		if (root->left) {
+			if (ptr<Inode*>(root->left)->m_id == id) {
+				retval = root;
+			} else {
+				retval = getInode(ptr<Inode*>(root->left), id);
+			}
+		}
+	} else if (root->m_id < id) {
+		if (root->right) {
+			if (ptr<Inode*>(root->right)->m_id == id) {
+				retval = root;
+			} else {
+				retval = getInode(ptr<Inode*>(root->right), id);
+			}
+		}
+	}
+
+	return retval;
+}
+
+template<typename FsSize_t>
+FsSize_t FileStore<FsSize_t>::nextInodeAddr() {
+	FsSize_t next = ptr(lastInode()) + lastInode()->size();
+	return next;
+}
+
+template<typename FsSize_t>
 void *FileStore<FsSize_t>::alloc(FsSize_t size) {
-	if ((lastInode()->next + size) > (ox::std::uint64_t) end()) {
-		compress();
-		if ((lastInode()->next + size) > (ox::std::uint64_t) end()) {
+	FsSize_t next = nextInodeAddr();
+	if ((next + size) > (ox::std::uint64_t) end()) {
+		compress(firstInode());
+		next = nextInodeAddr();
+		if ((next + size) > (ox::std::uint64_t) end()) {
 			return nullptr;
 		}
 	}
 
-	const auto retval = lastInode()->next;
+	const auto retval = next;
 	const auto inode = ptr<Inode*>(retval);
 	ox::std::memset(inode, 0, size);
+	inode->prev = ptr<Inode*>(firstInode())->prev;
 	inode->next = retval + size;
-	ptr<Inode*>(m_firstInode)->prev = retval;
+	ptr<Inode*>(firstInode())->prev = retval;
 	return inode;
 }
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::compress() {
-	auto current = ptr<Inode*>(m_firstInode);
-	while (current->next) {
-		auto prevEnd = current + current->size();
-		auto prev = ptr(current);
-		current->next = ptr(current) + current->size();
-		current = ptr<Inode*>(current->next);
-		current->prev = prev;
-		if (prevEnd != current) {
-			ox::std::memcpy(prevEnd, current, current->size());
-			current = prevEnd;
+void FileStore<FsSize_t>::compress(FsSize_t start) {
+	auto dest = ptr<Inode*>(firstInode());
+	auto current = ptr<Inode*>(start);
+	while (current->next > ptr(begin()) && current->next < ptr(end())) {
+		ox::std::memcpy(dest, current, current->size());
+		if (dest->next != firstInode()) {
+			dest->next = ptr(dest) + dest->size();
 		}
+		ptr<Inode*>(dest->next)->prev = ptr(dest);
+		current = ptr<Inode*>(dest->next);
+		dest = ptr<Inode*>(ptr(dest) + dest->size());
+		updateInodeAddress(dest->m_id, ptr(dest));
+		//auto prevEnd = current + current->size();
+		//auto prev = ptr(current);
+		//current->next = ptr(current) + current->size();
+		//current = ptr<Inode*>(current->next);
+		//current->prev = prev;
+		//if (prevEnd != current) {
+		//	ox::std::memcpy(prevEnd, current, current->size());
+		//	current = prevEnd;
+		//}
 	}
 }
 
@@ -373,6 +463,9 @@ bool FileStore<FsSize_t>::insert(Inode *root, Inode *insertValue) {
 			root->right = ptr(insertValue);
 			retval = true;
 		}
+	} else if (m_rootInode == 0) {
+		m_rootInode = ptr(insertValue);
+		retval = true;
 	}
 
 	return retval;
@@ -389,13 +482,13 @@ FsSize_t FileStore<FsSize_t>::ptr(void *ptr) {
 }
 
 template<typename FsSize_t>
-typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::firstInode() {
-	return ptr<Inode*>(sizeof(FileStore<FsSize_t>));
+FsSize_t FileStore<FsSize_t>::firstInode() {
+	return sizeof(FileStore<FsSize_t>);
 }
 
 template<typename FsSize_t>
 typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::lastInode() {
-	return ptr<Inode*>(ptr<Inode*>(m_firstInode)->prev);
+	return ptr<Inode*>(ptr<Inode*>(firstInode())->prev);
 }
 
 template<typename FsSize_t>
@@ -411,8 +504,7 @@ ox::std::uint8_t *FileStore<FsSize_t>::format(ox::std::uint8_t *buffer, FsSize_t
 	fs->m_fsType = fsType;
 	fs->m_size = size;
 	fs->m_rootInode = sizeof(FileStore<FsSize_t>);
-	fs->m_firstInode = sizeof(FileStore<FsSize_t>);
-	fs->firstInode()->prev = fs->m_firstInode;
+	((Inode*) (fs + 1))->prev = fs->firstInode();
 	fs->lastInode()->next = sizeof(FileStore<FsSize_t>);
 
 	return (ox::std::uint8_t*) buffer;
