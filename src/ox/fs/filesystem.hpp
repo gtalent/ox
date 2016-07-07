@@ -92,7 +92,7 @@ class FileSystemTemplate: public FileSystem {
 
 		int read(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) override;
 
-		int remove(ox::std::uint64_t inode);
+		int remove(ox::std::uint64_t inode) override;
 
 		int write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size, ox::std::uint8_t fileType) override;
 
