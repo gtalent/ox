@@ -29,5 +29,12 @@ FileSystem *createFileSystem(void *buff) {
 	return fs;
 }
 
+template<>
+FsType FileSystemTemplate<FileStore16>::FS_TYPE = OxFS_16;
+template<>
+FsType FileSystemTemplate<FileStore32>::FS_TYPE = OxFS_32;
+template<>
+FsType FileSystemTemplate<FileStore64>::FS_TYPE = OxFS_64;
+
 }
 }

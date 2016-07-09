@@ -27,8 +27,9 @@ enum FileType {
 };
 
 struct FileStat {
-	uint64_t inode;
-	uint64_t size;
+	ox::std::uint64_t inode;
+	ox::std::uint64_t size;
+	ox::std::uint8_t  fileType;
 };
 
 class FileSystem {
@@ -45,6 +46,8 @@ class FileSystem {
 
 		virtual FileStat stat(ox::std::uint64_t inode) = 0;
 };
+
+FileSystem *createFileSystem(void *buff);
 
 template<typename FileStore>
 class FileSystemTemplate: public FileSystem {
@@ -78,6 +81,8 @@ class FileSystemTemplate: public FileSystem {
 
 		// static members
 		static typename FileStore::InodeId_t INODE_ROOT_DIR;
+
+		static FsType FS_TYPE;
 
 		FileStore *store = nullptr;
 
@@ -128,6 +133,7 @@ FileStat FileSystemTemplate<FileStore>::stat(ox::std::uint64_t inode) {
 	auto s = store->stat(inode);
 	stat.size = s.size;
 	stat.inode = s.inodeId;
+	stat.fileType = s.fileType;
 	return stat;
 }
 
@@ -167,12 +173,14 @@ int FileSystemTemplate<FileStore>::write(ox::std::uint64_t inode, void *buffer, 
 
 template<typename FileStore>
 ox::std::uint8_t *FileSystemTemplate<FileStore>::format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories) {
-	buffer = FileStore::format((ox::std::uint8_t*) buffer, size);
+	buffer = FileStore::format((ox::std::uint8_t*) buffer, size, FS_TYPE);
+	auto fs = createFileSystem(buffer);
 
 	if (buffer && useDirectories) {
 		char dirBuff[sizeof(Directory) + sizeof(DirectoryEntry) + 2];
 		auto *dir = (Directory*) dirBuff;
 		dir->files();
+		fs->write(INODE_ROOT_DIR, dirBuff, useDirectories);
 	}
 
 	return (ox::std::uint8_t*) buffer;
@@ -181,8 +189,6 @@ ox::std::uint8_t *FileSystemTemplate<FileStore>::format(void *buffer, typename F
 typedef FileSystemTemplate<FileStore16> FileSystem16;
 typedef FileSystemTemplate<FileStore32> FileSystem32;
 typedef FileSystemTemplate<FileStore64> FileSystem64;
-
-FileSystem *createFileSystem(void *buff);
 
 }
 }
