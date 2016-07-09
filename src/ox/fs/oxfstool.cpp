@@ -73,7 +73,7 @@ int format(int argc, char **args) {
 		auto size = bytes(args[3]);
 		auto path = args[4];
 		auto buff = (ox::std::uint8_t*) malloc(size);
-		
+
 		printf("Size: %llu bytes\n", size);
 		printf("Type: %d\n", type);
 
