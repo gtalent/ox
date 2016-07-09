@@ -69,7 +69,7 @@ ox::std::uint64_t bytes(const char *str) {
 
 int format(int argc, char **args) {
 	printf("Creating file system...\n");
-	auto err = 1;
+	auto err = 0;
 	if (argc >= 5) {
 		auto type = ox::std::atoi(args[2]);
 		auto size = bytes(args[3]);
@@ -81,9 +81,10 @@ int format(int argc, char **args) {
 
 		if (size < sizeof(FileStore64)) {
 			err = 1;
+			fprintf(stderr, "File system size %llu too small, must be at least %lu\n", size, sizeof(FileStore64));
 		}
 
-		if (err) {
+		if (!err) {
 			// format
 			switch (type) {
 				case 16:
@@ -99,16 +100,16 @@ int format(int argc, char **args) {
 					err = 1;
 			}
 
-			if (err) {
+			if (!err) {
 				auto file = fopen(path, "wb");
 				if (file) {
-					err = fwrite(buff, size, 1, file);
+					err = fwrite(buff, size, 1, file) != 1;
 					err |= fclose(file);
 					if (err) {
-						printf("Could not write to file: %s.\n", path);
+						fprintf(stderr, "Could not write to file: %s.\n", path);
 					}
 				} else {
-					printf("Could not open file: %s.\n", path);
+					fprintf(stderr, "Could not open file: %s.\n", path);
 				}
 			}
 		}
@@ -116,7 +117,7 @@ int format(int argc, char **args) {
 		free(buff);
 
 		if (err == 0) {
-			printf("Created file system %s\n", path);
+			fprintf(stderr, "Created file system %s\n", path);
 		}
 	}
 
