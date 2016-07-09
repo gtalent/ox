@@ -9,6 +9,7 @@ add_executable(
 	oxfstool
 		oxfstool.cpp
 )
+set_target_properties(oxfstool PROPERTIES OUTPUT_NAME oxfs)
 target_link_libraries(oxfstool OxFS OxStd)
 
 install(
@@ -18,6 +19,10 @@ install(
 		inodemgr.hpp
 	DESTINATION
 		include/ox/fs
+)
+
+install(TARGETS oxfstool
+        RUNTIME DESTINATION bin
 )
 
 add_subdirectory(test)
