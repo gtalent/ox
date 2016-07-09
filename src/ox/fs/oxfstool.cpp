@@ -79,30 +79,41 @@ int format(int argc, char **args) {
 		printf("Size: %llu bytes\n", size);
 		printf("Type: %d\n", type);
 
-		// format
-		switch (type) {
-			case 16:
-				FileStore16::format(buff, size, ox::fs::OxFS_16);
-				break;
-			case 32:
-				FileStore32::format(buff, size, ox::fs::OxFS_32);
-				break;
-			case 64:
-				FileStore64::format(buff, size, ox::fs::OxFS_64);
-				break;
+		if (size < sizeof(FileStore64)) {
+			err = 1;
 		}
-		createFileSystem(buff);
 
-		auto file = fopen(path, "wb");
-		if (file) {
-			fwrite(buff, size, 1, file);
-			err = fclose(file);
-			if (err) {
-				printf("Could not write to file: %s.\n", path);
+		if (err) {
+			// format
+			switch (type) {
+				case 16:
+					FileStore16::format(buff, size, ox::fs::OxFS_16);
+					break;
+				case 32:
+					FileStore32::format(buff, size, ox::fs::OxFS_32);
+					break;
+				case 64:
+					FileStore64::format(buff, size, ox::fs::OxFS_64);
+					break;
+				default:
+					err = 1;
 			}
-		} else {
-			printf("Could not open file: %s.\n", path);
+
+			if (err) {
+				auto file = fopen(path, "wb");
+				if (file) {
+					err = fwrite(buff, size, 1, file);
+					err |= fclose(file);
+					if (err) {
+						printf("Could not write to file: %s.\n", path);
+					}
+				} else {
+					printf("Could not open file: %s.\n", path);
+				}
+			}
 		}
+
+		free(buff);
 
 		if (err == 0) {
 			printf("Created file system %s\n", path);
