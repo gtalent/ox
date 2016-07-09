@@ -13,6 +13,7 @@
 
 using namespace ox::fs;
 
+const static auto oxfstoolVersion = "1.0.0";
 const char *usage = "usage:\n"
 "\toxfs format [16,32,64] <size> <path>\n"
 "\toxfs read <FS file> <inode>\n"
@@ -258,6 +259,9 @@ int main(int argc, char **args) {
 			err = remove(argc, args);
 		} else if (::strcmp(cmd, "help") == 0) {
 			printf("%s\n", usage);
+		} else if (::strcmp(cmd, "version") == 0) {
+			printf("oxfstool version %s\n", oxfstoolVersion);
+			printf("oxfs format version %d\n", FileStore16::version());
 		} else {
 			printf("Command '%s' not recognized.\n", cmd);
 			err = 1;
