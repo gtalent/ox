@@ -37,16 +37,44 @@ char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
 	}
 }
 
+ox::std::uint64_t bytes(const char *str) {
+	const auto size = ::strlen(str);
+	const auto lastChar = str[size-1];
+	auto multiplier = 1;
+	char copy[size];
+	memcpy(copy, str, size);
+	if (lastChar < '0' || lastChar > '9') {
+		copy[size-1] = 0;
+		switch (lastChar) {
+			case 'k':
+			case 'K':
+				multiplier = 1024;
+				break;
+			case 'm':
+			case 'M':
+				multiplier = 1024 * 1024;
+				break;
+			case 'g':
+			case 'G':
+				multiplier = 1024 * 1024 * 1024;
+				break;
+			default:
+				multiplier = -1;
+		}
+	}
+	return ((ox::std::uint64_t) ::atoi(copy)) * multiplier;
+}
+
 int format(int argc, char **args) {
 	printf("Creating file system...\n");
 	auto err = 1;
 	if (argc >= 5) {
 		auto type = ox::std::atoi(args[2]);
-		auto size = ox::std::atoi(args[3]);
+		auto size = bytes(args[3]);
 		auto path = args[4];
 		auto buff = (ox::std::uint8_t*) malloc(size);
 		
-		printf("Size: %d bytes\n", size);
+		printf("Size: %llu bytes\n", size);
 		printf("Type: %d\n", type);
 
 		// format
