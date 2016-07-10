@@ -30,7 +30,7 @@ class FileStore {
 			// the next Inode in memory
 			FsSize_t prev, next;
 			FsSize_t dataLen;
-			InodeId_t m_id;
+			InodeId_t id;
 			ox::std::uint8_t refs;
 			ox::std::uint8_t fileType;
 			FsSize_t left, right;
@@ -88,6 +88,12 @@ class FileStore {
 		 * @return the stat information of the inode of the given inode id
 		 */
 		StatInfo stat(InodeId_t id);
+
+		/**
+		 * Returns the size of the file store.
+		 * @return the size of the file store.
+		 */
+		FsSize_t size();
 
 		static ox::std::uint8_t version();
 
@@ -193,7 +199,7 @@ FsSize_t FileStore<FsSize_t>::Inode::size() {
 
 template<typename FsSize_t>
 void FileStore<FsSize_t>::Inode::setId(InodeId_t id) {
-	this->m_id = id;
+	this->id = id;
 }
 
 template<typename FsSize_t>
@@ -223,7 +229,7 @@ int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen, ox::s
 	auto inode = (Inode*) alloc(size);
 	if (inode) {
 		remove(id);
-		inode->m_id = id;
+		inode->id = id;
 		inode->fileType = fileType;
 		inode->setData(data, dataLen);
 		auto root = ptr<Inode*>(m_rootInode);
@@ -243,10 +249,10 @@ template<typename FsSize_t>
 int FileStore<FsSize_t>::remove(Inode *root, InodeId_t id) {
 	auto err = 1;
 
-	if (root->m_id > id) {
+	if (root->id > id) {
 		if (root->left) {
 			auto node = ptr<Inode*>(root->left);
-			if (node->m_id != id) {
+			if (node->id != id) {
 				err = remove(node, id);
 			} else {
 				root->left = 0;
@@ -257,16 +263,16 @@ int FileStore<FsSize_t>::remove(Inode *root, InodeId_t id) {
 					insert(root, ptr<Inode*>(node->left));
 				}
 				unlink(node);
-				node->m_id = 0;
+				node->id = 0;
 				node->left = 0;
 				node->right = 0;
 				err = 0;
 			}
 		}
-	} else if (root->m_id < id) {
+	} else if (root->id < id) {
 		if (root->right) {
 			auto node = ptr<Inode*>(root->right);
-			if (node->m_id != id) {
+			if (node->id != id) {
 				err = remove(node, id);
 			} else {
 				root->right = 0;
@@ -277,19 +283,19 @@ int FileStore<FsSize_t>::remove(Inode *root, InodeId_t id) {
 					insert(root, ptr<Inode*>(node->left));
 				}
 				unlink(node);
-				node->m_id = 0;
+				node->id = 0;
 				node->left = 0;
 				node->right = 0;
 				err = 0;
 			}
 		}
-	} else if (ptr<Inode*>(m_rootInode)->m_id == id) {
+	} else if (ptr<Inode*>(m_rootInode)->id == id) {
 		m_rootInode = root->right;
 		if (root->left) {
 			insert(ptr<Inode*>(m_rootInode), ptr<Inode*>(root->left));
 		}
 		unlink(root);
-		root->m_id = 0;
+		root->id = 0;
 		root->left = 0;
 		root->right = 0;
 		err = 0;
@@ -314,9 +320,9 @@ template<typename FsSize_t>
 void FileStore<FsSize_t>::updateInodeAddress(InodeId_t id, FsSize_t addr) {
 	auto parent = getInodeParent(ptr<Inode*>(m_rootInode), id);
 	if (parent) {
-		if (parent->left && ptr<Inode*>(parent->left)->m_id == id) {
+		if (parent->left && ptr<Inode*>(parent->left)->id == id) {
 			parent->left = addr;
-		} else if (parent->right && ptr<Inode*>(parent->right)->m_id == id) {
+		} else if (parent->right && ptr<Inode*>(parent->right)->id == id) {
 			parent->right = addr;
 		}
 	}
@@ -351,18 +357,23 @@ typename FileStore<FsSize_t>::StatInfo FileStore<FsSize_t>::stat(InodeId_t id) {
 }
 
 template<typename FsSize_t>
+FsSize_t FileStore<FsSize_t>::size() {
+	return m_size;
+}
+
+template<typename FsSize_t>
 typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getInode(Inode *root, InodeId_t id) {
 	Inode *retval = nullptr;
 
-	if (root->m_id > id) {
+	if (root->id > id) {
 		if (root->left) {
 			retval = getInode(ptr<Inode*>(root->left), id);
 		}
-	} else if (root->m_id < id) {
+	} else if (root->id < id) {
 		if (root->right) {
 			retval = getInode(ptr<Inode*>(root->right), id);
 		}
-	} else if (root->m_id == id) {
+	} else if (root->id == id) {
 		retval = root;
 	}
 
@@ -373,17 +384,17 @@ template<typename FsSize_t>
 typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getInodeParent(Inode *root, InodeId_t id) {
 	Inode *retval = nullptr;
 
-	if (root->m_id > id) {
+	if (root->id > id) {
 		if (root->left) {
-			if (ptr<Inode*>(root->left)->m_id == id) {
+			if (ptr<Inode*>(root->left)->id == id) {
 				retval = root;
 			} else {
 				retval = getInode(ptr<Inode*>(root->left), id);
 			}
 		}
-	} else if (root->m_id < id) {
+	} else if (root->id < id) {
 		if (root->right) {
-			if (ptr<Inode*>(root->right)->m_id == id) {
+			if (ptr<Inode*>(root->right)->id == id) {
 				retval = root;
 			} else {
 				retval = getInode(ptr<Inode*>(root->right), id);
@@ -432,16 +443,7 @@ void FileStore<FsSize_t>::compress(FsSize_t start) {
 		ptr<Inode*>(dest->next)->prev = ptr(dest);
 		current = ptr<Inode*>(dest->next);
 		dest = ptr<Inode*>(ptr(dest) + dest->size());
-		updateInodeAddress(dest->m_id, ptr(dest));
-		//auto prevEnd = current + current->size();
-		//auto prev = ptr(current);
-		//current->next = ptr(current) + current->size();
-		//current = ptr<Inode*>(current->next);
-		//current->prev = prev;
-		//if (prevEnd != current) {
-		//	ox::std::memcpy(prevEnd, current, current->size());
-		//	current = prevEnd;
-		//}
+		updateInodeAddress(dest->id, ptr(dest));
 	}
 }
 
@@ -449,14 +451,14 @@ template<typename FsSize_t>
 bool FileStore<FsSize_t>::insert(Inode *root, Inode *insertValue) {
 	auto retval = false;
 
-	if (root->m_id > insertValue->m_id) {
+	if (root->id > insertValue->id) {
 		if (root->left) {
 			retval = insert(ptr<Inode*>(root->left), insertValue);
 		} else {
 			root->left = ptr(insertValue);
 			retval = true;
 		}
-	} else if (root->m_id < insertValue->m_id) {
+	} else if (root->id < insertValue->id) {
 		if (root->right) {
 			retval = insert(ptr<Inode*>(root->right), insertValue);
 		} else {
