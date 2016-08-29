@@ -5,8 +5,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-namespace ox {
-namespace std {
+
+#include "strops.hpp"
 
 int strcmp(const char *str1, const char *str2) {
 	auto retval = 0;
@@ -24,7 +24,7 @@ int strcmp(const char *str1, const char *str2) {
 	return retval;
 }
 
-int strlen(const char *str1) {
+size_t strlen(const char *str1) {
 	int len;
 	for (len = 0; str1[len]; len++);
 	return len;
@@ -40,7 +40,4 @@ int atoi(const char *str) {
 	}
 
 	return total;
-}
-
-}
 }

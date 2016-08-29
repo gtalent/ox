@@ -22,13 +22,13 @@ typedef unsigned long long uint64_t;
 
 typedef uint32_t Error;
 
+}
+}
+
 #if defined(_LP64) || defined(__ppc64__) || defined(_WIN64) || defined(__aarch64__)
-typedef uint64_t size_t;
+typedef unsigned long size_t;
 #elif defined(_LP32) || defined(__ppc__) || defined(_WIN32) || defined(__arm__)
-typedef uint32_t size_t;
+typedef ox::std::uint32_t size_t;
 #else
 #error size_t undefined
 #endif
-
-}
-}
