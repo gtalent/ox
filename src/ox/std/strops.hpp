@@ -7,14 +7,10 @@
  */
 #pragma once
 
-namespace ox {
-namespace std {
+#include "types.hpp"
 
 int strcmp(const char *str1, const char *str2);
 
-int strlen(const char *str1);
+size_t strlen(const char *str1);
 
 int atoi(const char *str);
-
-}
-}

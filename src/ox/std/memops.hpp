@@ -7,12 +7,8 @@
  */
 #pragma once
 
-namespace ox {
-namespace std {
+#include "types.hpp"
 
-void memcpy(void *src, void *dest, int size);
+void *memcpy(void *src, void *dest, size_t size);
 
-void memset(void *ptr, char val, int size);
-
-}
-}
+void *memset(void *ptr, int val, size_t size);
