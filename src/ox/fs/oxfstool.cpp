@@ -40,10 +40,10 @@ char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
 }
 
 ox::std::uint64_t bytes(const char *str) {
-	const auto size = ::strlen(str);
+	auto size = ::strlen(str);
 	const auto lastChar = str[size-1];
 	auto multiplier = 1;
-	char copy[size];
+	auto copy = new char[size];
 	memcpy(copy, str, size);
 	if (lastChar < '0' || lastChar > '9') {
 		copy[size-1] = 0;
@@ -64,7 +64,9 @@ ox::std::uint64_t bytes(const char *str) {
 				multiplier = -1;
 		}
 	}
-	return ((ox::std::uint64_t) ::atoi(copy)) * multiplier;
+	const auto retval = ((ox::std::uint64_t) ::atoi(copy)) * multiplier;
+	delete copy;
+	return  retval;
 }
 
 int format(int argc, char **args) {
@@ -81,17 +83,17 @@ int format(int argc, char **args) {
 
 		if (size < sizeof(FileStore64)) {
 			err = 1;
-			fprintf(stderr, "File system size %llu too small, must be at least %lu\n", size, sizeof(FileStore64));
+			fprintf(stderr, "File system size %llu too small, must be at least %llu\n", (ox::std::uint64_t) size, (ox::std::uint64_t) sizeof(FileStore64));
 		}
 
 		if (!err) {
 			// format
 			switch (type) {
 				case 16:
-					FileStore16::format(buff, size, ox::fs::OxFS_16);
+					FileStore16::format(buff, (FileStore16::FsSize_t) size, ox::fs::OxFS_16);
 					break;
 				case 32:
-					FileStore32::format(buff, size, ox::fs::OxFS_32);
+					FileStore32::format(buff, (FileStore32::FsSize_t) size, ox::fs::OxFS_32);
 					break;
 				case 64:
 					FileStore64::format(buff, size, ox::fs::OxFS_64);

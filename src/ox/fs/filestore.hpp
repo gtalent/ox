@@ -37,7 +37,7 @@ class FileStore {
 
 			FsSize_t size();
 			void setId(InodeId_t);
-			void setData(void *data, int size);
+                        void setData(void *data, FsSize_t size);
 			void *data();
 
 			private:
@@ -203,7 +203,7 @@ void FileStore<FsSize_t>::Inode::setId(InodeId_t id) {
 }
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::Inode::setData(void *data, int size) {
+void FileStore<FsSize_t>::Inode::setData(void *data, FsSize_t size) {
 	ox::std::memcpy(this->data(), data, size);
 	dataLen = size;
 }
