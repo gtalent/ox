@@ -478,6 +478,7 @@ FsSize_t FileStore<FsSize_t>::iterator() {
 	return ptr(lastInode()) + lastInode()->size();
 }
 
+#pragma warning(disable:4244)
 template<typename FsSize_t>
 FsSize_t FileStore<FsSize_t>::ptr(void *ptr) {
 	return ((ox::std::uint8_t*) ptr) - begin();
