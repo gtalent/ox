@@ -127,56 +127,83 @@ FileStat FileSystemTemplate<FileStore>::stat(const char *path) {
 	return stat;
 }
 
+#ifdef _MSC_VER
 #pragma warning(disable:4244)
+#endif
 template<typename FileStore>
 FileStat FileSystemTemplate<FileStore>::stat(ox::std::uint64_t inode) {
 	FileStat stat;
-	auto s = store->stat((FileStore::FsSize_t) inode);
+	auto s = store->stat(inode);
 	stat.size = s.size;
 	stat.inode = s.inodeId;
 	stat.fileType = s.fileType;
 	return stat;
 }
+#ifdef _MSC_VER
+#pragma warning(default:4244)
+#endif
 
+#ifdef _MSC_VER
 #pragma warning(disable:4244)
+#endif
 template<typename FileStore>
 int FileSystemTemplate<FileStore>::read(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) {
 	auto err = 1;
-	auto s = store->stat((FileStore::FsSize_t) inode);
+	auto s = store->stat(inode);
 	if (size == s.size) {
-		err = store->read((FileStore::FsSize_t) inode, buffer, nullptr);
+		err = store->read(inode, buffer, nullptr);
 	}
 	return err;
 }
+#ifdef _MSC_VER
+#pragma warning(default:4244)
+#endif
 
+#ifdef _MSC_VER
 #pragma warning(disable:4244)
+#endif
 template<typename FileStore>
 ox::std::uint8_t *FileSystemTemplate<FileStore>::read(ox::std::uint64_t inode, ox::std::uint64_t *size) {
-	auto s = store->stat((FileStore::FsSize_t) inode);
+	auto s = store->stat(inode);
 	auto buff = new ox::std::uint8_t[s.size];
 	if (size) {
 		*size = s.size;
 	}
-	if (store->read((FileStore::FsSize_t) inode, buff, nullptr)) {
+	if (store->read(inode, buff, nullptr)) {
 		delete []buff;
 		buff = nullptr;
 	}
 	return buff;
 }
+#ifdef _MSC_VER
+#pragma warning(default:4244)
+#endif
 
+#ifdef _MSC_VER
 #pragma warning(disable:4244)
+#endif
 template<typename FileStore>
 int FileSystemTemplate<FileStore>::remove(ox::std::uint64_t inode) {
-	return store->remove((FileStore::FsSize_t) inode);
+	return store->remove(inode);
 }
+#ifdef _MSC_VER
+#pragma warning(default:4244)
+#endif
 
+#ifdef _MSC_VER
 #pragma warning(disable:4244)
+#endif
 template<typename FileStore>
 int FileSystemTemplate<FileStore>::write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size, ox::std::uint8_t fileType) {
-	return store->write((FileStore::FsSize_t) inode, buffer, (FileStore::FsSize_t) size, fileType);
+	return store->write(inode, buffer, size, fileType);
 }
+#ifdef _MSC_VER
+#pragma warning(default:4244)
+#endif
 
+#ifdef _MSC_VER
 #pragma warning(disable:4244)
+#endif
 template<typename FileStore>
 ox::std::uint8_t *FileSystemTemplate<FileStore>::format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories) {
 	buffer = FileStore::format((ox::std::uint8_t*) buffer, size, FS_TYPE);
@@ -191,6 +218,9 @@ ox::std::uint8_t *FileSystemTemplate<FileStore>::format(void *buffer, typename F
 
 	return (ox::std::uint8_t*) buffer;
 }
+#ifdef _MSC_VER
+#pragma warning(default:4244)
+#endif
 
 typedef FileSystemTemplate<FileStore16> FileSystem16;
 typedef FileSystemTemplate<FileStore32> FileSystem32;
