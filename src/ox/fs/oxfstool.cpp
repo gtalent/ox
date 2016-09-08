@@ -40,11 +40,11 @@ char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
 }
 
 ox::std::uint64_t bytes(const char *str) {
-	auto size = ::strlen(str);
+	auto size = ::ox_strlen(str);
 	const auto lastChar = str[size-1];
 	auto multiplier = 1;
 	auto copy = new char[size];
-	memcpy(copy, str, size);
+	ox_memcpy(copy, str, size);
 	if (lastChar < '0' || lastChar > '9') {
 		copy[size-1] = 0;
 		switch (lastChar) {
@@ -64,7 +64,7 @@ ox::std::uint64_t bytes(const char *str) {
 				multiplier = -1;
 		}
 	}
-	const auto retval = ((ox::std::uint64_t) ::atoi(copy)) * multiplier;
+	const auto retval = ((ox::std::uint64_t) ::ox_atoi(copy)) * multiplier;
 	delete copy;
 	return  retval;
 }
@@ -73,7 +73,7 @@ int format(int argc, char **args) {
 	printf("Creating file system...\n");
 	auto err = 0;
 	if (argc >= 5) {
-		auto type = atoi(args[2]);
+		auto type = ox_atoi(args[2]);
 		auto size = bytes(args[3]);
 		auto path = args[4];
 		auto buff = (ox::std::uint8_t*) malloc(size);
@@ -130,7 +130,7 @@ int read(int argc, char **args) {
 	auto err = 1;
 	if (argc >= 4) {
 		auto fsPath = args[2];
-		auto inode = atoi(args[3]);
+		auto inode = ox_atoi(args[3]);
 		::size_t fsSize;
 		ox::std::uint64_t fileSize;
 
@@ -163,7 +163,7 @@ int write(int argc, char **args) {
 	auto err = 0;
 	if (argc >= 5) {
 		auto fsPath = args[2];
-		auto inode = atoi(args[3]);
+		auto inode = ox_atoi(args[3]);
 		auto srcPath = args[4];
 		::size_t srcSize;
 
@@ -221,7 +221,7 @@ int remove(int argc, char **args) {
 	auto err = 1;
 	if (argc >= 4) {
 		auto fsPath = args[2];
-		auto inode = atoi(args[3]);
+		auto inode = ox_atoi(args[3]);
 		::size_t fsSize;
 
 		auto fsBuff = loadFileBuff(fsPath, &fsSize);
@@ -264,17 +264,17 @@ int main(int argc, char **args) {
 	auto err = 0;
 	if (argc > 1) {
 		auto cmd = args[1];
-		if (strcmp(cmd, "format") == 0) {
+		if (ox_strcmp(cmd, "format") == 0) {
 			err = format(argc, args);
-		} else if (strcmp(cmd, "read") == 0) {
+		} else if (ox_strcmp(cmd, "read") == 0) {
 			err = read(argc, args);
-		} else if (strcmp(cmd, "write") == 0) {
+		} else if (ox_strcmp(cmd, "write") == 0) {
 			err = write(argc, args);
-		} else if (strcmp(cmd, "rm") == 0) {
+		} else if (ox_strcmp(cmd, "rm") == 0) {
 			err = remove(argc, args);
-		} else if (strcmp(cmd, "help") == 0) {
+		} else if (ox_strcmp(cmd, "help") == 0) {
 			printf("%s\n", usage);
-		} else if (strcmp(cmd, "version") == 0) {
+		} else if (ox_strcmp(cmd, "version") == 0) {
 			printf("oxfstool version %s\n", oxfstoolVersion);
 			printf("oxfs format version %d\n", FileStore16::version());
 		} else {

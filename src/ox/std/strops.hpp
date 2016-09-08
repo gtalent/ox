@@ -9,8 +9,8 @@
 
 #include "types.hpp"
 
-int strcmp(const char *str1, const char *str2);
+int ox_strcmp(const char *str1, const char *str2);
 
-size_t strlen(const char *str1);
+size_t ox_strlen(const char *str1);
 
-int atoi(const char *str);
+int ox_atoi(const char *str);

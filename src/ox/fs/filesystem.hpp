@@ -62,8 +62,8 @@ class FileSystemTemplate: public FileSystem {
 
 			void setName(const char *name) {
 				auto data = getName();
-				auto nameLen = strlen(name);
-				memcpy(data, &name, nameLen);
+				auto nameLen = ox_strlen(name);
+				ox_memcpy(data, &name, nameLen);
 				data[nameLen] = 0;
 			}
 		};

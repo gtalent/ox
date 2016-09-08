@@ -204,7 +204,7 @@ void FileStore<FsSize_t>::Inode::setId(InodeId_t id) {
 
 template<typename FsSize_t>
 void FileStore<FsSize_t>::Inode::setData(void *data, FsSize_t size) {
-	memcpy(this->data(), data, size);
+	ox_memcpy(this->data(), data, size);
 	dataLen = size;
 }
 
@@ -311,7 +311,7 @@ void FileStore<FsSize_t>::unlink(Inode *inode) {
 	prev->next = ptr(next);
 	next->prev = ptr(prev);
 
-	memset(inode, 0, inode->size());
+	ox_memset(inode, 0, inode->size());
 	inode->prev = firstInode();
 	inode->next = firstInode();
 }
@@ -336,7 +336,7 @@ int FileStore<FsSize_t>::read(InodeId_t id, void *data, FsSize_t *size) {
 		if (size) {
 			*size = inode->dataLen;
 		}
-		memcpy(data, inode->data(), inode->dataLen);
+		ox_memcpy(data, inode->data(), inode->dataLen);
 		retval = 0;
 	}
 	return retval;
@@ -424,7 +424,7 @@ void *FileStore<FsSize_t>::alloc(FsSize_t size) {
 
 	const auto retval = next;
 	const auto inode = ptr<Inode*>(retval);
-	memset(inode, 0, size);
+	ox_memset(inode, 0, size);
 	inode->prev = ptr<Inode*>(firstInode())->prev;
 	inode->next = retval + size;
 	ptr<Inode*>(firstInode())->prev = retval;
@@ -436,7 +436,7 @@ void FileStore<FsSize_t>::compress(FsSize_t start) {
 	auto dest = ptr<Inode*>(firstInode());
 	auto current = ptr<Inode*>(start);
 	while (current->next > ptr(begin()) && current->next < ptr(end())) {
-		memcpy(dest, current, current->size());
+		ox_memcpy(dest, current, current->size());
 		if (dest->next != firstInode()) {
 			dest->next = ptr(dest) + dest->size();
 		}
@@ -506,7 +506,7 @@ ox::std::uint8_t FileStore<FsSize_t>::version() {
 
 template<typename FsSize_t>
 ox::std::uint8_t *FileStore<FsSize_t>::format(ox::std::uint8_t *buffer, FsSize_t size, ox::std::uint32_t fsType) {
-	memset(buffer, 0, size);
+	ox_memset(buffer, 0, size);
 
 	auto *fs = (FileStore*) buffer;
 	fs->m_fsType = fsType;

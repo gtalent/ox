@@ -8,7 +8,7 @@
 
 #include "strops.hpp"
 
-int strcmp(const char *str1, const char *str2) {
+int ox_strcmp(const char *str1, const char *str2) {
 	auto retval = 0;
 	auto i = 0;
 	do {
@@ -24,17 +24,17 @@ int strcmp(const char *str1, const char *str2) {
 	return retval;
 }
 
-size_t strlen(const char *str1) {
+size_t ox_strlen(const char *str1) {
 	int len;
 	for (len = 0; str1[len]; len++);
 	return len;
 }
 
-int atoi(const char *str) {
+int ox_atoi(const char *str) {
 	int total = 0;
 	int multiplier = 1;
 
-	for (size_t i = strlen(str) - 1; i >= 0; i--) {
+	for (size_t i = ox_strlen(str) - 1; i >= 0; i--) {
 		total += (str[i] - '0') * multiplier;
 		multiplier *= 10;
 	}

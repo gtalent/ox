@@ -23,21 +23,21 @@ int test() {
 
 	if (fs->write(1, (void*) "Hello", 6) ||
 		 fs->read(1, (char*) out, &outSize) ||
-		 strcmp("Hello", out)) {
+		 ox_strcmp("Hello", out)) {
 		printf("Failure 1\n");
 		return 1;
 	}
 
 	if (fs->write(2, (void*) "World", 6) ||
 		 fs->read(2, (char*) out, &outSize) ||
-		 strcmp("World", out)) {
+		 ox_strcmp("World", out)) {
 		printf("Failure 2\n");
 		return 2;
 	}
 
 	// make sure first value was not overwritten
 	if (fs->read(1, (char*) out, &outSize) ||
-		 strcmp("Hello", out)) {
+		 ox_strcmp("Hello", out)) {
 		printf("Failure 3\n");
 		return 3;
 	}
@@ -56,7 +56,7 @@ int test() {
 	// make sure 2 is still available
 	if (fs->write(2, (void*) "World", 6) ||
 		 fs->read(2, (char*) out, &outSize) ||
-		 strcmp("World", out)) {
+		 ox_strcmp("World", out)) {
 		printf("Failure 6\n");
 		return 6;
 	}
