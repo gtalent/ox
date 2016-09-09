@@ -27,24 +27,24 @@ enum FileType {
 };
 
 struct FileStat {
-	ox::std::uint64_t inode;
-	ox::std::uint64_t size;
-	ox::std::uint8_t  fileType;
+	uint64_t inode;
+	uint64_t size;
+	uint8_t  fileType;
 };
 
 class FileSystem {
 	public:
 		virtual ~FileSystem() {};
 
-		virtual int read(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) = 0;
+		virtual int read(uint64_t inode, void *buffer, uint64_t size) = 0;
 
-		virtual ox::std::uint8_t *read(ox::std::uint64_t inode, ox::std::uint64_t *size) = 0;
+		virtual uint8_t *read(uint64_t inode, uint64_t *size) = 0;
 
-		virtual int remove(ox::std::uint64_t inode) = 0;
+		virtual int remove(uint64_t inode) = 0;
 
-		virtual int write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size, ox::std::uint8_t fileType = NormalFile) = 0;
+		virtual int write(uint64_t inode, void *buffer, uint64_t size, uint8_t fileType = NormalFile) = 0;
 
-		virtual FileStat stat(ox::std::uint64_t inode) = 0;
+		virtual FileStat stat(uint64_t inode) = 0;
 };
 
 FileSystem *createFileSystem(void *buff);
@@ -93,19 +93,19 @@ class FileSystemTemplate: public FileSystem {
 
 		int read(const char *path, void *buffer);
 
-		ox::std::uint8_t *read(ox::std::uint64_t inode, ox::std::uint64_t *size) override;
+		uint8_t *read(uint64_t inode, uint64_t *size) override;
 
-		int read(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) override;
+		int read(uint64_t inode, void *buffer, uint64_t size) override;
 
-		int remove(ox::std::uint64_t inode) override;
+		int remove(uint64_t inode) override;
 
-		int write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size, ox::std::uint8_t fileType) override;
+		int write(uint64_t inode, void *buffer, uint64_t size, uint8_t fileType) override;
 
 		FileStat stat(const char *path);
 
-		FileStat stat(ox::std::uint64_t inode) override;
+		FileStat stat(uint64_t inode) override;
 
-		static ox::std::uint8_t *format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories);
+		static uint8_t *format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories);
 };
 
 template<typename FileStore>
@@ -131,7 +131,7 @@ FileStat FileSystemTemplate<FileStore>::stat(const char *path) {
 #pragma warning(disable:4244)
 #endif
 template<typename FileStore>
-FileStat FileSystemTemplate<FileStore>::stat(ox::std::uint64_t inode) {
+FileStat FileSystemTemplate<FileStore>::stat(uint64_t inode) {
 	FileStat stat;
 	auto s = store->stat(inode);
 	stat.size = s.size;
@@ -147,7 +147,7 @@ FileStat FileSystemTemplate<FileStore>::stat(ox::std::uint64_t inode) {
 #pragma warning(disable:4244)
 #endif
 template<typename FileStore>
-int FileSystemTemplate<FileStore>::read(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size) {
+int FileSystemTemplate<FileStore>::read(uint64_t inode, void *buffer, uint64_t size) {
 	auto err = 1;
 	auto s = store->stat(inode);
 	if (size == s.size) {
@@ -163,9 +163,9 @@ int FileSystemTemplate<FileStore>::read(ox::std::uint64_t inode, void *buffer, o
 #pragma warning(disable:4244)
 #endif
 template<typename FileStore>
-ox::std::uint8_t *FileSystemTemplate<FileStore>::read(ox::std::uint64_t inode, ox::std::uint64_t *size) {
+uint8_t *FileSystemTemplate<FileStore>::read(uint64_t inode, uint64_t *size) {
 	auto s = store->stat(inode);
-	auto buff = new ox::std::uint8_t[s.size];
+	auto buff = new uint8_t[s.size];
 	if (size) {
 		*size = s.size;
 	}
@@ -183,7 +183,7 @@ ox::std::uint8_t *FileSystemTemplate<FileStore>::read(ox::std::uint64_t inode, o
 #pragma warning(disable:4244)
 #endif
 template<typename FileStore>
-int FileSystemTemplate<FileStore>::remove(ox::std::uint64_t inode) {
+int FileSystemTemplate<FileStore>::remove(uint64_t inode) {
 	return store->remove(inode);
 }
 #ifdef _MSC_VER
@@ -194,7 +194,7 @@ int FileSystemTemplate<FileStore>::remove(ox::std::uint64_t inode) {
 #pragma warning(disable:4244)
 #endif
 template<typename FileStore>
-int FileSystemTemplate<FileStore>::write(ox::std::uint64_t inode, void *buffer, ox::std::uint64_t size, ox::std::uint8_t fileType) {
+int FileSystemTemplate<FileStore>::write(uint64_t inode, void *buffer, uint64_t size, uint8_t fileType) {
 	return store->write(inode, buffer, size, fileType);
 }
 #ifdef _MSC_VER
@@ -205,8 +205,8 @@ int FileSystemTemplate<FileStore>::write(ox::std::uint64_t inode, void *buffer, 
 #pragma warning(disable:4244)
 #endif
 template<typename FileStore>
-ox::std::uint8_t *FileSystemTemplate<FileStore>::format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories) {
-	buffer = FileStore::format((ox::std::uint8_t*) buffer, size, FS_TYPE);
+uint8_t *FileSystemTemplate<FileStore>::format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories) {
+	buffer = FileStore::format((uint8_t*) buffer, size, FS_TYPE);
 	auto fs = createFileSystem(buffer);
 
 	if (buffer && useDirectories) {
@@ -216,7 +216,7 @@ ox::std::uint8_t *FileSystemTemplate<FileStore>::format(void *buffer, typename F
 		fs->write(INODE_ROOT_DIR, dirBuff, useDirectories);
 	}
 
-	return (ox::std::uint8_t*) buffer;
+	return (uint8_t*) buffer;
 }
 #ifdef _MSC_VER
 #pragma warning(default:4244)

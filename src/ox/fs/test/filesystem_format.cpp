@@ -13,8 +13,8 @@ using namespace ox::std;
 
 template<typename FileSystem>
 int test() {
-	const ox::std::uint16_t size = ~0;
-	ox::std::uint8_t volume[size];
+	const uint16_t size = ~0;
+	uint8_t volume[size];
 	FileSystem::format(volume, size, true);
 	return 0;
 }

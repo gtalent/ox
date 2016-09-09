@@ -11,7 +11,7 @@ namespace ox {
 namespace fs {
 
 FileSystem *createFileSystem(void *buff) {
-	auto type = *((ox::std::uint32_t*) buff);
+	auto type = *((uint32_t*) buff);
 	FileSystem *fs = nullptr;
 
 	switch (type) {

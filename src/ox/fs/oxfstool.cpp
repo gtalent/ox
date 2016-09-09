@@ -27,7 +27,7 @@ const static auto usage = "usage:\n"
 "\toxfs write <FS file> <inode> <insertion file>";
 
 char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
-	FILE *file = fopen(path, "rb");
+	auto file = fopen(path, "rb");
 	if (file) {
 		fseek(file, 0, SEEK_END);
 		const auto size = ftell(file);
@@ -44,7 +44,7 @@ char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
 	}
 }
 
-ox::std::uint64_t bytes(const char *str) {
+uint64_t bytes(const char *str) {
 	auto size = ::ox_strlen(str);
 	const auto lastChar = str[size-1];
 	auto multiplier = 1;
@@ -69,7 +69,7 @@ ox::std::uint64_t bytes(const char *str) {
 				multiplier = -1;
 		}
 	}
-	const auto retval = ((ox::std::uint64_t) ::ox_atoi(copy)) * multiplier;
+	const auto retval = ((uint64_t) ::ox_atoi(copy)) * multiplier;
 	delete copy;
 	return  retval;
 }
@@ -81,14 +81,14 @@ int format(int argc, char **args) {
 		auto type = ox_atoi(args[2]);
 		auto size = bytes(args[3]);
 		auto path = args[4];
-		auto buff = (ox::std::uint8_t*) malloc(size);
+		auto buff = (uint8_t*) malloc(size);
 
 		printf("Size: %llu bytes\n", size);
 		printf("Type: %d\n", type);
 
 		if (size < sizeof(FileStore64)) {
 			err = 1;
-			fprintf(stderr, "File system size %llu too small, must be at least %llu\n", (ox::std::uint64_t) size, (ox::std::uint64_t) sizeof(FileStore64));
+			fprintf(stderr, "File system size %llu too small, must be at least %llu\n", (uint64_t) size, (uint64_t) sizeof(FileStore64));
 		}
 
 		if (!err) {
@@ -137,7 +137,7 @@ int read(int argc, char **args) {
 		auto fsPath = args[2];
 		auto inode = ox_atoi(args[3]);
 		::size_t fsSize;
-		ox::std::uint64_t fileSize;
+		uint64_t fileSize;
 
 		auto fsBuff = loadFileBuff(fsPath, &fsSize);
 		
@@ -155,7 +155,7 @@ int read(int argc, char **args) {
 				delete fs;
 				free(fsBuff);
 			} else {
-				fprintf(stderr, "Invalid file system type: %d.\n", *(ox::std::uint32_t*) fsBuff);
+				fprintf(stderr, "Invalid file system type: %d.\n", *(uint32_t*) fsBuff);
 			}
 		} else {
 			fprintf(stderr, "Could not open file: %s\n", fsPath);
@@ -170,7 +170,7 @@ int write(int argc, char **args) {
 		auto fsPath = args[2];
 		auto inode = ox_atoi(args[3]);
 		auto srcPath = args[4];
-		::size_t srcSize;
+		size_t srcSize;
 
 		auto fsFile = fopen(fsPath, "rb");
 		if (fsFile) {
@@ -191,7 +191,7 @@ int write(int argc, char **args) {
 						fprintf(stderr, "Could not write to file system.\n");
 					}
 				} else {
-					fprintf(stderr, "Invalid file system type: %d.\n", *(ox::std::uint32_t*) fsBuff);
+					fprintf(stderr, "Invalid file system type: %d.\n", *(uint32_t*) fsBuff);
 					err = 1;
 				}
 
@@ -227,7 +227,7 @@ int remove(int argc, char **args) {
 	if (argc >= 4) {
 		auto fsPath = args[2];
 		auto inode = ox_atoi(args[3]);
-		::size_t fsSize;
+		size_t fsSize;
 
 		auto fsBuff = loadFileBuff(fsPath, &fsSize);
 		if (fsBuff) {

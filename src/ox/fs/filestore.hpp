@@ -16,13 +16,13 @@ template<typename FsT>
 class FileStore {
 
 	public:
-		typedef ox::std::uint16_t InodeId_t;
+                typedef uint16_t InodeId_t;
 		typedef FsT FsSize_t;
 
 		struct StatInfo {
 			InodeId_t inodeId;
 			FsSize_t  size;
-			ox::std::uint8_t fileType;
+                        uint8_t fileType;
 		};
 
 	private:
@@ -31,20 +31,17 @@ class FileStore {
 			FsSize_t prev, next;
 			FsSize_t dataLen;
 			InodeId_t id;
-			ox::std::uint8_t refs;
-			ox::std::uint8_t fileType;
+                        uint8_t refs;
+                        uint8_t fileType;
 			FsSize_t left, right;
 
 			FsSize_t size();
 			void setId(InodeId_t);
                         void setData(void *data, FsSize_t size);
 			void *data();
-
-			private:
-				Inode() = default;
 		};
 
-		ox::std::uint32_t m_fsType;
+                uint32_t m_fsType;
 		FsSize_t m_size;
 		FsSize_t m_rootInode;
 
@@ -55,7 +52,7 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-		int write(void *data, FsSize_t dataLen, ox::std::uint8_t fileType = 0);
+                int write(void *data, FsSize_t dataLen, uint8_t fileType = 0);
 
 		/**
 		 * Writes the given data to a "file" with the given id.
@@ -63,7 +60,7 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-		int write(InodeId_t id, void *data, FsSize_t dataLen, ox::std::uint8_t fileType = 0);
+                int write(InodeId_t id, void *data, FsSize_t dataLen, uint8_t fileType = 0);
 
 		/**
 		 * Removes the inode of the given ID.
@@ -95,9 +92,9 @@ class FileStore {
 		 */
 		FsSize_t size();
 
-		static ox::std::uint8_t version();
+                static uint8_t version();
 
-		static ox::std::uint8_t *format(ox::std::uint8_t *buffer, FsSize_t size, ox::std::uint32_t fsType = 0);
+                static uint8_t *format(uint8_t *buffer, FsSize_t size, uint32_t fsType = 0);
 
 	private:
 		/**
@@ -169,11 +166,11 @@ class FileStore {
 		 */
 		void updateInodeAddress(InodeId_t id, FsSize_t addr);
 
-		ox::std::uint8_t *begin() {
-			return (ox::std::uint8_t*) this;
+                uint8_t *begin() {
+                        return (uint8_t*) this;
 		}
 
-		ox::std::uint8_t *end() {
+                uint8_t *end() {
 			return begin() + this->m_size;
 		}
 
@@ -218,12 +215,12 @@ void *FileStore<FsSize_t>::Inode::data() {
 // FileStore
 
 template<typename FsSize_t>
-int FileStore<FsSize_t>::write(void *data, FsSize_t dataLen, ox::std::uint8_t fileType) {
+int FileStore<FsSize_t>::write(void *data, FsSize_t dataLen, uint8_t fileType) {
 	return 1;
 }
 
 template<typename FsSize_t>
-int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen, ox::std::uint8_t fileType) {
+int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen, uint8_t fileType) {
 	auto retval = 1;
 	const FsSize_t size = sizeof(Inode) + dataLen;
 	auto inode = (Inode*) alloc(size);
@@ -414,10 +411,10 @@ FsSize_t FileStore<FsSize_t>::nextInodeAddr() {
 template<typename FsSize_t>
 void *FileStore<FsSize_t>::alloc(FsSize_t size) {
 	FsSize_t next = nextInodeAddr();
-	if ((next + size) > (ox::std::uint64_t) end()) {
+        if ((next + size) > (uint64_t) end()) {
 		compress(firstInode());
 		next = nextInodeAddr();
-		if ((next + size) > (ox::std::uint64_t) end()) {
+                if ((next + size) > (uint64_t) end()) {
 			return nullptr;
 		}
 	}
@@ -483,7 +480,7 @@ FsSize_t FileStore<FsSize_t>::ptr(void *ptr) {
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
-	return ((ox::std::uint8_t*) ptr) - begin();
+        return ((uint8_t*) ptr) - begin();
 #ifdef _MSC_VER
 #pragma warning(default:4244)
 #endif
@@ -500,12 +497,12 @@ typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::lastInode() {
 }
 
 template<typename FsSize_t>
-ox::std::uint8_t FileStore<FsSize_t>::version() {
+uint8_t FileStore<FsSize_t>::version() {
 	return 1;
 };
 
 template<typename FsSize_t>
-ox::std::uint8_t *FileStore<FsSize_t>::format(ox::std::uint8_t *buffer, FsSize_t size, ox::std::uint32_t fsType) {
+uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size, uint32_t fsType) {
 	ox_memset(buffer, 0, size);
 
 	auto *fs = (FileStore*) buffer;
@@ -515,12 +512,12 @@ ox::std::uint8_t *FileStore<FsSize_t>::format(ox::std::uint8_t *buffer, FsSize_t
 	((Inode*) (fs + 1))->prev = fs->firstInode();
 	fs->lastInode()->next = sizeof(FileStore<FsSize_t>);
 
-	return (ox::std::uint8_t*) buffer;
+        return (uint8_t*) buffer;
 }
 
-typedef FileStore<ox::std::uint16_t> FileStore16;
-typedef FileStore<ox::std::uint32_t> FileStore32;
-typedef FileStore<ox::std::uint64_t> FileStore64;
+typedef FileStore<uint16_t> FileStore16;
+typedef FileStore<uint32_t> FileStore32;
+typedef FileStore<uint64_t> FileStore64;
 
 }
 }
