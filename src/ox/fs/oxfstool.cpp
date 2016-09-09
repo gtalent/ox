@@ -11,6 +11,11 @@
 #include <ox/std/strops.hpp>
 #include <ox/fs/filesystem.hpp>
 
+// suppress warnings about using fopen
+#ifdef _MSC_VER
+#pragma warning(disable:4996)
+#endif
+
 using namespace ox::fs;
 
 const static auto oxfstoolVersion = "1.0.0";
