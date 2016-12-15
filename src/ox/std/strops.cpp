@@ -34,7 +34,7 @@ int ox_atoi(const char *str) {
 	int total = 0;
 	int multiplier = 1;
 
-	for (auto i = ox_strlen(str) - 1; i != 0; i--) {
+	for (auto i = ox_strlen(str) - 1; i != -1; i--) {
 		total += (str[i] - '0') * multiplier;
 		multiplier *= 10;
 	}
