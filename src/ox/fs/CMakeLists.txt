@@ -21,8 +21,10 @@ install(
 		include/ox/fs
 )
 
-install(TARGETS oxfstool
+install(TARGETS oxfstool OxFS
         RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
 )
 
 add_subdirectory(test)
