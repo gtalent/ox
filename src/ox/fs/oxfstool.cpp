@@ -72,7 +72,7 @@ size_t bytes(const char *str) {
 		}
 	}
 	const auto retval = ((size_t) ox_atoi(copy)) * multiplier;
-	delete copy;
+	delete []copy;
 	return  retval;
 }
 
