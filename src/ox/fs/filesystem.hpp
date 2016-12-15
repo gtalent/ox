@@ -214,6 +214,8 @@ uint8_t *FileSystemTemplate<FileStore, FS_TYPE>::format(void *buffer, typename F
 		fs->write(INODE_ROOT_DIR, dirBuff, useDirectories);
 	}
 
+	delete fs;
+
 	return (uint8_t*) buffer;
 }
 #ifdef _MSC_VER
