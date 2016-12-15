@@ -91,7 +91,7 @@ int format(int argc, char **args) {
 
 		if (size < sizeof(FileStore64)) {
 			err = 1;
-			fprintf(stderr, "File system size %llu too small, must be at least %llu\n", (uint64_t) size, (uint64_t) sizeof(FileStore64));
+			fprintf(stderr, "File system size %lu too small, must be at least %lu\n", (uint64_t) size, (uint64_t) sizeof(FileStore64));
 		}
 
 		if (!err) {

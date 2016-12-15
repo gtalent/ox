@@ -14,12 +14,8 @@ typedef unsigned short     uint16_t;
 typedef int                int32_t;
 typedef unsigned int       uint32_t;
 typedef unsigned           uint_t;
-#ifdef _MSC_VER
-typedef long long          int64_t;
-#else
 typedef long               int64_t;
-#endif
-typedef unsigned long long uint64_t;
+typedef unsigned long      uint64_t;
 
 namespace ox {
 namespace std {

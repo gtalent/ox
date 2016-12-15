@@ -24,7 +24,7 @@ int ox_strcmp(const char *str1, const char *str2) {
 	return retval;
 }
 
-size_t ox_strlen(const char *str1) {
+int ox_strlen(const char *str1) {
 	int len;
 	for (len = 0; str1[len]; len++);
 	return len;
