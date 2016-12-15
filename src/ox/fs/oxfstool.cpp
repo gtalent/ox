@@ -70,7 +70,7 @@ uint64_t bytes(const char *str) {
 		}
 	}
 	const auto retval = ((uint64_t) ::ox_atoi(copy)) * multiplier;
-	delete copy;
+	delete []copy;
 	return  retval;
 }
 

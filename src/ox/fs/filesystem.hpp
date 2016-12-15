@@ -206,7 +206,7 @@ int FileSystemTemplate<FileStore>::write(uint64_t inode, void *buffer, uint64_t 
 #endif
 template<typename FileStore>
 uint8_t *FileSystemTemplate<FileStore>::format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories) {
-	buffer = FileStore::format((uint8_t*) buffer, size, FS_TYPE);
+	buffer = FileStore::format((uint8_t*) buffer, size, (uint32_t) FileSystemTemplate<FileStore>::FS_TYPE);
 	auto fs = createFileSystem(buffer);
 
 	if (buffer && useDirectories) {
