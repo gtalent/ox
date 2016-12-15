@@ -205,16 +205,14 @@ int FileSystemTemplate<FileStore, FS_TYPE>::write(uint64_t inode, void *buffer, 
 template<typename FileStore, FsType FS_TYPE>
 uint8_t *FileSystemTemplate<FileStore, FS_TYPE>::format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories) {
 	buffer = FileStore::format((uint8_t*) buffer, size, (uint32_t) FS_TYPE);
-	auto fs = createFileSystem(buffer);
+	FileSystemTemplate<FileStore, FS_TYPE> fs(buffer);
 
 	if (buffer && useDirectories) {
 		char dirBuff[sizeof(Directory) + sizeof(DirectoryEntry) + 2];
 		auto *dir = (Directory*) dirBuff;
 		dir->files();
-		fs->write(INODE_ROOT_DIR, dirBuff, useDirectories);
+		fs.write(INODE_ROOT_DIR, dirBuff, useDirectories, FileType::Directory);
 	}
-
-	delete fs;
 
 	return (uint8_t*) buffer;
 }
