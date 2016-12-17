@@ -1,4 +1,7 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
+
+set -e
+
 ./scripts/setup_build
 ./scripts/setup_build_debug
 make -j -C build/release all
