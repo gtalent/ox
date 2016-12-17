@@ -14,6 +14,13 @@ typedef unsigned short     uint16_t;
 typedef int                int32_t;
 typedef unsigned int       uint32_t;
 typedef unsigned           uint_t;
+#ifdef _MSC_VER
+typedef long               int64_t;
+typedef unsigned long      uint64_t;
+#else
+typedef long long          int64_t;
+typedef unsigned long long uint64_t;
+#endif
 
 namespace ox {
 namespace std {
@@ -26,12 +33,8 @@ typedef uint32_t Error;
 #if defined(_LP64) || defined(__ppc64__) || defined(__aarch64__)
 typedef unsigned long size_t;
 #elif defined(_WIN64)
-typedef long               int64_t;
-typedef unsigned long      uint64_t;
 typedef uint64_t size_t;
 #elif defined(_LP32) || defined(__ppc__) || defined(_WIN32) || defined(__arm__)
-typedef long long          int64_t;
-typedef unsigned long long uint64_t;
 typedef uint32_t size_t;
 #else
 #error size_t undefined
