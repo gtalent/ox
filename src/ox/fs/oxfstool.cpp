@@ -91,7 +91,7 @@ int format(int argc, char **args) {
 
 		if (size < sizeof(FileStore64)) {
 			err = 1;
-			fprintf(stderr, "File system size %lu too small, must be at least %lu\n", (uint64_t) size, (uint64_t) sizeof(FileStore64));
+			cerr <<  "File system size " << size << " too small, must be at least " << sizeof(FileStore64) << endl;
 		}
 
 		if (!err) {
@@ -139,8 +139,8 @@ int read(int argc, char **args) {
 	if (argc >= 4) {
 		auto fsPath = args[2];
 		auto inode = ox_atoi(args[3]);
-		::size_t fsSize;
-		uint64_t fileSize;
+		size_t fsSize;
+		size_t fileSize;
 
 		auto fsBuff = loadFileBuff(fsPath, &fsSize);
 		

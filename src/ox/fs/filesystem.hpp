@@ -36,9 +36,9 @@ class FileSystem {
 	public:
 		virtual ~FileSystem() {};
 
-		virtual int read(uint64_t inode, void *buffer, uint64_t size) = 0;
+		virtual int read(uint64_t inode, void *buffer, size_t size) = 0;
 
-		virtual uint8_t *read(uint64_t inode, uint64_t *size) = 0;
+		virtual uint8_t *read(uint64_t inode, size_t *size) = 0;
 
 		virtual int remove(uint64_t inode) = 0;
 
@@ -91,9 +91,9 @@ class FileSystemTemplate: public FileSystem {
 
 		int read(const char *path, void *buffer);
 
-		uint8_t *read(uint64_t inode, uint64_t *size) override;
+		uint8_t *read(uint64_t inode, size_t *size) override;
 
-		int read(uint64_t inode, void *buffer, uint64_t size) override;
+		int read(uint64_t inode, void *buffer, size_t size) override;
 
 		int remove(uint64_t inode) override;
 
@@ -145,7 +145,7 @@ FileStat FileSystemTemplate<FileStore, FS_TYPE>::stat(uint64_t inode) {
 #pragma warning(disable:4244)
 #endif
 template<typename FileStore, FsType FS_TYPE>
-int FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, void *buffer, uint64_t size) {
+int FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, void *buffer, size_t size) {
 	auto err = 1;
 	auto s = store->stat(inode);
 	if (size == s.size) {
@@ -161,7 +161,7 @@ int FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, void *buffer, u
 #pragma warning(disable:4244)
 #endif
 template<typename FileStore, FsType FS_TYPE>
-uint8_t *FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, uint64_t *size) {
+uint8_t *FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, size_t *size) {
 	auto s = store->stat(inode);
 	auto buff = new uint8_t[s.size];
 	if (size) {
