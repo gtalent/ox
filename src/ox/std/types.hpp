@@ -14,12 +14,12 @@ typedef unsigned short     uint16_t;
 typedef int                int32_t;
 typedef unsigned int       uint32_t;
 typedef unsigned           uint_t;
-#ifdef _MSC_VER
-typedef long               int64_t;
-typedef unsigned long      uint64_t;
-#else
+#if  defined(_MSC_VER) || defined(__APPLE__)
 typedef long long          int64_t;
 typedef unsigned long long uint64_t;
+#else
+typedef long               int64_t;
+typedef unsigned long      uint64_t;
 #endif
 
 namespace ox {
