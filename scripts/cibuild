@@ -1,5 +1,10 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
+
+set -e
+
 ./scripts/setup_build
 ./scripts/setup_build_debug
-make -j -C build/release all test
-make -j -C build/debug all test
+make -j -C build/release all
+make -j -C build/release test
+make -j -C build/debug all
+make -j -C build/debug test

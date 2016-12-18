@@ -16,13 +16,13 @@ template<typename FsT>
 class FileStore {
 
 	public:
-                typedef uint16_t InodeId_t;
+		typedef uint16_t InodeId_t;
 		typedef FsT FsSize_t;
 
 		struct StatInfo {
 			InodeId_t inodeId;
 			FsSize_t  size;
-                        uint8_t fileType;
+			uint8_t fileType;
 		};
 
 	private:
@@ -31,13 +31,13 @@ class FileStore {
 			FsSize_t prev, next;
 			FsSize_t dataLen;
 			InodeId_t id;
-                        uint8_t refs;
-                        uint8_t fileType;
+			uint8_t refs;
+			uint8_t fileType;
 			FsSize_t left, right;
 
 			FsSize_t size();
 			void setId(InodeId_t);
-                        void setData(void *data, FsSize_t size);
+			void setData(void *data, FsSize_t size);
 			void *data();
 		};
 
@@ -52,7 +52,7 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-                int write(void *data, FsSize_t dataLen, uint8_t fileType = 0);
+		int write(void *data, FsSize_t dataLen, uint8_t fileType = 0);
 
 		/**
 		 * Writes the given data to a "file" with the given id.
@@ -60,7 +60,7 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-                int write(InodeId_t id, void *data, FsSize_t dataLen, uint8_t fileType = 0);
+		int write(InodeId_t id, void *data, FsSize_t dataLen, uint8_t fileType = 0);
 
 		/**
 		 * Removes the inode of the given ID.
@@ -92,9 +92,9 @@ class FileStore {
 		 */
 		FsSize_t size();
 
-                static uint8_t version();
-
-                static uint8_t *format(uint8_t *buffer, FsSize_t size, uint32_t fsType = 0);
+		static uint8_t version();
+		
+		static uint8_t *format(uint8_t *buffer, FsSize_t size, uint32_t fsType = 0);
 
 	private:
 		/**
@@ -166,11 +166,11 @@ class FileStore {
 		 */
 		void updateInodeAddress(InodeId_t id, FsSize_t addr);
 
-                uint8_t *begin() {
-                        return (uint8_t*) this;
+		uint8_t *begin() {
+			return (uint8_t*) this;
 		}
 
-                uint8_t *end() {
+		uint8_t *end() {
 			return begin() + this->m_size;
 		}
 
@@ -411,10 +411,10 @@ FsSize_t FileStore<FsSize_t>::nextInodeAddr() {
 template<typename FsSize_t>
 void *FileStore<FsSize_t>::alloc(FsSize_t size) {
 	FsSize_t next = nextInodeAddr();
-        if ((next + size) > (uint64_t) end()) {
+	if ((next + size) > (uint64_t) end()) {
 		compress(firstInode());
 		next = nextInodeAddr();
-                if ((next + size) > (uint64_t) end()) {
+		if ((next + size) > (uint64_t) end()) {
 			return nullptr;
 		}
 	}
@@ -480,7 +480,7 @@ FsSize_t FileStore<FsSize_t>::ptr(void *ptr) {
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
-        return ((uint8_t*) ptr) - begin();
+	return ((uint8_t*) ptr) - begin();
 #ifdef _MSC_VER
 #pragma warning(default:4244)
 #endif
@@ -512,7 +512,7 @@ uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size, uint32_t fs
 	((Inode*) (fs + 1))->prev = fs->firstInode();
 	fs->lastInode()->next = sizeof(FileStore<FsSize_t>);
 
-        return (uint8_t*) buffer;
+	return (uint8_t*) buffer;
 }
 
 typedef FileStore<uint16_t> FileStore16;

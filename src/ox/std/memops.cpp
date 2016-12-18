@@ -7,18 +7,18 @@
  */
 #include "memops.hpp"
 
-void *ox_memcpy(void *dest, const void *src, size_t size) {
+void *ox_memcpy(void *dest, const void *src, int64_t size) {
 	char *srcBuf = (char*) src;
 	char *dstBuf = (char*) dest;
-	for (size_t i = 0; i < size; i++) {
+	for (int64_t i = 0; i < size; i++) {
 		dstBuf[i] = (char) srcBuf[i];
 	}
 	return dest;
 }
 
-void *ox_memset(void *ptr, int val, size_t size) {
+void *ox_memset(void *ptr, int val, int64_t size) {
 	char *buf = (char*) ptr;
-	for (size_t i = 0; i < size; i++) {
+	for (int64_t i = 0; i < size; i++) {
 		buf[i] = val;
 	}
 	return ptr;

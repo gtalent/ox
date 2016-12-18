@@ -9,6 +9,6 @@
 
 #include "types.hpp"
 
-void *ox_memcpy(void *src, const void *dest, size_t size);
+void *ox_memcpy(void *src, const void *dest, int64_t size);
 
-void *ox_memset(void *ptr, int val, size_t size);
+void *ox_memset(void *ptr, int val, int64_t size);

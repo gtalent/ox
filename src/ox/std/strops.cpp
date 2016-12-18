@@ -24,7 +24,7 @@ int ox_strcmp(const char *str1, const char *str2) {
 	return retval;
 }
 
-size_t ox_strlen(const char *str1) {
+int ox_strlen(const char *str1) {
 	int len;
 	for (len = 0; str1[len]; len++);
 	return len;
@@ -34,7 +34,7 @@ int ox_atoi(const char *str) {
 	int total = 0;
 	int multiplier = 1;
 
-	for (auto i = ox_strlen(str) - 1; i != 0; i--) {
+	for (auto i = ox_strlen(str) - 1; i != -1; i--) {
 		total += (str[i] - '0') * multiplier;
 		multiplier *= 10;
 	}

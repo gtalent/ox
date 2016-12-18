@@ -11,6 +11,6 @@
 
 int ox_strcmp(const char *str1, const char *str2);
 
-size_t ox_strlen(const char *str1);
+int ox_strlen(const char *str1);
 
 int ox_atoi(const char *str);

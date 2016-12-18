@@ -36,9 +36,9 @@ class FileSystem {
 	public:
 		virtual ~FileSystem() {};
 
-		virtual int read(uint64_t inode, void *buffer, uint64_t size) = 0;
+		virtual int read(uint64_t inode, void *buffer, size_t size) = 0;
 
-		virtual uint8_t *read(uint64_t inode, uint64_t *size) = 0;
+		virtual uint8_t *read(uint64_t inode, size_t *size) = 0;
 
 		virtual int remove(uint64_t inode) = 0;
 
@@ -49,7 +49,7 @@ class FileSystem {
 
 FileSystem *createFileSystem(void *buff);
 
-template<typename FileStore>
+template<typename FileStore, FsType FS_TYPE>
 class FileSystemTemplate: public FileSystem {
 
 	private:
@@ -82,8 +82,6 @@ class FileSystemTemplate: public FileSystem {
 		// static members
 		static typename FileStore::InodeId_t INODE_ROOT_DIR;
 
-		static FsType FS_TYPE;
-
 		FileStore *store = nullptr;
 
 	public:
@@ -93,9 +91,9 @@ class FileSystemTemplate: public FileSystem {
 
 		int read(const char *path, void *buffer);
 
-		uint8_t *read(uint64_t inode, uint64_t *size) override;
+		uint8_t *read(uint64_t inode, size_t *size) override;
 
-		int read(uint64_t inode, void *buffer, uint64_t size) override;
+		int read(uint64_t inode, void *buffer, size_t size) override;
 
 		int remove(uint64_t inode) override;
 
@@ -108,21 +106,21 @@ class FileSystemTemplate: public FileSystem {
 		static uint8_t *format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories);
 };
 
-template<typename FileStore>
-FileSystemTemplate<FileStore>::FileSystemTemplate(void *buff) {
+template<typename FileStore, FsType FS_TYPE>
+FileSystemTemplate<FileStore, FS_TYPE>::FileSystemTemplate(void *buff) {
 	store = (FileStore*) buff;
 }
 
-template<typename FileStore>
-typename FileStore::InodeId_t FileSystemTemplate<FileStore>::INODE_ROOT_DIR = 2;
+template<typename FileStore, FsType FS_TYPE>
+typename FileStore::InodeId_t FileSystemTemplate<FileStore, FS_TYPE>::INODE_ROOT_DIR = 2;
 
-template<typename FileStore>
-int FileSystemTemplate<FileStore>::mkdir(const char *path) {
+template<typename FileStore, FsType FS_TYPE>
+int FileSystemTemplate<FileStore, FS_TYPE>::mkdir(const char *path) {
 	return 0;
 }
 
-template<typename FileStore>
-FileStat FileSystemTemplate<FileStore>::stat(const char *path) {
+template<typename FileStore, FsType FS_TYPE>
+FileStat FileSystemTemplate<FileStore, FS_TYPE>::stat(const char *path) {
 	FileStat stat;
 	return stat;
 }
@@ -130,8 +128,8 @@ FileStat FileSystemTemplate<FileStore>::stat(const char *path) {
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
-template<typename FileStore>
-FileStat FileSystemTemplate<FileStore>::stat(uint64_t inode) {
+template<typename FileStore, FsType FS_TYPE>
+FileStat FileSystemTemplate<FileStore, FS_TYPE>::stat(uint64_t inode) {
 	FileStat stat;
 	auto s = store->stat(inode);
 	stat.size = s.size;
@@ -146,8 +144,8 @@ FileStat FileSystemTemplate<FileStore>::stat(uint64_t inode) {
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
-template<typename FileStore>
-int FileSystemTemplate<FileStore>::read(uint64_t inode, void *buffer, uint64_t size) {
+template<typename FileStore, FsType FS_TYPE>
+int FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, void *buffer, size_t size) {
 	auto err = 1;
 	auto s = store->stat(inode);
 	if (size == s.size) {
@@ -162,8 +160,8 @@ int FileSystemTemplate<FileStore>::read(uint64_t inode, void *buffer, uint64_t s
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
-template<typename FileStore>
-uint8_t *FileSystemTemplate<FileStore>::read(uint64_t inode, uint64_t *size) {
+template<typename FileStore, FsType FS_TYPE>
+uint8_t *FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, size_t *size) {
 	auto s = store->stat(inode);
 	auto buff = new uint8_t[s.size];
 	if (size) {
@@ -182,8 +180,8 @@ uint8_t *FileSystemTemplate<FileStore>::read(uint64_t inode, uint64_t *size) {
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
-template<typename FileStore>
-int FileSystemTemplate<FileStore>::remove(uint64_t inode) {
+template<typename FileStore, FsType FS_TYPE>
+int FileSystemTemplate<FileStore, FS_TYPE>::remove(uint64_t inode) {
 	return store->remove(inode);
 }
 #ifdef _MSC_VER
@@ -193,8 +191,8 @@ int FileSystemTemplate<FileStore>::remove(uint64_t inode) {
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
-template<typename FileStore>
-int FileSystemTemplate<FileStore>::write(uint64_t inode, void *buffer, uint64_t size, uint8_t fileType) {
+template<typename FileStore, FsType FS_TYPE>
+int FileSystemTemplate<FileStore, FS_TYPE>::write(uint64_t inode, void *buffer, uint64_t size, uint8_t fileType) {
 	return store->write(inode, buffer, size, fileType);
 }
 #ifdef _MSC_VER
@@ -204,16 +202,16 @@ int FileSystemTemplate<FileStore>::write(uint64_t inode, void *buffer, uint64_t 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
-template<typename FileStore>
-uint8_t *FileSystemTemplate<FileStore>::format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories) {
-	buffer = FileStore::format((uint8_t*) buffer, size, (uint32_t) FileSystemTemplate<FileStore>::FS_TYPE);
-	auto fs = createFileSystem(buffer);
+template<typename FileStore, FsType FS_TYPE>
+uint8_t *FileSystemTemplate<FileStore, FS_TYPE>::format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories) {
+	buffer = FileStore::format((uint8_t*) buffer, size, (uint32_t) FS_TYPE);
+	FileSystemTemplate<FileStore, FS_TYPE> fs(buffer);
 
 	if (buffer && useDirectories) {
 		char dirBuff[sizeof(Directory) + sizeof(DirectoryEntry) + 2];
 		auto *dir = (Directory*) dirBuff;
 		dir->files();
-		fs->write(INODE_ROOT_DIR, dirBuff, useDirectories);
+		fs.write(INODE_ROOT_DIR, dirBuff, useDirectories, FileType::Directory);
 	}
 
 	return (uint8_t*) buffer;
@@ -222,9 +220,9 @@ uint8_t *FileSystemTemplate<FileStore>::format(void *buffer, typename FileStore:
 #pragma warning(default:4244)
 #endif
 
-typedef FileSystemTemplate<FileStore16> FileSystem16;
-typedef FileSystemTemplate<FileStore32> FileSystem32;
-typedef FileSystemTemplate<FileStore64> FileSystem64;
+typedef FileSystemTemplate<FileStore16, OxFS_16> FileSystem16;
+typedef FileSystemTemplate<FileStore32, OxFS_32> FileSystem32;
+typedef FileSystemTemplate<FileStore64, OxFS_64> FileSystem64;
 
 }
 }

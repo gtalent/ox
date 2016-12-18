@@ -5,6 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+#include <iostream>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +18,7 @@
 #endif
 
 using namespace ox::fs;
+using namespace std;
 
 const static auto oxfstoolVersion = "1.0.0";
 const static auto usage = "usage:\n"
@@ -44,7 +46,7 @@ char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
 	}
 }
 
-uint64_t bytes(const char *str) {
+size_t bytes(const char *str) {
 	auto size = ::ox_strlen(str);
 	const auto lastChar = str[size-1];
 	auto multiplier = 1;
@@ -69,7 +71,7 @@ uint64_t bytes(const char *str) {
 				multiplier = -1;
 		}
 	}
-	const auto retval = ((uint64_t) ::ox_atoi(copy)) * multiplier;
+	const auto retval = ((size_t) ox_atoi(copy)) * multiplier;
 	delete []copy;
 	return  retval;
 }
@@ -79,16 +81,17 @@ int format(int argc, char **args) {
 	auto err = 0;
 	if (argc >= 5) {
 		auto type = ox_atoi(args[2]);
+		cout << args[3] << endl;
 		auto size = bytes(args[3]);
 		auto path = args[4];
 		auto buff = (uint8_t*) malloc(size);
 
-		printf("Size: %llu bytes\n", size);
-		printf("Type: %d\n", type);
+		cout << "Size: " << size << " bytes\n";
+		cout << "Type: " << type << endl;
 
 		if (size < sizeof(FileStore64)) {
 			err = 1;
-			fprintf(stderr, "File system size %llu too small, must be at least %llu\n", (uint64_t) size, (uint64_t) sizeof(FileStore64));
+			cerr <<  "File system size " << size << " too small, must be at least " << sizeof(FileStore64) << endl;
 		}
 
 		if (!err) {
@@ -136,8 +139,8 @@ int read(int argc, char **args) {
 	if (argc >= 4) {
 		auto fsPath = args[2];
 		auto inode = ox_atoi(args[3]);
-		::size_t fsSize;
-		uint64_t fileSize;
+		size_t fsSize;
+		size_t fileSize;
 
 		auto fsBuff = loadFileBuff(fsPath, &fsSize);
 		

@@ -24,8 +24,10 @@ install(
 		include/ox/fs
 )
 
-install(TARGETS oxfstool
+install(TARGETS oxfstool OxFS
         RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
 )
 
 if(OX_BUILD_EXEC STREQUAL "ON")
