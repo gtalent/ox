@@ -24,12 +24,14 @@ install(
 		include/ox/fs
 )
 
-install(TARGETS oxfstool OxFS
-        RUNTIME DESTINATION bin
+install(TARGETS OxFS
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
 )
 
 if(OX_BUILD_EXEC STREQUAL "ON")
 	add_subdirectory(test)
+	install(TARGETS oxfstool
+			  RUNTIME DESTINATION bin
+	)
 endif()
