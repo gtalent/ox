@@ -1,7 +1,9 @@
 language: cpp
+sudo: false
 compiler:
    - clang
-   - gcc
-install:
-   - sudo apt-get install cmake
+addons:
+    apt:
+        packages:
+            - cmake
 script: ./scripts/cibuild
