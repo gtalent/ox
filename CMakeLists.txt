@@ -5,6 +5,8 @@ project(Ox)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 include(address_sanitizer)
 
+set(OX_BUILD_EXEC "ON" CACHE STRING "Build executables (ON/OFF)")
+
 if(NOT MSVC)
 	add_definitions(
 		-std=c++11

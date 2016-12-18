@@ -5,10 +5,13 @@ add_library(
 		filesystem.cpp
 )
 
-add_executable(
-	oxfstool
-		oxfstool.cpp
-)
+if(OX_BUILD_EXEC STREQUAL "ON")
+	add_executable(
+		oxfstool
+			oxfstool.cpp
+	)
+endif()
+
 set_target_properties(oxfstool PROPERTIES OUTPUT_NAME oxfs)
 target_link_libraries(oxfstool OxFS OxStd)
 
@@ -25,4 +28,6 @@ install(TARGETS oxfstool
         RUNTIME DESTINATION bin
 )
 
-add_subdirectory(test)
+if(OX_BUILD_EXEC STREQUAL "ON")
+	add_subdirectory(test)
+endif()
