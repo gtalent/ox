@@ -10,10 +10,9 @@ if(OX_BUILD_EXEC STREQUAL "ON")
 		oxfstool
 			oxfstool.cpp
 	)
+	set_target_properties(oxfstool PROPERTIES OUTPUT_NAME oxfs)
+	target_link_libraries(oxfstool OxFS OxStd)
 endif()
-
-set_target_properties(oxfstool PROPERTIES OUTPUT_NAME oxfs)
-target_link_libraries(oxfstool OxFS OxStd)
 
 install(
 	FILES
