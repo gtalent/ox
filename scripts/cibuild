@@ -2,12 +2,6 @@
 
 set -e
 
-OS=$(uname | tr [:upper:] [:lower:])
-TARGET=$OS-$(uname -m)
-
-./scripts/setup_build $TARGET
-./scripts/setup_build $TARGET debug
-make -j -C build/${TARGET}-release all
-make -j -C build/${TARGET}-release test
-make -j -C build/${TARGET}-debug all
-make -j -C build/${TARGET}-debug test
+make -j release 
+make -j debug 
+make -j
