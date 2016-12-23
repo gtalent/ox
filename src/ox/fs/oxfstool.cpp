@@ -35,10 +35,10 @@ char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
 		const auto size = ftell(file);
 		rewind(file);
 		auto buff = (char*) malloc(size);
-		fread(buff, size, 1, file);
+		auto itemsRead = fread(buff, size, 1, file);
 		fclose(file);
 		if (sizeOut) {
-			*sizeOut = size;
+			*sizeOut = itemsRead ? size : 0;
 		}
 		return buff;
 	} else {
@@ -212,6 +212,7 @@ int write(int argc, char **args) {
 							err = 1;
 						}
 					}
+					free(srcBuff);
 				} else {
 					err = 1;
 					fprintf(stderr, "Could not load source file.\n");
@@ -219,7 +220,6 @@ int write(int argc, char **args) {
 			}
 
 			free(fsBuff);
-			free(srcBuff);
 		} else {
 			fprintf(stderr, "Could not open file system\n");
 		}
