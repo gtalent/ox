@@ -1,4 +1,4 @@
-all: gba_build native_build native_debug_build windows_build
+all: gba_build native_build native_debug_build windows_release windows_debug
 
 gba_build:
 	@if [ -d gba ]; then \
@@ -6,16 +6,21 @@ gba_build:
 	fi
 
 native_build:
-	@if [ -d release ]; then \
-		make -C release ${ARGS}; \
+	@if [ -d ${TARGET}-release ]; then \
+		make -C ${TARGET}-release ${ARGS}; \
 	fi
 
 native_debug_build:
-	@if [ -d debug ]; then \
-		make -C debug ${ARGS}; \
+	@if [ -d ${TARGET}-debug ]; then \
+		make -C ${TARGET}-debug ${ARGS}; \
 	fi
 
-windows_build:
-	@if [ -d windows ]; then \
-		make -C windows ${ARGS}; \
+windows_release:
+	@if [ -d windows-release ]; then \
+		make -C windows-release ${ARGS}; \
+	fi
+
+windows_debug:
+	@if [ -d windows-debug ]; then \
+		make -C windows-debug ${ARGS}; \
 	fi
