@@ -2,9 +2,12 @@
 
 set -e
 
-./scripts/setup_build
-./scripts/setup_build_debug
-make -j -C build/release all
-make -j -C build/release test
-make -j -C build/debug all
-make -j -C build/debug test
+OS=$(uname | tr [:upper:] [:lower:])
+TARGET=$OS-$(uname -m)
+
+./scripts/setup_build $TARGET
+./scripts/setup_build $TARGET debug
+make -j -C build/${TARGET}-release all
+make -j -C build/${TARGET}-release test
+make -j -C build/${TARGET}-debug all
+make -j -C build/${TARGET}-debug test
