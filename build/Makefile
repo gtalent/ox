@@ -1,4 +1,4 @@
-all: gba_build native_build native_debug_build
+all: gba_build native_build native_debug_build windows_build
 
 gba_build:
 	@if [ -d gba ]; then \
@@ -13,4 +13,9 @@ native_build:
 native_debug_build:
 	@if [ -d debug ]; then \
 		make -C debug ${ARGS}; \
+	fi
+
+windows_build:
+	@if [ -d windows ]; then \
+		make -C windows ${ARGS}; \
 	fi

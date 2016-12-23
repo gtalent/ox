@@ -39,5 +39,3 @@ find_path(GBA_INCLUDE_DIR gba.h
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(GBA DEFAULT_MSG GBA_LIBRARY)
-
-set(CMAKE_INSTALL_PREFIX ${DEVKITARM})

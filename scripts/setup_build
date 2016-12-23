@@ -1,8 +1,18 @@
 #! /usr/bin/env bash
 project=$(pwd)/
-buildDir="build/release"
+
+TARGET=$1
+
+if [[ $TARGET == windows ]]; then
+	toolchain="-DCMAKE_TOOLCHAIN_FILE=cmake/Modules/Mingw.cmake"
+	buildDir="build/windows"
+else
+	buildDir="build/release"
+fi
 
 mkdir -p $buildDir
 pushd $buildDir
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release $project
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release \
+		$toolchain \
+		$project
 popd

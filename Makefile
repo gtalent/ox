@@ -26,6 +26,8 @@ devenv:
 		--name ${DEVENV} -t wombatant/devenv bash
 devenv-destroy:
 	docker rm -f ${DEVENV}
+devenv-shell:
+	docker exec -i --user $(shell id -u ${USER}) ${DEVENV} ls /usr/bin/x86_64-w64-mingw32-g++
 
 native:
 	${ENV_RUN} rm -rf build/release
@@ -38,6 +40,12 @@ native_debug:
 	${ENV_RUN} ./scripts/setup_build_debug
 	${ENV_RUN} rm -f build/current
 	${ENV_RUN} ln -s debug build/current
+
+windows:
+	${ENV_RUN} rm -rf build/windows
+	${ENV_RUN} ./scripts/setup_build windows
+	${ENV_RUN} rm -f build/current
+	${ENV_RUN} ln -s windows build/current
 
 gba:
 	${ENV_RUN} rm -rf build/gba
