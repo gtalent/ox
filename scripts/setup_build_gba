@@ -4,5 +4,7 @@ buildDir="build/gba"
 
 mkdir -p $buildDir
 pushd $buildDir
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=cmake/Modules/GBA.cmake $project
+cmake -DCMAKE_BUILD_TYPE=Release -DOX_BUILD_EXEC=OFF \
+	-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+	-DCMAKE_TOOLCHAIN_FILE=cmake/Modules/GBA.cmake $project
 popd
