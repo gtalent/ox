@@ -1,2 +1,4 @@
-build
+build/gba
+build/debug
+build/release
 tags

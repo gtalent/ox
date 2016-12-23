@@ -16,7 +16,7 @@ if(NOT MSVC)
 		-fno-rtti
 		-Wsign-compare
 		-Wunused-variable
-		#-Werror
+		-Werror
 		#--analyze
 		#-Os # GCC size optimization flag
 	)

@@ -179,41 +179,43 @@ int write(int argc, char **args) {
 		if (fsFile) {
 			fseek(fsFile, 0, SEEK_END);
 
-			const auto fsSize = (::size_t) ftell(fsFile);
+			const auto fsSize = (size_t) ftell(fsFile);
 			rewind(fsFile);
 			auto fsBuff = (char*) malloc(fsSize);
-			fread(fsBuff, fsSize, 1, fsFile);
+			auto itemsRead = fread(fsBuff, fsSize, 1, fsFile);
 			fclose(fsFile);
 
-			auto srcBuff = loadFileBuff(srcPath, &srcSize);
-			if (srcBuff) {
-				auto fs = createFileSystem(fsBuff);
-				if (fs) {
-					err |= fs->write(inode, srcBuff, srcSize);
-					if (err) {
-						fprintf(stderr, "Could not write to file system.\n");
-					}
-				} else {
-					fprintf(stderr, "Invalid file system type: %d.\n", *(uint32_t*) fsBuff);
-					err = 1;
-				}
-
-				if (!err) {
-					fsFile = fopen(fsPath, "wb");
-
-					if (fsFile) {
-						err = fwrite(fsBuff, fsSize, 1, fsFile) != 1;
-						err |= fclose(fsFile);
+			if (itemsRead) {
+				auto srcBuff = loadFileBuff(srcPath, &srcSize);
+				if (srcBuff) {
+					auto fs = createFileSystem(fsBuff);
+					if (fs) {
+						err |= fs->write(inode, srcBuff, srcSize);
 						if (err) {
-							fprintf(stderr, "Could not write to file system file.\n");
+							fprintf(stderr, "Could not write to file system.\n");
 						}
 					} else {
+						fprintf(stderr, "Invalid file system type: %d.\n", *(uint32_t*) fsBuff);
 						err = 1;
 					}
+
+					if (!err) {
+						fsFile = fopen(fsPath, "wb");
+
+						if (fsFile) {
+							err = fwrite(fsBuff, fsSize, 1, fsFile) != 1;
+							err |= fclose(fsFile);
+							if (err) {
+								fprintf(stderr, "Could not write to file system file.\n");
+							}
+						} else {
+							err = 1;
+						}
+					}
+				} else {
+					err = 1;
+					fprintf(stderr, "Could not load source file.\n");
 				}
-			} else {
-				err = 1;
-				fprintf(stderr, "Could not load source file.\n");
 			}
 
 			free(fsBuff);
