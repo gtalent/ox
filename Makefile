@@ -12,7 +12,7 @@ install:
 clean:
 	${ENV_RUN} make -j -C build ARGS="clean"
 purge:
-	${ENV_RUN} rm -rf $(find build -mindepth 1 -maxdepth 1 -type d)
+	${ENV_RUN} rm -rf $(shell find build -mindepth 1 -maxdepth 1 -type d)
 test:
 	${ENV_RUN} make -j -C build ARGS="test"
 run: make

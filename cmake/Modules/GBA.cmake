@@ -32,23 +32,12 @@ find_library(GBA_LIBRARY
 	PATHS
 		/lib
 )
-find_library(FILESYSTEM_LIBRARY
-	NAMES
-		filesystem
-	PATHS
-		/lib
-)
-find_library(FAT_LIBRARY
-	NAMES
-		fat
-	PATHS
-		/lib
-)
 find_path(GBA_INCLUDE_DIR gba.h
 	PATHS
 		/include
 )
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(GBA DEFAULT_MSG GBA_LIBRARY
-											 FAT_LIBRARY FILESYSTEM_LIBRARY)
+find_package_handle_standard_args(GBA DEFAULT_MSG GBA_LIBRARY)
+
+set(CMAKE_INSTALL_PREFIX ${DEVKITARM})
