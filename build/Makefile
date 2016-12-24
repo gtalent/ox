@@ -3,18 +3,18 @@ all: gba_build native_build native_debug_build windows_release windows_debug
 MAKE=make -j
 
 gba_build:
-	@if [ -d gba ]; then \
-		${MAKE} -C gba ${ARGS}; \
+	@if [ -d gba-release ]; then \
+		${MAKE} -C gba-release ${ARGS}; \
 	fi
 
 native_build:
-	@if [ -d ${TARGET}-release ]; then \
-		${MAKE} -C ${TARGET}-release ${ARGS}; \
+	@if [ -d ${HOST_ENV}-release ]; then \
+		${MAKE} -C ${HOST_ENV}-release ${ARGS}; \
 	fi
 
 native_debug_build:
-	@if [ -d ${TARGET}-debug ]; then \
-		${MAKE} -C ${TARGET}-debug ${ARGS}; \
+	@if [ -d ${HOST_ENV}-debug ]; then \
+		${MAKE} -C ${HOST_ENV}-debug ${ARGS}; \
 	fi
 
 windows_release:
