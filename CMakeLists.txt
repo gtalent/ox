@@ -26,6 +26,6 @@ enable_testing()
 
 include_directories("src")
 
-install(FILES config.cmake DESTINATION lib/ox)
+install(FILES OxConfig.cmake DESTINATION lib/ox)
 
 add_subdirectory(src)
