@@ -24,8 +24,8 @@ install(
 )
 
 install(TARGETS OxFS
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib/ox
+        ARCHIVE DESTINATION lib/ox
 )
 
 if(OX_BUILD_EXEC STREQUAL "ON")
