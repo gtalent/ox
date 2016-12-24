@@ -1,2 +1,2 @@
-set(Ox_INCLUDE_DIRS ${PREFIX}/include/ox)
-set(OxFs_LIBRARY ${PREFIX}/lib/ox/libOxFs.a)
+set(Ox_INCLUDE_DIRS ${CMAKE_FIND_ROOT_PATH}/include/)
+set(OxFs_LIBRARY ${CMAKE_FIND_ROOT_PATH}/lib/ox/libOxFs.a)
