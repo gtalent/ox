@@ -10,19 +10,33 @@
 #include <functional>
 #include <ox/std/std.hpp>
 
-::std::map<std::string, std::function<int()>> tests = {
+using namespace std;
+
+map<string, function<int()>> tests = {
 	{
-		"ox_memcmp",
+		"ABCDEFG != HIJKLMN",
 		[]() {
-			int success = 1;
-			const char *data1 = "ABCDEFG";
-			const char *data2 = "HIJKLMN";
-			success &= ox_memcmp(data1, data2, 7) < 0;
-			success &= ox_memcmp(data2, data1, 7) > 0;
-			success &= ox_memcmp(data1, data1, 7) == 0;
-			return !success;
+			return !ox_memcmp("ABCDEFG", "HIJKLMN", 7) < 0;
 		}
-	}
+	},
+	{
+		"HIJKLMN != ABCDEFG",
+		[]() {
+			return !ox_memcmp("HIJKLMN", "ABCDEFG", 7) > 0;
+		}
+	},
+	{
+		"ABCDEFG == ABCDEFG",
+		[]() {
+			return !ox_memcmp("ABCDEFG", "ABCDEFG", 7) == 0;
+		}
+	},
+	{
+		"ABCDEFGHI == ABCDEFG",
+		[]() {
+			return !ox_memcmp("ABCDEFGHI", "ABCDEFG", 7) == 0;
+		}
+	},
 };
 
 int main(int argc, const char **args) {

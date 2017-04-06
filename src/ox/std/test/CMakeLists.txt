@@ -7,4 +7,7 @@ add_executable(
 
 target_link_libraries(StdTest OxStd)
 
-add_test("Test\\ ox_memcmp" StdTest "ox_memcmp")
+add_test("Test\\ ox_memcmp\\ ABCDEFG\\ !=\\ HIJKLMN" StdTest "ABCDEFG != HIJKLMN")
+add_test("Test\\ ox_memcmp\\ HIJKLMN\\ !=\\ ABCDEFG" StdTest "HIJKLMN != ABCDEFG")
+add_test("Test\\ ox_memcmp\\ ABCDEFG\\ ==\\ ABCDEFG" StdTest "ABCDEFG == ABCDEFG")
+add_test("Test\\ ox_memcmp\\ ABCDEFGHI\\ ==\\ ABCDEFG" StdTest "ABCDEFGHI == ABCDEFG")
