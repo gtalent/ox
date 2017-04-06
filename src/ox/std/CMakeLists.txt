@@ -15,3 +15,7 @@ install(
 	DESTINATION
 		include/ox/std
 )
+
+if(OX_BUILD_EXEC STREQUAL "ON")
+	add_subdirectory(test)
+endif()

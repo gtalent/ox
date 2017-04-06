@@ -7,6 +7,22 @@
  */
 #include "memops.hpp"
 
+int ox_memcmp(const void *ptr1, const void *ptr2, size_t size) {
+	int retval = 0;
+	auto block1 = ((uint8_t*) ptr1);
+	auto block2 = ((uint8_t*) ptr2);
+	for (size_t i = 0; i < size; i++) {
+		if (block1[i] < block2[i]) {
+			retval = -1;
+			break;
+		} else if (block1[i] > block2[i]) {
+			retval = 1;
+			break;
+		}
+	}
+	return retval;
+}
+
 void *ox_memcpy(void *dest, const void *src, int64_t size) {
 	char *srcBuf = (char*) src;
 	char *dstBuf = (char*) dest;
