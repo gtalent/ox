@@ -6,6 +6,12 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 include(address_sanitizer)
 
 set(OX_BUILD_EXEC "ON" CACHE STRING "Build executables (ON/OFF)")
+set(OX_RUN_TESTS  "ON" CACHE STRING "Run tests (ON/OFF)")
+
+# can't run tests without building them
+if(OX_BUILD_EXEC STREQUAL "OFF")
+	set(OX_RUN_TESTS "OFF")
+endif()
 
 if(NOT MSVC)
 	add_definitions(

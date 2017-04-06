@@ -16,6 +16,11 @@ install(
 		include/ox/std
 )
 
-if(OX_BUILD_EXEC STREQUAL "ON")
+install(TARGETS OxStd
+        LIBRARY DESTINATION lib/ox
+        ARCHIVE DESTINATION lib/ox
+)
+
+if(OX_RUN_TESTS STREQUAL "ON")
 	add_subdirectory(test)
 endif()
