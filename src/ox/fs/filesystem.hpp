@@ -42,9 +42,13 @@ class FileSystem {
 
 		virtual int remove(uint64_t inode) = 0;
 
+		virtual void resize() = 0;
+
 		virtual int write(uint64_t inode, void *buffer, uint64_t size, uint8_t fileType = NormalFile) = 0;
 
 		virtual FileStat stat(uint64_t inode) = 0;
+
+		virtual uint64_t size() = 0;
 };
 
 FileSystem *createFileSystem(void *buff);
@@ -95,6 +99,8 @@ class FileSystemTemplate: public FileSystem {
 
 		int read(uint64_t inode, void *buffer, size_t size) override;
 
+		void resize() override;
+
 		int remove(uint64_t inode) override;
 
 		int write(uint64_t inode, void *buffer, uint64_t size, uint8_t fileType) override;
@@ -102,6 +108,8 @@ class FileSystemTemplate: public FileSystem {
 		FileStat stat(const char *path);
 
 		FileStat stat(uint64_t inode) override;
+
+		uint64_t size() override;
 
 		static uint8_t *format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories);
 };
@@ -198,6 +206,16 @@ int FileSystemTemplate<FileStore, FS_TYPE>::write(uint64_t inode, void *buffer, 
 #ifdef _MSC_VER
 #pragma warning(default:4244)
 #endif
+
+template<typename FileStore, FsType FS_TYPE>
+void FileSystemTemplate<FileStore, FS_TYPE>::resize() {
+	return store->resize();
+}
+
+template<typename FileStore, FsType FS_TYPE>
+uint64_t FileSystemTemplate<FileStore, FS_TYPE>::size() {
+	return store->size();
+}
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)

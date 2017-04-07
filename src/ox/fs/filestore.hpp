@@ -41,11 +41,17 @@ class FileStore {
 			void *data();
 		};
 
-                uint32_t m_fsType;
+		uint32_t m_fsType;
 		FsSize_t m_size;
 		FsSize_t m_rootInode;
 
 	public:
+		/**
+		 * Compacts and resizes the file store to the minimum possible size for
+		 * the contents.
+		 */
+		void resize();
+
 		/**
 		 * Writes the given data to a "file" with the given id.
 		 * @param id the id of the file
@@ -111,9 +117,10 @@ class FileStore {
 		 * @param root the root node to start comparing on
 		 * @param id id of the "file"
 		 * @param pathLen number of characters in pathLen
+		 * @param targetAddr the address of the target inode
 		 * @return the requested Inode, if available
 		 */
-		Inode *getInodeParent(Inode *root, InodeId_t id);
+		Inode *getInodeParent(Inode *root, InodeId_t id, FsSize_t targetAddr);
 
 		/**
 		 * Removes the inode of the given ID.
@@ -140,9 +147,9 @@ class FileStore {
 		void *alloc(FsSize_t size);
 
 		/**
-		 * Compresses all of the inode into a contiguous space, starting at the first inode.
+		 * Compacts all of the inodes into a contiguous space, starting at the first inode.
 		 */
-		void compress(FsSize_t firstInode);
+		void compact();
 
 		/**
 		 * Inserts the given insertValue into the tree of the given root.
@@ -164,7 +171,7 @@ class FileStore {
 		/**
 		 * Updates the address of the inode in the tree.
 		 */
-		void updateInodeAddress(InodeId_t id, FsSize_t addr);
+		void updateInodeAddress(InodeId_t id, FsSize_t oldAddr, FsSize_t newAddr);
 
 		uint8_t *begin() {
 			return (uint8_t*) this;
@@ -213,6 +220,13 @@ void *FileStore<FsSize_t>::Inode::data() {
 
 
 // FileStore
+
+template<typename FsSize_t>
+void FileStore<FsSize_t>::resize() {
+	compact();
+	auto last = lastInode();
+	m_size = ptr(last) + last->size();
+}
 
 template<typename FsSize_t>
 int FileStore<FsSize_t>::write(void *data, FsSize_t dataLen, uint8_t fileType) {
@@ -314,13 +328,13 @@ void FileStore<FsSize_t>::unlink(Inode *inode) {
 }
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::updateInodeAddress(InodeId_t id, FsSize_t addr) {
-	auto parent = getInodeParent(ptr<Inode*>(m_rootInode), id);
+void FileStore<FsSize_t>::updateInodeAddress(InodeId_t id, FsSize_t oldAddr, FsSize_t newAddr) {
+	auto parent = getInodeParent(ptr<Inode*>(m_rootInode), id, oldAddr);
 	if (parent) {
-		if (parent->left && ptr<Inode*>(parent->left)->id == id) {
-			parent->left = addr;
-		} else if (parent->right && ptr<Inode*>(parent->right)->id == id) {
-			parent->right = addr;
+		if (parent->left == oldAddr) {
+			parent->left = newAddr;
+		} else if (parent->right == oldAddr) {
+			parent->right = newAddr;
 		}
 	}
 }
@@ -378,23 +392,23 @@ typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getInode(Inode *root, 
 }
 
 template<typename FsSize_t>
-typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getInodeParent(Inode *root, InodeId_t id) {
+typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::getInodeParent(Inode *root, InodeId_t id, FsSize_t targetAddr) {
 	Inode *retval = nullptr;
 
 	if (root->id > id) {
 		if (root->left) {
-			if (ptr<Inode*>(root->left)->id == id) {
+			if (root->left == targetAddr) {
 				retval = root;
 			} else {
-				retval = getInode(ptr<Inode*>(root->left), id);
+				retval = getInodeParent(ptr<Inode*>(root->left), id, targetAddr);
 			}
 		}
 	} else if (root->id < id) {
 		if (root->right) {
-			if (ptr<Inode*>(root->right)->id == id) {
+			if (root->right == targetAddr) {
 				retval = root;
 			} else {
-				retval = getInode(ptr<Inode*>(root->right), id);
+				retval = getInodeParent(ptr<Inode*>(root->right), id, targetAddr);
 			}
 		}
 	}
@@ -412,7 +426,7 @@ template<typename FsSize_t>
 void *FileStore<FsSize_t>::alloc(FsSize_t size) {
 	FsSize_t next = nextInodeAddr();
 	if ((next + size) > (uint64_t) end()) {
-		compress(firstInode());
+		compact();
 		next = nextInodeAddr();
 		if ((next + size) > (uint64_t) end()) {
 			return nullptr;
@@ -429,18 +443,18 @@ void *FileStore<FsSize_t>::alloc(FsSize_t size) {
 }
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::compress(FsSize_t start) {
+void FileStore<FsSize_t>::compact() {
 	auto dest = ptr<Inode*>(firstInode());
-	auto current = ptr<Inode*>(start);
-	while (current->next > ptr(begin()) && current->next < ptr(end())) {
+	auto current = ptr<Inode*>(firstInode());
+	while (current->next > firstInode() && current->next < ptr(end())) {
 		ox_memcpy(dest, current, current->size());
 		if (dest->next != firstInode()) {
 			dest->next = ptr(dest) + dest->size();
 		}
 		ptr<Inode*>(dest->next)->prev = ptr(dest);
+		updateInodeAddress(dest->id, ptr(current), ptr(dest));
 		current = ptr<Inode*>(dest->next);
 		dest = ptr<Inode*>(ptr(dest) + dest->size());
-		updateInodeAddress(dest->id, ptr(dest));
 	}
 }
 

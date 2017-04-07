@@ -20,13 +20,14 @@
 using namespace ox::fs;
 using namespace std;
 
-const static auto oxfstoolVersion = "1.0.0";
+const static auto oxfstoolVersion = "1.1.0";
 const static auto usage = "usage:\n"
 "\toxfs format [16,32,64] <size> <path>\n"
 "\toxfs read <FS file> <inode>\n"
+"\toxfs write <FS file> <inode> <insertion file>"
+"\toxfs compact <FS file>"
 "\toxfs rm <FS file> <inode>\n"
-"\toxfs version\n"
-"\toxfs write <FS file> <inode> <insertion file>";
+"\toxfs version\n";
 
 char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
 	auto file = fopen(path, "rb");
@@ -129,6 +130,8 @@ int format(int argc, char **args) {
 		if (err == 0) {
 			fprintf(stderr, "Created file system %s\n", path);
 		}
+	} else {
+		fprintf(stderr, "Insufficient arguments\n");
 	}
 
 	return err;
@@ -163,6 +166,8 @@ int read(int argc, char **args) {
 		} else {
 			fprintf(stderr, "Could not open file: %s\n", fsPath);
 		}
+	} else {
+		fprintf(stderr, "Insufficient arguments\n");
 	}
 	return err;
 }
@@ -223,6 +228,47 @@ int write(int argc, char **args) {
 		} else {
 			fprintf(stderr, "Could not open file system\n");
 		}
+	} else {
+		fprintf(stderr, "Insufficient arguments\n");
+	}
+	return err;
+}
+
+int resize(int argc, char **args) {
+	auto err = 1;
+	if (argc >= 2) {
+		auto fsPath = args[2];
+		size_t fsSize;
+
+		auto fsBuff = loadFileBuff(fsPath, &fsSize);
+		if (fsBuff) {
+			auto fs = createFileSystem(fsBuff);
+
+			if (fs) {
+				fs->resize();
+			} else {
+				fprintf(stderr, "Invalid file system.\n");
+			}
+
+			// write back to file
+			auto fsFile = fopen(fsPath, "wb");
+			if (fsFile) {
+				err = fwrite(fsBuff, fs->size(), 1, fsFile) != 1;
+				err |= fclose(fsFile);
+				if (err) {
+					fprintf(stderr, "Could not write to file system file.\n");
+				}
+			} else {
+				err = 1;
+			}
+
+			delete fs;
+			free(fsBuff);
+		} else {
+			fprintf(stderr, "Could not open file: %s\n", fsPath);
+		}
+	} else {
+		fprintf(stderr, "Insufficient arguments\n");
 	}
 	return err;
 }
@@ -280,6 +326,8 @@ int main(int argc, char **args) {
 			err = read(argc, args);
 		} else if (ox_strcmp(cmd, "write") == 0) {
 			err = write(argc, args);
+		} else if (ox_strcmp(cmd, "resize") == 0) {
+			err = resize(argc, args);
 		} else if (ox_strcmp(cmd, "rm") == 0) {
 			err = remove(argc, args);
 		} else if (ox_strcmp(cmd, "help") == 0) {
