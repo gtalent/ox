@@ -20,7 +20,7 @@ int ox_strcmp(const char *str1, const char *str2) {
 			break;
 		}
 		i++;
-	} while (str1[i] == str2[i] && str1[i]);
+	} while (str1[i] || str2[i]);
 	return retval;
 }
 
