@@ -5,3 +5,4 @@ set -e
 make -j release 
 make -j debug 
 make -j
+make -j test
