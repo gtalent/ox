@@ -18,6 +18,7 @@ class FileStore {
 	public:
 		typedef uint16_t InodeId_t;
 		typedef FsT FsSize_t;
+		const static auto VERSION = 2;
 
 		struct StatInfo {
 			InodeId_t inodeId;
@@ -41,16 +42,25 @@ class FileStore {
 			void *data();
 		};
 
-		uint32_t m_fsType;
+		uint16_t m_version;
+		uint16_t m_fsType;
 		FsSize_t m_size;
+		FsSize_t m_memUsed;
 		FsSize_t m_rootInode;
 
 	public:
 		/**
+		 * Dumps this file store's inodes to the given file store.
+		 */
+		int dumpTo(FileStore<FsSize_t> *dest);
+
+		/**
 		 * Compacts and resizes the file store to the minimum possible size for
 		 * the contents.
+		 *
+		 * NOTE: This does NOT resize the buffer that this file store refers to!
 		 */
-		void resize();
+		void resize(FsSize_t size = 0);
 
 		/**
 		 * Writes the given data to a "file" with the given id.
@@ -90,9 +100,17 @@ class FileStore {
 		 */
 		FsSize_t size();
 
-		static uint8_t version();
+		/**
+		 * Returns the space currently available in this file store.
+		 * @return the space currently available in this file store.
+		 */
+		FsSize_t available();
+
+		uint16_t fsType();
+
+		uint16_t version();
 		
-		static uint8_t *format(uint8_t *buffer, FsSize_t size, uint32_t fsType = 0);
+		static uint8_t *format(uint8_t *buffer, FsSize_t size, uint16_t fsType = 0);
 
 	private:
 		/**
@@ -124,7 +142,7 @@ class FileStore {
 		 * Removes the given node from the linked list.
 		 * @param node node to remove
 		 */
-		void unlink(Inode *node);
+		void dealloc(Inode *node);
 
 		/**
 		 * Gets the address of the next available inode, assuming there is a next
@@ -214,25 +232,49 @@ void *FileStore<FsSize_t>::Inode::data() {
 // FileStore
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::resize() {
-	compact();
-	auto last = lastInode();
-	m_size = ptr(last) + last->size();
+int FileStore<FsSize_t>::dumpTo(FileStore<FsSize_t> *dest) {
+	if (dest->size() >= size()) {
+		auto i = ptr<Inode*>(firstInode());
+		do {
+			dest->write(i->id, i->data(), i->dataLen, i->fileType);
+			i = ptr<Inode*>(i->next);
+		} while (ptr(i) != firstInode());
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+template<typename FsSize_t>
+void FileStore<FsSize_t>::resize(FsSize_t size) {
+	if (size < m_size) {
+		// shrink file store
+		if (m_memUsed > size) {
+			size = m_memUsed;
+		}
+		compact();
+		m_size = size;
+	} else if (size > m_size) {
+		// grow file store
+		m_size = size;
+	}
 }
 
 template<typename FsSize_t>
 int FileStore<FsSize_t>::write(InodeId_t id, void *data, FsSize_t dataLen, uint8_t fileType) {
 	auto retval = 1;
 	const FsSize_t size = sizeof(Inode) + dataLen;
-	auto inode = (Inode*) alloc(size);
-	if (inode) {
-		remove(id);
-		inode->id = id;
-		inode->fileType = fileType;
-		inode->setData(data, dataLen);
-		auto root = ptr<Inode*>(m_rootInode);
-		if (insert(root, inode) || root == inode) {
-			retval = 0;
+	if (size <= (m_size - m_memUsed)) {
+		auto inode = (Inode*) alloc(size);
+		if (inode) {
+			remove(id);
+			inode->id = id;
+			inode->fileType = fileType;
+			inode->setData(data, dataLen);
+			auto root = ptr<Inode*>(m_rootInode);
+			if (insert(root, inode) || root == inode) {
+				retval = 0;
+			}
 		}
 	}
 	return retval;
@@ -260,7 +302,7 @@ int FileStore<FsSize_t>::remove(Inode *root, InodeId_t id) {
 				if (node->left) {
 					insert(root, ptr<Inode*>(node->left));
 				}
-				unlink(node);
+				dealloc(node);
 				node->id = 0;
 				node->left = 0;
 				node->right = 0;
@@ -280,7 +322,7 @@ int FileStore<FsSize_t>::remove(Inode *root, InodeId_t id) {
 				if (node->left) {
 					insert(root, ptr<Inode*>(node->left));
 				}
-				unlink(node);
+				dealloc(node);
 				node->id = 0;
 				node->left = 0;
 				node->right = 0;
@@ -292,7 +334,7 @@ int FileStore<FsSize_t>::remove(Inode *root, InodeId_t id) {
 		if (root->left) {
 			insert(ptr<Inode*>(m_rootInode), ptr<Inode*>(root->left));
 		}
-		unlink(root);
+		dealloc(root);
 		root->id = 0;
 		root->left = 0;
 		root->right = 0;
@@ -303,15 +345,15 @@ int FileStore<FsSize_t>::remove(Inode *root, InodeId_t id) {
 }
 
 template<typename FsSize_t>
-void FileStore<FsSize_t>::unlink(Inode *inode) {
+void FileStore<FsSize_t>::dealloc(Inode *inode) {
 	auto next = ptr<Inode*>(inode->next);
 	auto prev = ptr<Inode*>(inode->prev);
 	prev->next = ptr(next);
 	next->prev = ptr(prev);
 
+	m_memUsed -= inode->size();
+
 	ox_memset(inode, 0, inode->size());
-	inode->prev = firstInode();
-	inode->next = firstInode();
 }
 
 template<typename FsSize_t>
@@ -357,6 +399,11 @@ typename FileStore<FsSize_t>::StatInfo FileStore<FsSize_t>::stat(InodeId_t id) {
 template<typename FsSize_t>
 FsSize_t FileStore<FsSize_t>::size() {
 	return m_size;
+}
+
+template<typename FsSize_t>
+FsSize_t FileStore<FsSize_t>::available() {
+	return m_size - m_memUsed;
 }
 
 template<typename FsSize_t>
@@ -425,6 +472,7 @@ void *FileStore<FsSize_t>::alloc(FsSize_t size) {
 	ox_memset(inode, 0, size);
 	inode->prev = ptr<Inode*>(firstInode())->prev;
 	inode->next = retval + size;
+	m_memUsed += size;
 	ptr<Inode*>(firstInode())->prev = retval;
 	return inode;
 }
@@ -498,19 +546,26 @@ typename FileStore<FsSize_t>::Inode *FileStore<FsSize_t>::lastInode() {
 }
 
 template<typename FsSize_t>
-uint8_t FileStore<FsSize_t>::version() {
-	return 1;
+uint16_t FileStore<FsSize_t>::fsType() {
+	return m_fsType;
 };
 
 template<typename FsSize_t>
-uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size, uint32_t fsType) {
+uint16_t FileStore<FsSize_t>::version() {
+	return m_version;
+};
+
+template<typename FsSize_t>
+uint8_t *FileStore<FsSize_t>::format(uint8_t *buffer, FsSize_t size, uint16_t fsType) {
 	ox_memset(buffer, 0, size);
 
 	auto *fs = (FileStore*) buffer;
 	fs->m_fsType = fsType;
+	fs->m_version = VERSION;
 	fs->m_size = size;
+	fs->m_memUsed = sizeof(FileStore<FsSize_t>) + sizeof(Inode);
 	fs->m_rootInode = sizeof(FileStore<FsSize_t>);
-	((Inode*) (fs + 1))->prev = fs->firstInode();
+	((Inode*) (fs + 1))->prev = sizeof(FileStore<FsSize_t>);
 	fs->lastInode()->next = sizeof(FileStore<FsSize_t>);
 
 	return (uint8_t*) buffer;

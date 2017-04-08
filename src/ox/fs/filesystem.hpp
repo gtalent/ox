@@ -13,8 +13,6 @@
 namespace ox {
 namespace fs {
 
-using namespace std;
-
 enum FsType {
 	OxFS_16 = 1,
 	OxFS_32 = 2,
@@ -42,11 +40,13 @@ class FileSystem {
 
 		virtual int remove(uint64_t inode) = 0;
 
-		virtual void resize() = 0;
+		virtual void resize(uint64_t size = 0) = 0;
 
 		virtual int write(uint64_t inode, void *buffer, uint64_t size, uint8_t fileType = NormalFile) = 0;
 
 		virtual FileStat stat(uint64_t inode) = 0;
+
+		virtual uint64_t available() = 0;
 
 		virtual uint64_t size() = 0;
 };
@@ -99,7 +99,7 @@ class FileSystemTemplate: public FileSystem {
 
 		int read(uint64_t inode, void *buffer, size_t size) override;
 
-		void resize() override;
+		void resize(uint64_t size = 0) override;
 
 		int remove(uint64_t inode) override;
 
@@ -108,6 +108,8 @@ class FileSystemTemplate: public FileSystem {
 		FileStat stat(const char *path);
 
 		FileStat stat(uint64_t inode) override;
+
+		uint64_t available() override;
 
 		uint64_t size() override;
 
@@ -208,8 +210,13 @@ int FileSystemTemplate<FileStore, FS_TYPE>::write(uint64_t inode, void *buffer, 
 #endif
 
 template<typename FileStore, FsType FS_TYPE>
-void FileSystemTemplate<FileStore, FS_TYPE>::resize() {
-	return store->resize();
+void FileSystemTemplate<FileStore, FS_TYPE>::resize(uint64_t size) {
+	return store->resize(size);
+}
+
+template<typename FileStore, FsType FS_TYPE>
+uint64_t FileSystemTemplate<FileStore, FS_TYPE>::available() {
+	return store->available();
 }
 
 template<typename FileStore, FsType FS_TYPE>
@@ -222,7 +229,7 @@ uint64_t FileSystemTemplate<FileStore, FS_TYPE>::size() {
 #endif
 template<typename FileStore, FsType FS_TYPE>
 uint8_t *FileSystemTemplate<FileStore, FS_TYPE>::format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories) {
-	buffer = FileStore::format((uint8_t*) buffer, size, (uint32_t) FS_TYPE);
+	buffer = FileStore::format((uint8_t*) buffer, size, (uint16_t) FS_TYPE);
 	FileSystemTemplate<FileStore, FS_TYPE> fs(buffer);
 
 	if (buffer && useDirectories) {

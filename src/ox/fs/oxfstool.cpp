@@ -24,9 +24,10 @@ const static auto oxfstoolVersion = "1.1.0";
 const static auto usage = "usage:\n"
 "\toxfs format [16,32,64] <size> <path>\n"
 "\toxfs read <FS file> <inode>\n"
-"\toxfs write <FS file> <inode> <insertion file>"
-"\toxfs compact <FS file>"
+"\toxfs write <FS file> <inode> <insertion file>\n"
+"\toxfs write-expand <FS file> <inode> <insertion file>\n"
 "\toxfs rm <FS file> <inode>\n"
+"\toxfs compact <FS file>\n"
 "\toxfs version\n";
 
 char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
@@ -155,6 +156,7 @@ int read(int argc, char **args) {
 
 				if (output) {
 					fwrite(output, fileSize, 1, stdout);
+					delete []output;
 					err = 0;
 				}
 
@@ -172,7 +174,7 @@ int read(int argc, char **args) {
 	return err;
 }
 
-int write(int argc, char **args) {
+int write(int argc, char **args, bool expand) {
 	auto err = 0;
 	if (argc >= 5) {
 		auto fsPath = args[2];
@@ -184,9 +186,9 @@ int write(int argc, char **args) {
 		if (fsFile) {
 			fseek(fsFile, 0, SEEK_END);
 
-			const auto fsSize = (size_t) ftell(fsFile);
+			auto fsSize = (size_t) ftell(fsFile);
 			rewind(fsFile);
-			auto fsBuff = (char*) malloc(fsSize);
+			auto fsBuff = new uint8_t[fsSize];
 			auto itemsRead = fread(fsBuff, fsSize, 1, fsFile);
 			fclose(fsFile);
 
@@ -195,10 +197,24 @@ int write(int argc, char **args) {
 				if (srcBuff) {
 					auto fs = createFileSystem(fsBuff);
 					if (fs) {
+						if (expand && fs->available() <= srcSize) {
+							auto needed = (fs->size() - fs->available()) + fsSize;
+							auto cloneBuff = new uint8_t[needed];
+							ox_memcpy(cloneBuff, fsBuff, fsSize);
+
+							delete fs;
+							delete []fsBuff;
+
+							fsBuff = cloneBuff;
+							fs = createFileSystem(fsBuff);
+							fsSize = needed;
+							fs->resize(fsSize);
+						}
 						err |= fs->write(inode, srcBuff, srcSize);
 						if (err) {
 							fprintf(stderr, "Could not write to file system.\n");
 						}
+						delete fs;
 					} else {
 						fprintf(stderr, "Invalid file system type: %d.\n", *(uint32_t*) fsBuff);
 						err = 1;
@@ -224,7 +240,7 @@ int write(int argc, char **args) {
 				}
 			}
 
-			free(fsBuff);
+			delete []fsBuff;
 		} else {
 			fprintf(stderr, "Could not open file system\n");
 		}
@@ -234,7 +250,7 @@ int write(int argc, char **args) {
 	return err;
 }
 
-int resize(int argc, char **args) {
+int compact(int argc, char **args) {
 	auto err = 1;
 	if (argc >= 2) {
 		auto fsPath = args[2];
@@ -325,16 +341,18 @@ int main(int argc, char **args) {
 		} else if (ox_strcmp(cmd, "read") == 0) {
 			err = read(argc, args);
 		} else if (ox_strcmp(cmd, "write") == 0) {
-			err = write(argc, args);
-		} else if (ox_strcmp(cmd, "resize") == 0) {
-			err = resize(argc, args);
+			err = write(argc, args, false);
+		} else if (ox_strcmp(cmd, "write-expand") == 0) {
+			err = write(argc, args, true);
+		} else if (ox_strcmp(cmd, "compact") == 0) {
+			err = compact(argc, args);
 		} else if (ox_strcmp(cmd, "rm") == 0) {
 			err = remove(argc, args);
 		} else if (ox_strcmp(cmd, "help") == 0) {
 			printf("%s\n", usage);
 		} else if (ox_strcmp(cmd, "version") == 0) {
 			printf("oxfstool version %s\n", oxfstoolVersion);
-			printf("oxfs format version %d\n", FileStore16::version());
+			printf("oxfs format version %d\n", FileStore16::VERSION);
 		} else {
 			printf("Command '%s' not recognized.\n", cmd);
 			err = 1;

@@ -11,7 +11,7 @@ namespace ox {
 namespace fs {
 
 FileSystem *createFileSystem(void *buff) {
-	auto type = *((uint32_t*) buff);
+	auto type = ((FileStore16*) buff)->fsType();
 	FileSystem *fs = nullptr;
 
 	switch (type) {
