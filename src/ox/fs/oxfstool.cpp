@@ -20,7 +20,7 @@
 using namespace ox::fs;
 using namespace std;
 
-const static auto oxfstoolVersion = "1.1.0";
+const static auto oxfstoolVersion = "1.1.1";
 const static auto usage = "usage:\n"
 "\toxfs format [16,32,64] <size> <path>\n"
 "\toxfs read <FS file> <inode>\n"
@@ -198,7 +198,7 @@ int write(int argc, char **args, bool expand) {
 					auto fs = createFileSystem(fsBuff);
 					if (fs) {
 						if (expand && fs->available() <= srcSize) {
-							auto needed = (fs->size() - fs->available()) + fsSize;
+							auto needed = fs->spaceNeeded(inode, srcSize);
 							auto cloneBuff = new uint8_t[needed];
 							ox_memcpy(cloneBuff, fsBuff, fsSize);
 

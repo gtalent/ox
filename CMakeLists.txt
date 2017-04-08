@@ -15,7 +15,7 @@ endif()
 
 if(NOT MSVC)
 	add_definitions(
-		-std=c++11
+		-std=c++14
 		-Wall
 		-nostdlib
 		-fno-exceptions

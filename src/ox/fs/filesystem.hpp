@@ -46,6 +46,8 @@ class FileSystem {
 
 		virtual FileStat stat(uint64_t inode) = 0;
 
+		virtual uint64_t spaceNeeded(uint64_t id, uint64_t size) = 0;
+
 		virtual uint64_t available() = 0;
 
 		virtual uint64_t size() = 0;
@@ -108,6 +110,8 @@ class FileSystemTemplate: public FileSystem {
 		FileStat stat(const char *path);
 
 		FileStat stat(uint64_t inode) override;
+
+		uint64_t spaceNeeded(uint64_t id, uint64_t size) override;
 
 		uint64_t available() override;
 
@@ -212,6 +216,11 @@ int FileSystemTemplate<FileStore, FS_TYPE>::write(uint64_t inode, void *buffer, 
 template<typename FileStore, FsType FS_TYPE>
 void FileSystemTemplate<FileStore, FS_TYPE>::resize(uint64_t size) {
 	return store->resize(size);
+}
+
+template<typename FileStore, FsType FS_TYPE>
+uint64_t FileSystemTemplate<FileStore, FS_TYPE>::spaceNeeded(uint64_t id, uint64_t size) {
+	return store->spaceNeeded(id, size);
 }
 
 template<typename FileStore, FsType FS_TYPE>

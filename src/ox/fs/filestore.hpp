@@ -95,6 +95,14 @@ class FileStore {
 		StatInfo stat(InodeId_t id);
 
 		/**
+		 * Returns the space needed for this data at the given inode address.
+		 * @param id the target inode id
+		 * @param size the size of the data to insert
+		 * @return the space currently available in this file store.
+		 */
+		FsSize_t spaceNeeded(InodeId_t id, FsSize_t size);
+
+		/**
 		 * Returns the size of the file store.
 		 * @return the size of the file store.
 		 */
@@ -394,6 +402,16 @@ typename FileStore<FsSize_t>::StatInfo FileStore<FsSize_t>::stat(InodeId_t id) {
 		stat.inodeId = 0;
 	}
 	return stat;
+}
+
+template<typename FsSize_t>
+FsSize_t FileStore<FsSize_t>::spaceNeeded(InodeId_t id, FsSize_t size) {
+	FsSize_t needed = sizeof(Inode) + size;;
+	auto inode = getInode(ptr<Inode*>(m_rootInode), id);
+	if (inode) {
+		needed -= inode->size();
+	}
+	return needed;
 }
 
 template<typename FsSize_t>
