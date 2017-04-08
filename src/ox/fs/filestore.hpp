@@ -58,14 +58,6 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-		int write(void *data, FsSize_t dataLen, uint8_t fileType = 0);
-
-		/**
-		 * Writes the given data to a "file" with the given id.
-		 * @param id the id of the file
-		 * @param data the contents of the file
-		 * @param dataLen the number of bytes data points to
-		 */
 		int write(InodeId_t id, void *data, FsSize_t dataLen, uint8_t fileType = 0);
 
 		/**
@@ -226,11 +218,6 @@ void FileStore<FsSize_t>::resize() {
 	compact();
 	auto last = lastInode();
 	m_size = ptr(last) + last->size();
-}
-
-template<typename FsSize_t>
-int FileStore<FsSize_t>::write(void *data, FsSize_t dataLen, uint8_t fileType) {
-	return 1;
 }
 
 template<typename FsSize_t>
