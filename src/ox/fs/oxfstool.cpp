@@ -20,7 +20,7 @@
 using namespace ox::fs;
 using namespace std;
 
-const static auto oxfstoolVersion = "1.1.1";
+const static auto oxfstoolVersion = "1.2.0";
 const static auto usage = "usage:\n"
 "\toxfs format [16,32,64] <size> <path>\n"
 "\toxfs read <FS file> <inode>\n"
