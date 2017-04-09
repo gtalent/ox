@@ -316,7 +316,7 @@ class FileStore {
 
 template<typename Header>
 typename Header::FsSize_t FileStore<Header>::Inode::size() {
-	return std::nativizeLittleEndian(sizeof(Inode) + getDataLen());
+	return sizeof(Inode) + getDataLen();
 }
 
 template<typename Header>

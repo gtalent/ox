@@ -13,6 +13,7 @@
 namespace ox {
 namespace std {
 
+
 inline uint16_t byteSwap(uint16_t i) {
 	return (i << 8) | (i >> 8);
 }

@@ -28,3 +28,16 @@ add_test("Test\\ ox_strcmp\\ hijk\\ !=\\ asdf" StrOpsTest "hijk > asdf")
 add_test("Test\\ ox_strcmp\\ read\\ !=\\ resize" StrOpsTest "read < resize")
 add_test("Test\\ ox_strcmp\\ resize\\ !=\\ read" StrOpsTest "resize > read")
 add_test("Test\\ ox_strcmp\\ resize\\ ==\\ resize" StrOpsTest "resize == resize")
+
+
+################################################################################
+# Byte Swap Tests
+
+add_executable(
+	ByteSwapTest
+		byteswap_test.cpp
+)
+
+target_link_libraries(ByteSwapTest OxStd)
+
+add_test("Test\\ nativizeLittleEndian\\ 40\\ ==\\ 671088640" ByteSwapTest "40")
