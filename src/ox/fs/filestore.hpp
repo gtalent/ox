@@ -24,33 +24,33 @@ struct FileStoreHeader {
 	FsSize_t rootInode;
 };
 
-template<typename FsT, typename Header>
+template<typename Header>
 class FileStore {
 
 	public:
 		typedef uint16_t InodeId_t;
-		typedef FsT FsSize_t;
+		typedef typename Header::FsSize_t FsSize_t;
 		const static auto VERSION = Header::VERSION;
 
 		struct StatInfo {
 			InodeId_t inodeId;
-			FsSize_t  size;
+			typename Header::FsSize_t  size;
 			uint8_t fileType;
 		};
 
 	private:
 		struct Inode {
 			// the next Inode in memory
-			FsSize_t prev, next;
-			FsSize_t dataLen;
+			typename Header::FsSize_t prev, next;
+			typename Header::FsSize_t dataLen;
 			InodeId_t id;
 			uint8_t refs;
 			uint8_t fileType;
-			FsSize_t left, right;
+			typename Header::FsSize_t left, right;
 
-			FsSize_t size();
+			typename Header::FsSize_t size();
 			void setId(InodeId_t);
-			void setData(void *data, FsSize_t size);
+			void setData(void *data, typename Header::FsSize_t size);
 			void *data();
 		};
 
@@ -60,7 +60,7 @@ class FileStore {
 		/**
 		 * Dumps this file store's inodes to the given file store.
 		 */
-		int dumpTo(FileStore<FsSize_t, Header> *dest);
+		int dumpTo(FileStore<Header> *dest);
 
 		/**
 		 * Compacts and resizes the file store to the minimum possible size for
@@ -68,7 +68,7 @@ class FileStore {
 		 *
 		 * NOTE: This does NOT resize the buffer that this file store refers to!
 		 */
-		void resize(FsSize_t size = 0);
+		void resize(typename Header::FsSize_t size = 0);
 
 		/**
 		 * Writes the given data to a "file" with the given id.
@@ -76,7 +76,7 @@ class FileStore {
 		 * @param data the contents of the file
 		 * @param dataLen the number of bytes data points to
 		 */
-		int write(InodeId_t id, void *data, FsSize_t dataLen, uint8_t fileType = 0);
+		int write(InodeId_t id, void *data, typename Header::FsSize_t dataLen, uint8_t fileType = 0);
 
 		/**
 		 * Removes the inode of the given ID.
@@ -92,7 +92,7 @@ class FileStore {
 		 * @param size pointer to a value that will be assigned the size of data
 		 * @return 0 if read is a success
 		 */
-		int read(InodeId_t id, void *data, FsSize_t *size);
+		int read(InodeId_t id, void *data, typename Header::FsSize_t *size);
 
 		/**
 		 * Reads the stat information of the inode of the given inode id.
@@ -108,25 +108,25 @@ class FileStore {
 		 * @param size the size of the data to insert
 		 * @return the space currently available in this file store.
 		 */
-		FsSize_t spaceNeeded(InodeId_t id, FsSize_t size);
+		typename Header::FsSize_t spaceNeeded(InodeId_t id, typename Header::FsSize_t size);
 
 		/**
 		 * Returns the size of the file store.
 		 * @return the size of the file store.
 		 */
-		FsSize_t size();
+		typename Header::FsSize_t size();
 
 		/**
 		 * Returns the space currently available in this file store.
 		 * @return the space currently available in this file store.
 		 */
-		FsSize_t available();
+		typename Header::FsSize_t available();
 
 		uint16_t fsType();
 
 		uint16_t version();
 		
-		static uint8_t *format(uint8_t *buffer, FsSize_t size, uint16_t fsType = 0);
+		static uint8_t *format(uint8_t *buffer, typename Header::FsSize_t size, uint16_t fsType = 0);
 
 	private:
 		/**
@@ -146,7 +146,7 @@ class FileStore {
 		 * @param targetAddr the address of the target inode
 		 * @return the requested Inode, if available
 		 */
-		Inode *getInodeParent(Inode *root, InodeId_t id, FsSize_t targetAddr);
+		Inode *getInodeParent(Inode *root, InodeId_t id, typename Header::FsSize_t targetAddr);
 
 		/**
 		 * Removes the inode of the given ID.
@@ -164,13 +164,13 @@ class FileStore {
 		 * Gets the address of the next available inode, assuming there is a next
 		 * available inode.
 		 */
-		FsSize_t nextInodeAddr();
+		typename Header::FsSize_t nextInodeAddr();
 
 		/**
 		 * Gets an address for a new Inode.
 		 * @param size the size of the Inode
 		 */
-		void *alloc(FsSize_t size);
+		void *alloc(typename Header::FsSize_t size);
 
 		/**
 		 * Compacts all of the inodes into a contiguous space, starting at the first inode.
@@ -188,16 +188,16 @@ class FileStore {
 		 * Gets the FsSize_t associated with the next Inode to be allocated.
 		 * @retrun the FsSize_t associated with the next Inode to be allocated
 		 */
-		FsSize_t iterator();
+		typename Header::FsSize_t iterator();
 
-		FsSize_t firstInode();
+		typename Header::FsSize_t firstInode();
 
 		Inode *lastInode();
 
 		/**
 		 * Updates the address of the inode in the tree.
 		 */
-		void updateInodeAddress(InodeId_t id, FsSize_t oldAddr, FsSize_t newAddr);
+		void updateInodeAddress(InodeId_t id, typename Header::FsSize_t oldAddr, typename Header::FsSize_t newAddr);
 
 		uint8_t *begin() {
 			return (uint8_t*) this;
@@ -210,45 +210,45 @@ class FileStore {
 		/**
 		 * Converts an actual pointer to a FsSize_t.
 		 */
-		FsSize_t ptr(void *ptr);
+		typename Header::FsSize_t ptr(void *ptr);
 
 		/**
 		 * Converts a FsSize_t to an actual pointer.
 		 */
 		template<typename T>
-		T ptr(FsSize_t ptr) {
+		T ptr(typename Header::FsSize_t ptr) {
 			return (T) (begin() + ptr);
 		};
 
 };
 
-template<typename FsSize_t, typename Header>
-FsSize_t FileStore<FsSize_t, Header>::Inode::size() {
+template<typename Header>
+typename Header::FsSize_t FileStore<Header>::Inode::size() {
 	return sizeof(Inode) + dataLen;
 }
 
-template<typename FsSize_t, typename Header>
-void FileStore<FsSize_t, Header>::Inode::setId(InodeId_t id) {
+template<typename Header>
+void FileStore<Header>::Inode::setId(InodeId_t id) {
 	this->id = id;
 }
 
-template<typename FsSize_t, typename Header>
-void FileStore<FsSize_t, Header>::Inode::setData(void *data, FsSize_t size) {
+template<typename Header>
+void FileStore<Header>::Inode::setData(void *data, typename Header::FsSize_t size) {
 	ox_memcpy(this->data(), data, size);
 	dataLen = size;
 }
 
 
-template<typename FsSize_t, typename Header>
-void *FileStore<FsSize_t, Header>::Inode::data() {
+template<typename Header>
+void *FileStore<Header>::Inode::data() {
 	return this + 1;
 }
 
 
 // FileStore
 
-template<typename FsSize_t, typename Header>
-int FileStore<FsSize_t, Header>::dumpTo(FileStore<FsSize_t, Header> *dest) {
+template<typename Header>
+int FileStore<Header>::dumpTo(FileStore<Header> *dest) {
 	if (dest->size() >= size()) {
 		auto i = ptr<Inode*>(firstInode());
 		do {
@@ -261,8 +261,8 @@ int FileStore<FsSize_t, Header>::dumpTo(FileStore<FsSize_t, Header> *dest) {
 	}
 }
 
-template<typename FsSize_t, typename Header>
-void FileStore<FsSize_t, Header>::resize(FsSize_t size) {
+template<typename Header>
+void FileStore<Header>::resize(typename Header::FsSize_t size) {
 	if (size < m_header.size) {
 		// shrink file store
 		if (m_header.memUsed > size) {
@@ -276,10 +276,10 @@ void FileStore<FsSize_t, Header>::resize(FsSize_t size) {
 	}
 }
 
-template<typename FsSize_t, typename Header>
-int FileStore<FsSize_t, Header>::write(InodeId_t id, void *data, FsSize_t dataLen, uint8_t fileType) {
+template<typename Header>
+int FileStore<Header>::write(InodeId_t id, void *data, typename Header::FsSize_t dataLen, uint8_t fileType) {
 	auto retval = 1;
-	const FsSize_t size = sizeof(Inode) + dataLen;
+	const typename Header::FsSize_t size = sizeof(Inode) + dataLen;
 	if (size <= (m_header.size - m_header.memUsed)) {
 		auto inode = (Inode*) alloc(size);
 		if (inode) {
@@ -296,13 +296,13 @@ int FileStore<FsSize_t, Header>::write(InodeId_t id, void *data, FsSize_t dataLe
 	return retval;
 }
 
-template<typename FsSize_t, typename Header>
-int FileStore<FsSize_t, Header>::remove(InodeId_t id) {
+template<typename Header>
+int FileStore<Header>::remove(InodeId_t id) {
 	return remove(ptr<Inode*>(m_header.rootInode), id);
 }
 
-template<typename FsSize_t, typename Header>
-int FileStore<FsSize_t, Header>::remove(Inode *root, InodeId_t id) {
+template<typename Header>
+int FileStore<Header>::remove(Inode *root, InodeId_t id) {
 	auto err = 1;
 
 	if (root->id > id) {
@@ -360,8 +360,8 @@ int FileStore<FsSize_t, Header>::remove(Inode *root, InodeId_t id) {
 	return err;
 }
 
-template<typename FsSize_t, typename Header>
-void FileStore<FsSize_t, Header>::dealloc(Inode *inode) {
+template<typename Header>
+void FileStore<Header>::dealloc(Inode *inode) {
 	auto next = ptr<Inode*>(inode->next);
 	auto prev = ptr<Inode*>(inode->prev);
 	prev->next = ptr(next);
@@ -372,8 +372,8 @@ void FileStore<FsSize_t, Header>::dealloc(Inode *inode) {
 	ox_memset(inode, 0, inode->size());
 }
 
-template<typename FsSize_t, typename Header>
-void FileStore<FsSize_t, Header>::updateInodeAddress(InodeId_t id, FsSize_t oldAddr, FsSize_t newAddr) {
+template<typename Header>
+void FileStore<Header>::updateInodeAddress(InodeId_t id, typename Header::FsSize_t oldAddr, typename Header::FsSize_t newAddr) {
 	auto parent = getInodeParent(ptr<Inode*>(m_header.rootInode), id, oldAddr);
 	if (parent) {
 		if (parent->left == oldAddr) {
@@ -384,8 +384,8 @@ void FileStore<FsSize_t, Header>::updateInodeAddress(InodeId_t id, FsSize_t oldA
 	}
 }
 
-template<typename FsSize_t, typename Header>
-int FileStore<FsSize_t, Header>::read(InodeId_t id, void *data, FsSize_t *size) {
+template<typename Header>
+int FileStore<Header>::read(InodeId_t id, void *data, typename Header::FsSize_t *size) {
 	auto inode = getInode(ptr<Inode*>(m_header.rootInode), id);
 	int retval = 1;
 	if (inode) {
@@ -398,8 +398,8 @@ int FileStore<FsSize_t, Header>::read(InodeId_t id, void *data, FsSize_t *size) 
 	return retval;
 }
 
-template<typename FsSize_t, typename Header>
-typename FileStore<FsSize_t, Header>::StatInfo FileStore<FsSize_t, Header>::stat(InodeId_t id) {
+template<typename Header>
+typename FileStore<Header>::StatInfo FileStore<Header>::stat(InodeId_t id) {
 	auto inode = getInode(ptr<Inode*>(m_header.rootInode), id);
 	StatInfo stat;
 	if (inode) {
@@ -412,9 +412,9 @@ typename FileStore<FsSize_t, Header>::StatInfo FileStore<FsSize_t, Header>::stat
 	return stat;
 }
 
-template<typename FsSize_t, typename Header>
-FsSize_t FileStore<FsSize_t, Header>::spaceNeeded(InodeId_t id, FsSize_t size) {
-	FsSize_t needed = sizeof(Inode) + size;;
+template<typename Header>
+typename Header::FsSize_t FileStore<Header>::spaceNeeded(InodeId_t id, typename Header::FsSize_t size) {
+	typename Header::FsSize_t needed = sizeof(Inode) + size;;
 	auto inode = getInode(ptr<Inode*>(m_header.rootInode), id);
 	if (inode) {
 		needed -= inode->size();
@@ -422,18 +422,18 @@ FsSize_t FileStore<FsSize_t, Header>::spaceNeeded(InodeId_t id, FsSize_t size) {
 	return needed;
 }
 
-template<typename FsSize_t, typename Header>
-FsSize_t FileStore<FsSize_t, Header>::size() {
+template<typename Header>
+typename Header::FsSize_t FileStore<Header>::size() {
 	return m_header.size;
 }
 
-template<typename FsSize_t, typename Header>
-FsSize_t FileStore<FsSize_t, Header>::available() {
+template<typename Header>
+typename Header::FsSize_t FileStore<Header>::available() {
 	return m_header.size - m_header.memUsed;
 }
 
-template<typename FsSize_t, typename Header>
-typename FileStore<FsSize_t, Header>::Inode *FileStore<FsSize_t, Header>::getInode(Inode *root, InodeId_t id) {
+template<typename Header>
+typename FileStore<Header>::Inode *FileStore<Header>::getInode(Inode *root, InodeId_t id) {
 	Inode *retval = nullptr;
 
 	if (root->id > id) {
@@ -451,8 +451,8 @@ typename FileStore<FsSize_t, Header>::Inode *FileStore<FsSize_t, Header>::getIno
 	return retval;
 }
 
-template<typename FsSize_t, typename Header>
-typename FileStore<FsSize_t, Header>::Inode *FileStore<FsSize_t, Header>::getInodeParent(Inode *root, InodeId_t id, FsSize_t targetAddr) {
+template<typename Header>
+typename FileStore<Header>::Inode *FileStore<Header>::getInodeParent(Inode *root, InodeId_t id, typename Header::FsSize_t targetAddr) {
 	Inode *retval = nullptr;
 
 	if (root->id > id) {
@@ -476,15 +476,15 @@ typename FileStore<FsSize_t, Header>::Inode *FileStore<FsSize_t, Header>::getIno
 	return retval;
 }
 
-template<typename FsSize_t, typename Header>
-FsSize_t FileStore<FsSize_t, Header>::nextInodeAddr() {
-	FsSize_t next = ptr(lastInode()) + lastInode()->size();
+template<typename Header>
+typename Header::FsSize_t FileStore<Header>::nextInodeAddr() {
+	typename Header::FsSize_t next = ptr(lastInode()) + lastInode()->size();
 	return next;
 }
 
-template<typename FsSize_t, typename Header>
-void *FileStore<FsSize_t, Header>::alloc(FsSize_t size) {
-	FsSize_t next = nextInodeAddr();
+template<typename Header>
+void *FileStore<Header>::alloc(typename Header::FsSize_t size) {
+	typename Header::FsSize_t next = nextInodeAddr();
 	if ((next + size) > (uint64_t) end()) {
 		compact();
 		next = nextInodeAddr();
@@ -503,8 +503,8 @@ void *FileStore<FsSize_t, Header>::alloc(FsSize_t size) {
 	return inode;
 }
 
-template<typename FsSize_t, typename Header>
-void FileStore<FsSize_t, Header>::compact() {
+template<typename Header>
+void FileStore<Header>::compact() {
 	auto dest = ptr<Inode*>(firstInode());
 	auto current = ptr<Inode*>(firstInode());
 	while (current->next > firstInode() && current->next < ptr(end())) {
@@ -519,8 +519,8 @@ void FileStore<FsSize_t, Header>::compact() {
 	}
 }
 
-template<typename FsSize_t, typename Header>
-bool FileStore<FsSize_t, Header>::insert(Inode *root, Inode *insertValue) {
+template<typename Header>
+bool FileStore<Header>::insert(Inode *root, Inode *insertValue) {
 	auto retval = false;
 
 	if (root->id > insertValue->id) {
@@ -545,13 +545,13 @@ bool FileStore<FsSize_t, Header>::insert(Inode *root, Inode *insertValue) {
 	return retval;
 }
 
-template<typename FsSize_t, typename Header>
-FsSize_t FileStore<FsSize_t, Header>::iterator() {
+template<typename Header>
+typename Header::FsSize_t FileStore<Header>::iterator() {
 	return ptr(lastInode()) + lastInode()->size();
 }
 
-template<typename FsSize_t, typename Header>
-FsSize_t FileStore<FsSize_t, Header>::ptr(void *ptr) {
+template<typename Header>
+typename Header::FsSize_t FileStore<Header>::ptr(void *ptr) {
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
@@ -561,45 +561,45 @@ FsSize_t FileStore<FsSize_t, Header>::ptr(void *ptr) {
 #endif
 }
 
-template<typename FsSize_t, typename Header>
-FsSize_t FileStore<FsSize_t, Header>::firstInode() {
-	return sizeof(FileStore<FsSize_t, Header>);
+template<typename Header>
+typename Header::FsSize_t FileStore<Header>::firstInode() {
+	return sizeof(FileStore<Header>);
 }
 
-template<typename FsSize_t, typename Header>
-typename FileStore<FsSize_t, Header>::Inode *FileStore<FsSize_t, Header>::lastInode() {
+template<typename Header>
+typename FileStore<Header>::Inode *FileStore<Header>::lastInode() {
 	return ptr<Inode*>(ptr<Inode*>(firstInode())->prev);
 }
 
-template<typename FsSize_t, typename Header>
-uint16_t FileStore<FsSize_t, Header>::fsType() {
+template<typename Header>
+uint16_t FileStore<Header>::fsType() {
 	return m_header.fsType;
 };
 
-template<typename FsSize_t, typename Header>
-uint16_t FileStore<FsSize_t, Header>::version() {
+template<typename Header>
+uint16_t FileStore<Header>::version() {
 	return m_header.version;
 };
 
-template<typename FsSize_t, typename Header>
-uint8_t *FileStore<FsSize_t, Header>::format(uint8_t *buffer, FsSize_t size, uint16_t fsType) {
+template<typename Header>
+uint8_t *FileStore<Header>::format(uint8_t *buffer, typename Header::FsSize_t size, uint16_t fsType) {
 	ox_memset(buffer, 0, size);
 
 	auto *fs = (FileStore*) buffer;
 	fs->m_header.fsType = fsType;
 	fs->m_header.version = Header::VERSION;
 	fs->m_header.size = size;
-	fs->m_header.memUsed = sizeof(FileStore<FsSize_t, Header>) + sizeof(Inode);
-	fs->m_header.rootInode = sizeof(FileStore<FsSize_t, Header>);
-	((Inode*) (fs + 1))->prev = sizeof(FileStore<FsSize_t, Header>);
-	fs->lastInode()->next = sizeof(FileStore<FsSize_t, Header>);
+	fs->m_header.memUsed = sizeof(FileStore<Header>) + sizeof(Inode);
+	fs->m_header.rootInode = sizeof(FileStore<Header>);
+	((Inode*) (fs + 1))->prev = sizeof(FileStore<Header>);
+	fs->lastInode()->next = sizeof(FileStore<Header>);
 
 	return (uint8_t*) buffer;
 }
 
-typedef FileStore<uint16_t, FileStoreHeader<uint16_t>> FileStore16;
-typedef FileStore<uint32_t, FileStoreHeader<uint32_t>> FileStore32;
-typedef FileStore<uint64_t, FileStoreHeader<uint64_t>> FileStore64;
+typedef FileStore<FileStoreHeader<uint16_t>> FileStore16;
+typedef FileStore<FileStoreHeader<uint32_t>> FileStore32;
+typedef FileStore<FileStoreHeader<uint64_t>> FileStore64;
 
 }
 }
