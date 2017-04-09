@@ -14,16 +14,84 @@ namespace fs {
 
 template<typename FsT, typename InodeId>
 struct FileStoreHeader {
-	typedef InodeId InodeId_t;
-	typedef FsT FsSize_t;
-	const static auto VERSION = 4;
+	public:
+		typedef InodeId InodeId_t;
+		typedef FsT FsSize_t;
+		const static auto VERSION = 4;
 
-	uint16_t version;
-	uint16_t fsType;
-	FsSize_t size;
-	FsSize_t memUsed;
-	FsSize_t rootInode;
+	private:
+		uint16_t m_version;
+		uint16_t m_fsType;
+		FsSize_t m_size;
+		FsSize_t m_memUsed;
+		FsSize_t m_rootInode;
+
+	public:
+		void setVersion(uint16_t);
+		uint16_t getVersion();
+
+		void setFsType(uint16_t);
+		uint16_t getFsType();
+
+		void setSize(FsSize_t);
+		FsSize_t getSize();
+
+		void setMemUsed(FsSize_t);
+		FsSize_t getMemUsed();
+
+		void setRootInode(FsSize_t);
+		FsSize_t getRootInode();
 };
+
+template<typename FsSize_t, typename InodeId_t>
+void FileStoreHeader<FsSize_t, InodeId_t>::setVersion(uint16_t version) {
+	m_version = version;
+}
+
+template<typename FsSize_t, typename InodeId_t>
+uint16_t FileStoreHeader<FsSize_t, InodeId_t>::getVersion() {
+	return m_version;
+}
+
+template<typename FsSize_t, typename InodeId_t>
+void FileStoreHeader<FsSize_t, InodeId_t>::setFsType(uint16_t fsType) {
+	m_fsType = fsType;
+}
+
+template<typename FsSize_t, typename InodeId_t>
+uint16_t FileStoreHeader<FsSize_t, InodeId_t>::getFsType() {
+	return m_fsType;
+}
+
+template<typename FsSize_t, typename InodeId_t>
+void FileStoreHeader<FsSize_t, InodeId_t>::setSize(FsSize_t size) {
+	m_size = size;
+}
+
+template<typename FsSize_t, typename InodeId_t>
+FsSize_t FileStoreHeader<FsSize_t, InodeId_t>::getSize() {
+	return m_size;
+}
+
+template<typename FsSize_t, typename InodeId_t>
+void FileStoreHeader<FsSize_t, InodeId_t>::setMemUsed(FsSize_t memUsed) {
+	m_memUsed = memUsed;
+}
+
+template<typename FsSize_t, typename InodeId_t>
+FsSize_t FileStoreHeader<FsSize_t, InodeId_t>::getMemUsed() {
+	return m_memUsed;
+}
+
+template<typename FsSize_t, typename InodeId_t>
+void FileStoreHeader<FsSize_t, InodeId_t>::setRootInode(FsSize_t rootInode) {
+	m_rootInode = rootInode;
+}
+
+template<typename FsSize_t, typename InodeId_t>
+FsSize_t FileStoreHeader<FsSize_t, InodeId_t>::getRootInode() {
+	return m_rootInode;
+}
 
 template<typename Header>
 class FileStore {
@@ -205,7 +273,7 @@ class FileStore {
 		}
 
 		uint8_t *end() {
-			return begin() + this->m_header.size;
+			return begin() + this->m_header.getSize();
 		}
 
 		/**
@@ -264,16 +332,16 @@ int FileStore<Header>::dumpTo(FileStore<Header> *dest) {
 
 template<typename Header>
 void FileStore<Header>::resize(typename Header::FsSize_t size) {
-	if (size < m_header.size) {
+	if (size < m_header.getSize()) {
 		// shrink file store
-		if (m_header.memUsed > size) {
-			size = m_header.memUsed;
+		if (m_header.getMemUsed() > size) {
+			size = m_header.getMemUsed();
 		}
 		compact();
-		m_header.size = size;
-	} else if (size > m_header.size) {
+		m_header.setSize(size);
+	} else if (size > m_header.getSize()) {
 		// grow file store
-		m_header.size = size;
+		m_header.setSize(size);
 	}
 }
 
@@ -281,14 +349,14 @@ template<typename Header>
 int FileStore<Header>::write(InodeId_t id, void *data, typename Header::FsSize_t dataLen, uint8_t fileType) {
 	auto retval = 1;
 	const typename Header::FsSize_t size = sizeof(Inode) + dataLen;
-	if (size <= (m_header.size - m_header.memUsed)) {
+	if (size <= (m_header.getSize() - m_header.getMemUsed())) {
 		auto inode = (Inode*) alloc(size);
 		if (inode) {
 			remove(id);
 			inode->id = id;
 			inode->fileType = fileType;
 			inode->setData(data, dataLen);
-			auto root = ptr<Inode*>(m_header.rootInode);
+			auto root = ptr<Inode*>(m_header.getRootInode());
 			if (insert(root, inode) || root == inode) {
 				retval = 0;
 			}
@@ -299,7 +367,7 @@ int FileStore<Header>::write(InodeId_t id, void *data, typename Header::FsSize_t
 
 template<typename Header>
 int FileStore<Header>::remove(InodeId_t id) {
-	return remove(ptr<Inode*>(m_header.rootInode), id);
+	return remove(ptr<Inode*>(m_header.getRootInode()), id);
 }
 
 template<typename Header>
@@ -346,10 +414,10 @@ int FileStore<Header>::remove(Inode *root, InodeId_t id) {
 				err = 0;
 			}
 		}
-	} else if (ptr<Inode*>(m_header.rootInode)->id == id) {
-		m_header.rootInode = root->right;
+	} else if (ptr<Inode*>(m_header.getRootInode())->id == id) {
+		m_header.setRootInode(root->right);
 		if (root->left) {
-			insert(ptr<Inode*>(m_header.rootInode), ptr<Inode*>(root->left));
+			insert(ptr<Inode*>(m_header.getRootInode()), ptr<Inode*>(root->left));
 		}
 		dealloc(root);
 		root->id = 0;
@@ -368,14 +436,14 @@ void FileStore<Header>::dealloc(Inode *inode) {
 	prev->next = ptr(next);
 	next->prev = ptr(prev);
 
-	m_header.memUsed -= inode->size();
+	m_header.setMemUsed(m_header.getMemUsed() - inode->size());
 
 	ox_memset(inode, 0, inode->size());
 }
 
 template<typename Header>
 void FileStore<Header>::updateInodeAddress(InodeId_t id, typename Header::FsSize_t oldAddr, typename Header::FsSize_t newAddr) {
-	auto parent = getInodeParent(ptr<Inode*>(m_header.rootInode), id, oldAddr);
+	auto parent = getInodeParent(ptr<Inode*>(m_header.getRootInode()), id, oldAddr);
 	if (parent) {
 		if (parent->left == oldAddr) {
 			parent->left = newAddr;
@@ -387,7 +455,7 @@ void FileStore<Header>::updateInodeAddress(InodeId_t id, typename Header::FsSize
 
 template<typename Header>
 int FileStore<Header>::read(InodeId_t id, void *data, typename Header::FsSize_t *size) {
-	auto inode = getInode(ptr<Inode*>(m_header.rootInode), id);
+	auto inode = getInode(ptr<Inode*>(m_header.getRootInode()), id);
 	int retval = 1;
 	if (inode) {
 		if (size) {
@@ -401,7 +469,7 @@ int FileStore<Header>::read(InodeId_t id, void *data, typename Header::FsSize_t 
 
 template<typename Header>
 typename FileStore<Header>::StatInfo FileStore<Header>::stat(InodeId_t id) {
-	auto inode = getInode(ptr<Inode*>(m_header.rootInode), id);
+	auto inode = getInode(ptr<Inode*>(m_header.getRootInode()), id);
 	StatInfo stat;
 	if (inode) {
 		stat.size = inode->dataLen;
@@ -416,7 +484,7 @@ typename FileStore<Header>::StatInfo FileStore<Header>::stat(InodeId_t id) {
 template<typename Header>
 typename Header::FsSize_t FileStore<Header>::spaceNeeded(InodeId_t id, typename Header::FsSize_t size) {
 	typename Header::FsSize_t needed = sizeof(Inode) + size;;
-	auto inode = getInode(ptr<Inode*>(m_header.rootInode), id);
+	auto inode = getInode(ptr<Inode*>(m_header.getRootInode()), id);
 	if (inode) {
 		needed -= inode->size();
 	}
@@ -425,12 +493,12 @@ typename Header::FsSize_t FileStore<Header>::spaceNeeded(InodeId_t id, typename 
 
 template<typename Header>
 typename Header::FsSize_t FileStore<Header>::size() {
-	return m_header.size;
+	return m_header.getSize();
 }
 
 template<typename Header>
 typename Header::FsSize_t FileStore<Header>::available() {
-	return m_header.size - m_header.memUsed;
+	return m_header.getSize() - m_header.getMemUsed();
 }
 
 template<typename Header>
@@ -499,7 +567,7 @@ void *FileStore<Header>::alloc(typename Header::FsSize_t size) {
 	ox_memset(inode, 0, size);
 	inode->prev = ptr<Inode*>(firstInode())->prev;
 	inode->next = retval + size;
-	m_header.memUsed += size;
+	m_header.setMemUsed(m_header.getMemUsed() + size);
 	ptr<Inode*>(firstInode())->prev = retval;
 	return inode;
 }
@@ -538,8 +606,8 @@ bool FileStore<Header>::insert(Inode *root, Inode *insertValue) {
 			root->right = ptr(insertValue);
 			retval = true;
 		}
-	} else if (m_header.rootInode == 0) {
-		m_header.rootInode = ptr(insertValue);
+	} else if (m_header.getRootInode() == 0) {
+		m_header.setRootInode(ptr(insertValue));
 		retval = true;
 	}
 
@@ -574,12 +642,12 @@ typename FileStore<Header>::Inode *FileStore<Header>::lastInode() {
 
 template<typename Header>
 uint16_t FileStore<Header>::fsType() {
-	return m_header.fsType;
+	return m_header.getFsType();
 };
 
 template<typename Header>
 uint16_t FileStore<Header>::version() {
-	return m_header.version;
+	return m_header.getVersion();
 };
 
 template<typename Header>
@@ -587,11 +655,11 @@ uint8_t *FileStore<Header>::format(uint8_t *buffer, typename Header::FsSize_t si
 	ox_memset(buffer, 0, size);
 
 	auto *fs = (FileStore*) buffer;
-	fs->m_header.fsType = fsType;
-	fs->m_header.version = Header::VERSION;
-	fs->m_header.size = size;
-	fs->m_header.memUsed = sizeof(FileStore<Header>) + sizeof(Inode);
-	fs->m_header.rootInode = sizeof(FileStore<Header>);
+	fs->m_header.setFsType(fsType);
+	fs->m_header.setVersion(Header::VERSION);
+	fs->m_header.setSize(size);
+	fs->m_header.setMemUsed(sizeof(FileStore<Header>) + sizeof(Inode));
+	fs->m_header.setRootInode(sizeof(FileStore<Header>));
 	((Inode*) (fs + 1))->prev = sizeof(FileStore<Header>);
 	fs->lastInode()->next = sizeof(FileStore<Header>);
 
