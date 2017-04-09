@@ -109,18 +109,40 @@ class FileStore {
 
 	private:
 		struct Inode {
-			// the next Inode in memory
-			typename Header::FsSize_t prev, next;
-			typename Header::FsSize_t dataLen;
-			InodeId_t id;
-			uint8_t refs;
-			uint8_t fileType;
-			typename Header::FsSize_t left, right;
+			private:
+				// the next Inode in memory
+				typename Header::FsSize_t m_prev, m_next;
+				typename Header::FsSize_t m_dataLen;
 
-			typename Header::FsSize_t size();
-			void setId(InodeId_t);
-			void setData(void *data, typename Header::FsSize_t size);
-			void *data();
+				InodeId_t m_id;
+				uint8_t m_fileType;
+				typename Header::FsSize_t m_left, m_right;
+
+			public:
+				typename Header::FsSize_t size();
+
+				typename Header::FsSize_t getDataLen();
+
+				void setPrev(typename Header::FsSize_t);
+				typename Header::FsSize_t getPrev();
+
+				void setNext(typename Header::FsSize_t);
+				typename Header::FsSize_t getNext();
+
+				void setId(InodeId_t);
+				InodeId_t getId();
+
+				void setFileType(uint8_t);
+				uint8_t getFileType();
+
+				void setLeft(typename Header::FsSize_t);
+				typename Header::FsSize_t getLeft();
+
+				void setRight(typename Header::FsSize_t);
+				typename Header::FsSize_t getRight();
+
+				void setData(void *data, typename Header::FsSize_t size);
+				void *getData();
 		};
 
 		Header m_header;
@@ -293,23 +315,83 @@ class FileStore {
 
 template<typename Header>
 typename Header::FsSize_t FileStore<Header>::Inode::size() {
-	return sizeof(Inode) + dataLen;
+	return sizeof(Inode) + m_dataLen;
+}
+
+template<typename Header>
+typename Header::FsSize_t FileStore<Header>::Inode::getDataLen() {
+	return this->m_dataLen;
+}
+
+template<typename Header>
+void FileStore<Header>::Inode::setPrev(typename Header::FsSize_t prev) {
+	this->m_prev = prev;
+}
+
+template<typename Header>
+typename Header::FsSize_t FileStore<Header>::Inode::getPrev() {
+	return this->m_prev;
+}
+
+template<typename Header>
+void FileStore<Header>::Inode::setNext(typename Header::FsSize_t next) {
+	this->m_next = next;
+}
+
+template<typename Header>
+typename Header::FsSize_t FileStore<Header>::Inode::getNext() {
+	return this->m_next;
 }
 
 template<typename Header>
 void FileStore<Header>::Inode::setId(InodeId_t id) {
-	this->id = id;
+	this->m_id = id;
+}
+
+template<typename Header>
+typename Header::InodeId_t FileStore<Header>::Inode::getId() {
+	return this->m_id;
+}
+
+template<typename Header>
+void FileStore<Header>::Inode::setFileType(uint8_t fileType) {
+	this->m_fileType = fileType;
+}
+
+template<typename Header>
+uint8_t FileStore<Header>::Inode::getFileType() {
+	return this->m_fileType;
+}
+
+template<typename Header>
+void FileStore<Header>::Inode::setLeft(typename Header::FsSize_t left) {
+	this->m_left = left;
+}
+
+template<typename Header>
+typename Header::FsSize_t FileStore<Header>::Inode::getLeft() {
+	return this->m_left;
+}
+
+template<typename Header>
+void FileStore<Header>::Inode::setRight(typename Header::FsSize_t right) {
+	this->m_right = right;
+}
+
+template<typename Header>
+typename Header::FsSize_t FileStore<Header>::Inode::getRight() {
+	return this->m_right;
 }
 
 template<typename Header>
 void FileStore<Header>::Inode::setData(void *data, typename Header::FsSize_t size) {
-	ox_memcpy(this->data(), data, size);
-	dataLen = size;
+	ox_memcpy(this->getData(), data, size);
+	m_dataLen = size;
 }
 
 
 template<typename Header>
-void *FileStore<Header>::Inode::data() {
+void *FileStore<Header>::Inode::getData() {
 	return this + 1;
 }
 
@@ -321,8 +403,8 @@ int FileStore<Header>::dumpTo(FileStore<Header> *dest) {
 	if (dest->size() >= size()) {
 		auto i = ptr<Inode*>(firstInode());
 		do {
-			dest->write(i->id, i->data(), i->dataLen, i->fileType);
-			i = ptr<Inode*>(i->next);
+			dest->write(i->getId(), i->getData(), i->getDataLen(), i->getFileType());
+			i = ptr<Inode*>(i->getNext());
 		} while (ptr(i) != firstInode());
 		return 0;
 	} else {
@@ -353,8 +435,8 @@ int FileStore<Header>::write(InodeId_t id, void *data, typename Header::FsSize_t
 		auto inode = (Inode*) alloc(size);
 		if (inode) {
 			remove(id);
-			inode->id = id;
-			inode->fileType = fileType;
+			inode->setId(id);
+			inode->setFileType(fileType);
 			inode->setData(data, dataLen);
 			auto root = ptr<Inode*>(m_header.getRootInode());
 			if (insert(root, inode) || root == inode) {
@@ -374,55 +456,55 @@ template<typename Header>
 int FileStore<Header>::remove(Inode *root, InodeId_t id) {
 	auto err = 1;
 
-	if (root->id > id) {
-		if (root->left) {
-			auto node = ptr<Inode*>(root->left);
-			if (node->id != id) {
+	if (root->getId() > id) {
+		if (root->getLeft()) {
+			auto node = ptr<Inode*>(root->getLeft());
+			if (node->getId() != id) {
 				err = remove(node, id);
 			} else {
-				root->left = 0;
-				if (node->right) {
-					insert(root, ptr<Inode*>(node->right));
+				root->setLeft(0);
+				if (node->getRight()) {
+					insert(root, ptr<Inode*>(node->getRight()));
 				}
-				if (node->left) {
-					insert(root, ptr<Inode*>(node->left));
+				if (node->getLeft()) {
+					insert(root, ptr<Inode*>(node->getLeft()));
 				}
 				dealloc(node);
-				node->id = 0;
-				node->left = 0;
-				node->right = 0;
+				node->setId(0);
+				node->setLeft(0);
+				node->setRight(0);
 				err = 0;
 			}
 		}
-	} else if (root->id < id) {
-		if (root->right) {
-			auto node = ptr<Inode*>(root->right);
-			if (node->id != id) {
+	} else if (root->getId() < id) {
+		if (root->getRight()) {
+			auto node = ptr<Inode*>(root->getRight());
+			if (node->getId() != id) {
 				err = remove(node, id);
 			} else {
-				root->right = 0;
-				if (node->right) {
-					insert(root, ptr<Inode*>(node->right));
+				root->setRight(0);
+				if (node->getRight()) {
+					insert(root, ptr<Inode*>(node->getRight()));
 				}
-				if (node->left) {
-					insert(root, ptr<Inode*>(node->left));
+				if (node->getLeft()) {
+					insert(root, ptr<Inode*>(node->getLeft()));
 				}
 				dealloc(node);
-				node->id = 0;
-				node->left = 0;
-				node->right = 0;
+				node->setId(0);
+				node->setLeft(0);
+				node->setRight(0);
 				err = 0;
 			}
 		}
-	} else if (ptr<Inode*>(m_header.getRootInode())->id == id) {
-		m_header.setRootInode(root->right);
-		if (root->left) {
-			insert(ptr<Inode*>(m_header.getRootInode()), ptr<Inode*>(root->left));
+	} else if (ptr<Inode*>(m_header.getRootInode())->getId() == id) {
+		m_header.setRootInode(root->getRight());
+		if (root->getLeft()) {
+			insert(ptr<Inode*>(m_header.getRootInode()), ptr<Inode*>(root->getLeft()));
 		}
 		dealloc(root);
-		root->id = 0;
-		root->left = 0;
-		root->right = 0;
+		root->setId(0);
+		root->setLeft(0);
+		root->setRight(0);
 		err = 0;
 	}
 
@@ -431,10 +513,10 @@ int FileStore<Header>::remove(Inode *root, InodeId_t id) {
 
 template<typename Header>
 void FileStore<Header>::dealloc(Inode *inode) {
-	auto next = ptr<Inode*>(inode->next);
-	auto prev = ptr<Inode*>(inode->prev);
-	prev->next = ptr(next);
-	next->prev = ptr(prev);
+	auto next = ptr<Inode*>(inode->getNext());
+	auto prev = ptr<Inode*>(inode->getPrev());
+	prev->setNext(ptr(next));
+	next->setPrev(ptr(prev));
 
 	m_header.setMemUsed(m_header.getMemUsed() - inode->size());
 
@@ -445,10 +527,10 @@ template<typename Header>
 void FileStore<Header>::updateInodeAddress(InodeId_t id, typename Header::FsSize_t oldAddr, typename Header::FsSize_t newAddr) {
 	auto parent = getInodeParent(ptr<Inode*>(m_header.getRootInode()), id, oldAddr);
 	if (parent) {
-		if (parent->left == oldAddr) {
-			parent->left = newAddr;
-		} else if (parent->right == oldAddr) {
-			parent->right = newAddr;
+		if (parent->getLeft() == oldAddr) {
+			parent->setLeft(newAddr);
+		} else if (parent->getRight() == oldAddr) {
+			parent->setRight(newAddr);
 		}
 	}
 }
@@ -459,9 +541,9 @@ int FileStore<Header>::read(InodeId_t id, void *data, typename Header::FsSize_t 
 	int retval = 1;
 	if (inode) {
 		if (size) {
-			*size = inode->dataLen;
+			*size = inode->getDataLen();
 		}
-		ox_memcpy(data, inode->data(), inode->dataLen);
+		ox_memcpy(data, inode->getData(), inode->getDataLen());
 		retval = 0;
 	}
 	return retval;
@@ -472,8 +554,8 @@ typename FileStore<Header>::StatInfo FileStore<Header>::stat(InodeId_t id) {
 	auto inode = getInode(ptr<Inode*>(m_header.getRootInode()), id);
 	StatInfo stat;
 	if (inode) {
-		stat.size = inode->dataLen;
-		stat.fileType = inode->fileType;
+		stat.size = inode->getDataLen();
+		stat.fileType = inode->getFileType();
 		stat.inodeId = id;
 	} else {
 		stat.inodeId = 0;
@@ -505,15 +587,15 @@ template<typename Header>
 typename FileStore<Header>::Inode *FileStore<Header>::getInode(Inode *root, InodeId_t id) {
 	Inode *retval = nullptr;
 
-	if (root->id > id) {
-		if (root->left) {
-			retval = getInode(ptr<Inode*>(root->left), id);
+	if (root->getId() > id) {
+		if (root->getLeft()) {
+			retval = getInode(ptr<Inode*>(root->getLeft()), id);
 		}
-	} else if (root->id < id) {
-		if (root->right) {
-			retval = getInode(ptr<Inode*>(root->right), id);
+	} else if (root->getId() < id) {
+		if (root->getRight()) {
+			retval = getInode(ptr<Inode*>(root->getRight()), id);
 		}
-	} else if (root->id == id) {
+	} else if (root->getId() == id) {
 		retval = root;
 	}
 
@@ -524,20 +606,20 @@ template<typename Header>
 typename FileStore<Header>::Inode *FileStore<Header>::getInodeParent(Inode *root, InodeId_t id, typename Header::FsSize_t targetAddr) {
 	Inode *retval = nullptr;
 
-	if (root->id > id) {
-		if (root->left) {
-			if (root->left == targetAddr) {
+	if (root->getId() > id) {
+		if (root->getLeft()) {
+			if (root->getLeft() == targetAddr) {
 				retval = root;
 			} else {
-				retval = getInodeParent(ptr<Inode*>(root->left), id, targetAddr);
+				retval = getInodeParent(ptr<Inode*>(root->getLeft()), id, targetAddr);
 			}
 		}
-	} else if (root->id < id) {
-		if (root->right) {
-			if (root->right == targetAddr) {
+	} else if (root->getId() < id) {
+		if (root->getRight()) {
+			if (root->getRight() == targetAddr) {
 				retval = root;
 			} else {
-				retval = getInodeParent(ptr<Inode*>(root->right), id, targetAddr);
+				retval = getInodeParent(ptr<Inode*>(root->getRight()), id, targetAddr);
 			}
 		}
 	}
@@ -565,10 +647,10 @@ void *FileStore<Header>::alloc(typename Header::FsSize_t size) {
 	const auto retval = next;
 	const auto inode = ptr<Inode*>(retval);
 	ox_memset(inode, 0, size);
-	inode->prev = ptr<Inode*>(firstInode())->prev;
-	inode->next = retval + size;
+	inode->setPrev(ptr<Inode*>(firstInode())->getPrev());
+	inode->setNext(retval + size);
 	m_header.setMemUsed(m_header.getMemUsed() + size);
-	ptr<Inode*>(firstInode())->prev = retval;
+	ptr<Inode*>(firstInode())->setPrev(retval);
 	return inode;
 }
 
@@ -576,14 +658,14 @@ template<typename Header>
 void FileStore<Header>::compact() {
 	auto dest = ptr<Inode*>(firstInode());
 	auto current = ptr<Inode*>(firstInode());
-	while (current->next > firstInode() && current->next < ptr(end())) {
+	while (current->getNext() > firstInode() && current->getNext() < ptr(end())) {
 		ox_memcpy(dest, current, current->size());
-		if (dest->next != firstInode()) {
-			dest->next = ptr(dest) + dest->size();
+		if (dest->getNext() != firstInode()) {
+			dest->setNext(ptr(dest) + dest->size());
 		}
-		ptr<Inode*>(dest->next)->prev = ptr(dest);
-		updateInodeAddress(dest->id, ptr(current), ptr(dest));
-		current = ptr<Inode*>(dest->next);
+		ptr<Inode*>(dest->getNext())->setPrev(ptr(dest));
+		updateInodeAddress(dest->getId(), ptr(current), ptr(dest));
+		current = ptr<Inode*>(dest->getNext());
 		dest = ptr<Inode*>(ptr(dest) + dest->size());
 	}
 }
@@ -592,18 +674,18 @@ template<typename Header>
 bool FileStore<Header>::insert(Inode *root, Inode *insertValue) {
 	auto retval = false;
 
-	if (root->id > insertValue->id) {
-		if (root->left) {
-			retval = insert(ptr<Inode*>(root->left), insertValue);
+	if (root->getId() > insertValue->getId()) {
+		if (root->getLeft()) {
+			retval = insert(ptr<Inode*>(root->getLeft()), insertValue);
 		} else {
-			root->left = ptr(insertValue);
+			root->setLeft(ptr(insertValue));
 			retval = true;
 		}
-	} else if (root->id < insertValue->id) {
-		if (root->right) {
-			retval = insert(ptr<Inode*>(root->right), insertValue);
+	} else if (root->getId() < insertValue->getId()) {
+		if (root->getRight()) {
+			retval = insert(ptr<Inode*>(root->getRight()), insertValue);
 		} else {
-			root->right = ptr(insertValue);
+			root->setRight(ptr(insertValue));
 			retval = true;
 		}
 	} else if (m_header.getRootInode() == 0) {
@@ -637,7 +719,7 @@ typename Header::FsSize_t FileStore<Header>::firstInode() {
 
 template<typename Header>
 typename FileStore<Header>::Inode *FileStore<Header>::lastInode() {
-	return ptr<Inode*>(ptr<Inode*>(firstInode())->prev);
+	return ptr<Inode*>(ptr<Inode*>(firstInode())->getPrev());
 }
 
 template<typename Header>
@@ -660,8 +742,8 @@ uint8_t *FileStore<Header>::format(uint8_t *buffer, typename Header::FsSize_t si
 	fs->m_header.setSize(size);
 	fs->m_header.setMemUsed(sizeof(FileStore<Header>) + sizeof(Inode));
 	fs->m_header.setRootInode(sizeof(FileStore<Header>));
-	((Inode*) (fs + 1))->prev = sizeof(FileStore<Header>);
-	fs->lastInode()->next = sizeof(FileStore<Header>);
+	((Inode*) (fs + 1))->setPrev(sizeof(FileStore<Header>));
+	fs->lastInode()->setNext(sizeof(FileStore<Header>));
 
 	return (uint8_t*) buffer;
 }
