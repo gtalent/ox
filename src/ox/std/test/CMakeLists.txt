@@ -40,4 +40,4 @@ add_executable(
 
 target_link_libraries(ByteSwapTest OxStd)
 
-add_test("Test\\ nativizeLittleEndian\\ 40\\ ==\\ 671088640" ByteSwapTest "40")
+add_test("Test\\ nativizeLittleEndian\\ 40" ByteSwapTest "40")

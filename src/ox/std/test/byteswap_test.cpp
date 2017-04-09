@@ -17,8 +17,7 @@ map<string, function<int()>> tests = {
 	{
 		"40",
 		[]() {
-			cout << (nativizeLittleEndian((uint32_t) 40)) << endl;
-			return !(nativizeLittleEndian((uint32_t) 40) == 671088640);
+			return !(nativizeLittleEndian(nativizeLittleEndian((uint32_t) 40)) == 40);
 		}
 	},
 };
