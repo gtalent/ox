@@ -12,10 +12,11 @@
 namespace ox {
 namespace fs {
 
-template<typename FsT>
+template<typename FsT, typename InodeId>
 struct FileStoreHeader {
+	typedef InodeId InodeId_t;
 	typedef FsT FsSize_t;
-	const static auto VERSION = 2;
+	const static auto VERSION = 4;
 
 	uint16_t version;
 	uint16_t fsType;
@@ -28,7 +29,7 @@ template<typename Header>
 class FileStore {
 
 	public:
-		typedef uint16_t InodeId_t;
+		typedef typename Header::InodeId_t InodeId_t;
 		typedef typename Header::FsSize_t FsSize_t;
 		const static auto VERSION = Header::VERSION;
 
@@ -597,9 +598,9 @@ uint8_t *FileStore<Header>::format(uint8_t *buffer, typename Header::FsSize_t si
 	return (uint8_t*) buffer;
 }
 
-typedef FileStore<FileStoreHeader<uint16_t>> FileStore16;
-typedef FileStore<FileStoreHeader<uint32_t>> FileStore32;
-typedef FileStore<FileStoreHeader<uint64_t>> FileStore64;
+typedef FileStore<FileStoreHeader<uint16_t, uint16_t>> FileStore16;
+typedef FileStore<FileStoreHeader<uint32_t, uint16_t>> FileStore32;
+typedef FileStore<FileStoreHeader<uint64_t, uint16_t>> FileStore64;
 
 }
 }

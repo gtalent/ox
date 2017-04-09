@@ -11,19 +11,26 @@ namespace ox {
 namespace fs {
 
 FileSystem *createFileSystem(void *buff) {
+	auto version = ((FileStore16*) buff)->version();
 	auto type = ((FileStore16*) buff)->fsType();
 	FileSystem *fs = nullptr;
 
-	switch (type) {
-		case ox::fs::OxFS_16:
-			fs = new FileSystem16(buff);
+	switch (version) {
+		case 4:
+			switch (type) {
+				case ox::fs::OxFS_16:
+					fs = new FileSystem16(buff);
+					break;
+				case ox::fs::OxFS_32:
+					fs = new FileSystem32(buff);
+					break;
+				case ox::fs::OxFS_64:
+					fs = new FileSystem64(buff);
+					break;
+			}
 			break;
-		case ox::fs::OxFS_32:
-			fs = new FileSystem32(buff);
-			break;
-		case ox::fs::OxFS_64:
-			fs = new FileSystem64(buff);
-			break;
+		default:
+			return nullptr;
 	}
 
 	return fs;

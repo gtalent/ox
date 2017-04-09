@@ -236,7 +236,7 @@ int write(int argc, char **args, bool expand) {
 					free(srcBuff);
 				} else {
 					err = 1;
-					fprintf(stderr, "Could not load source file.\n");
+					fprintf(stderr, "Could not load source file: %s.\n", srcPath);
 				}
 			}
 
