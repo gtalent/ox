@@ -30,7 +30,7 @@ FileSystem *createFileSystem(void *buff) {
 			}
 			break;
 		default:
-			return nullptr;
+			break;
 	}
 
 	return fs;

@@ -9,6 +9,7 @@ add_library(
 
 install(
 	FILES
+		byteswap.hpp
 		memops.hpp
 		strops.hpp
 		std.hpp
