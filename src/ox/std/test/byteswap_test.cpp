@@ -14,16 +14,16 @@ using namespace std;
 using namespace ox::std;
 
 template<typename T>
-int testLittleEndianToNative(string str) {
+int testBigEndianAdapt(string str) {
 	auto i = (T) stoul(str, nullptr, 16);
-	return !(littleEndianToNative(littleEndianToNative(i)) == i);
+	return !(bigEndianAdapt(bigEndianAdapt(i)) == i);
 }
 
 map<string, function<int(string)>> tests = {
 	{
-		{ "littleEndianToNative<uint16_t>", testLittleEndianToNative<uint16_t> },
-		{ "littleEndianToNative<uint32_t>", testLittleEndianToNative<uint32_t> },
-		{ "littleEndianToNative<uint64_t>", testLittleEndianToNative<uint64_t> },
+		{ "bigEndianAdapt<uint16_t>", testBigEndianAdapt<uint16_t> },
+		{ "bigEndianAdapt<uint32_t>", testBigEndianAdapt<uint32_t> },
+		{ "bigEndianAdapt<uint64_t>", testBigEndianAdapt<uint64_t> },
 	},
 };
 
