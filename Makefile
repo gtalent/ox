@@ -3,7 +3,7 @@ HOST_ENV=${OS}-$(shell uname -m)
 DEVENV=devenv$(shell pwd | sed 's/\//-/g')
 DEVENV_IMAGE=wombatant/devenv
 ifeq ($(shell docker inspect --format="{{.State.Status}}" ${DEVENV} 2>&1),running)
-	ENV_RUN=docker exec --user $(shell id -u ${USER}) ${DEVENV}
+	ENV_RUN=docker exec -i -t --user $(shell id -u ${USER}) ${DEVENV}
 endif
 
 make:
@@ -30,6 +30,9 @@ devenv:
 		--name ${DEVENV} -t ${DEVENV_IMAGE} bash
 devenv-destroy:
 	docker rm -f ${DEVENV}
+
+shell:
+	${ENV_RUN} bash
 
 release:
 	${ENV_RUN} rm -rf build/${HOST_ENV}-release
