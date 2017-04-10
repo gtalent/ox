@@ -40,14 +40,14 @@ inline uint64_t byteSwap(uint64_t i) {
 /**
  * Takes a little endian int and byte swaps if the platform is big endian.
  */
-inline uint8_t nativizeLittleEndian(uint8_t i) {
+inline uint8_t littleEndianToNative(uint8_t i) {
 	return i;
 }
 
 /**
  * Takes a little endian int and byte swaps if the platform is big endian.
  */
-inline uint16_t nativizeLittleEndian(uint16_t i) {
+inline uint16_t littleEndianToNative(uint16_t i) {
 #ifdef __BIG_ENDIAN__
 	return byteSwap(i);
 #else
@@ -58,7 +58,7 @@ inline uint16_t nativizeLittleEndian(uint16_t i) {
 /**
  * Takes a little endian int and byte swaps if the platform is big endian.
  */
-inline uint32_t nativizeLittleEndian(uint32_t i) {
+inline uint32_t littleEndianToNative(uint32_t i) {
 #ifdef __BIG_ENDIAN__
 	return byteSwap(i);
 #else
@@ -69,7 +69,7 @@ inline uint32_t nativizeLittleEndian(uint32_t i) {
 /**
  * Takes a little endian int and byte swaps if the platform is big endian.
  */
-inline uint64_t nativizeLittleEndian(uint64_t i) {
+inline uint64_t littleEndianToNative(uint64_t i) {
 #ifdef __BIG_ENDIAN__
 	return byteSwap(i);
 #else
@@ -100,31 +100,6 @@ inline uint32_t toLittleEndian(uint32_t i) {
 
 inline uint64_t toLittleEndian(uint64_t i) {
 #ifdef __BIG_ENDIAN__
-	return byteSwap(i);
-#else
-	return i;
-#endif
-}
-
-
-inline uint16_t toBigEndian(uint16_t i) {
-#ifdef __LITTLE_ENDIAN__
-	return byteSwap(i);
-#else
-	return i;
-#endif
-}
-
-inline uint32_t toBigEndian(uint32_t i) {
-#ifdef __LITTLE_ENDIAN__
-	return byteSwap(i);
-#else
-	return i;
-#endif
-}
-
-inline uint64_t toBigEndian(uint64_t i) {
-#ifdef __LITTLE_ENDIAN__
 	return byteSwap(i);
 #else
 	return i;

@@ -13,20 +13,26 @@
 using namespace std;
 using namespace ox::std;
 
-map<string, function<int()>> tests = {
+template<typename T>
+int testLittleEndianToNative(string str) {
+	auto i = (T) stoul(str, nullptr, 16);
+	return !(littleEndianToNative(littleEndianToNative(i)) == i);
+}
+
+map<string, function<int(string)>> tests = {
 	{
-		"40",
-		[]() {
-			return !(nativizeLittleEndian(nativizeLittleEndian((uint32_t) 40)) == 40);
-		}
+		{ "littleEndianToNative<uint16_t>", testLittleEndianToNative<uint16_t> },
+		{ "littleEndianToNative<uint32_t>", testLittleEndianToNative<uint32_t> },
+		{ "littleEndianToNative<uint64_t>", testLittleEndianToNative<uint64_t> },
 	},
 };
 
 int main(int argc, const char **args) {
 	if (argc > 1) {
 		auto testName = args[1];
+		auto testArg = args[2];
 		if (tests.find(testName) != tests.end()) {
-			return tests[testName]();
+			return tests[testName](testArg);
 		}
 	}
 	return -1;
