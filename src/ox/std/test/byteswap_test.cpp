@@ -5,9 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#include <iostream>
 #include <map>
-#include <functional>
 #include <ox/std/std.hpp>
 
 using namespace std;
@@ -15,11 +13,11 @@ using namespace ox::std;
 
 template<typename T>
 int testBigEndianAdapt(string str) {
-	auto i = (T) stoul(str, nullptr, 16);
+	auto i = (T) stoull(str, nullptr, 16);
 	return !(bigEndianAdapt(bigEndianAdapt(i)) == i);
 }
 
-map<string, function<int(string)>> tests = {
+map<string, int(*)(string)> tests = {
 	{
 		{ "bigEndianAdapt<uint16_t>", testBigEndianAdapt<uint16_t> },
 		{ "bigEndianAdapt<uint32_t>", testBigEndianAdapt<uint32_t> },
@@ -28,12 +26,13 @@ map<string, function<int(string)>> tests = {
 };
 
 int main(int argc, const char **args) {
+	int retval = -1;
 	if (argc > 1) {
 		auto testName = args[1];
-		auto testArg = args[2];
+		string testArg = args[2];
 		if (tests.find(testName) != tests.end()) {
-			return tests[testName](testArg);
+			retval = tests[testName](testArg);
 		}
 	}
-	return -1;
+	return retval;
 }
