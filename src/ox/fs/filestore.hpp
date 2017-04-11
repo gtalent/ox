@@ -571,12 +571,7 @@ typename FileStore<Header>::StatInfo FileStore<Header>::stat(InodeId_t id) {
 
 template<typename Header>
 typename Header::FsSize_t FileStore<Header>::spaceNeeded(InodeId_t id, typename Header::FsSize_t size) {
-	typename Header::FsSize_t needed = sizeof(Inode) + size;;
-	auto inode = getInode(ptr<Inode*>(m_header.getRootInode()), id);
-	if (inode) {
-		needed -= inode->size();
-	}
-	return needed;
+	return sizeof(Inode) + size;
 }
 
 template<typename Header>

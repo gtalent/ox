@@ -30,8 +30,7 @@ const static auto usage = "usage:\n"
 "\toxfs compact <FS file>\n"
 "\toxfs version\n";
 
-char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
-	auto file = fopen(path, "rb");
+char *loadFileBuff(FILE *file, ::size_t *sizeOut = nullptr) {
 	if (file) {
 		fseek(file, 0, SEEK_END);
 		const auto size = ftell(file);
@@ -46,6 +45,10 @@ char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
 	} else {
 		return nullptr;
 	}
+}
+
+char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
+	return loadFileBuff(fopen(path, "rb"), sizeOut);
 }
 
 size_t bytes(const char *str) {
