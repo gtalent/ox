@@ -276,15 +276,9 @@ class FileStore {
 		 */
 		bool insert(Inode *root, Inode *insertValue);
 
-		/**
-		 * Gets the FsSize_t associated with the next Inode to be allocated.
-		 * @retrun the FsSize_t associated with the next Inode to be allocated
-		 */
-		typename Header::FsSize_t iterator();
-
 		typename Header::FsSize_t firstInode();
 
-		Inode *lastInode();
+		typename Header::FsSize_t lastInode();
 
 		/**
 		 * Updates the address of the inode in the tree.
@@ -326,7 +320,7 @@ void FileStore<Header>::Inode::setDataLen(typename Header::FsSize_t dataLen) {
 
 template<typename Header>
 typename Header::FsSize_t FileStore<Header>::Inode::getDataLen() {
-	return std::bigEndianAdapt(this->m_dataLen);
+	return std::bigEndianAdapt(m_dataLen);
 }
 
 template<typename Header>
@@ -336,7 +330,7 @@ void FileStore<Header>::Inode::setPrev(typename Header::FsSize_t prev) {
 
 template<typename Header>
 typename Header::FsSize_t FileStore<Header>::Inode::getPrev() {
-	return std::bigEndianAdapt(this->m_prev);
+	return std::bigEndianAdapt(m_prev);
 }
 
 template<typename Header>
@@ -346,7 +340,7 @@ void FileStore<Header>::Inode::setNext(typename Header::FsSize_t next) {
 
 template<typename Header>
 typename Header::FsSize_t FileStore<Header>::Inode::getNext() {
-	return std::bigEndianAdapt(this->m_next);
+	return std::bigEndianAdapt(m_next);
 }
 
 template<typename Header>
@@ -356,7 +350,7 @@ void FileStore<Header>::Inode::setId(InodeId_t id) {
 
 template<typename Header>
 typename Header::InodeId_t FileStore<Header>::Inode::getId() {
-	return std::bigEndianAdapt(this->m_id);
+	return std::bigEndianAdapt(m_id);
 }
 
 template<typename Header>
@@ -366,7 +360,7 @@ void FileStore<Header>::Inode::setFileType(uint8_t fileType) {
 
 template<typename Header>
 uint8_t FileStore<Header>::Inode::getFileType() {
-	return std::bigEndianAdapt(this->m_fileType);
+	return std::bigEndianAdapt(m_fileType);
 }
 
 template<typename Header>
@@ -376,7 +370,7 @@ void FileStore<Header>::Inode::setLeft(typename Header::FsSize_t left) {
 
 template<typename Header>
 typename Header::FsSize_t FileStore<Header>::Inode::getLeft() {
-	return std::bigEndianAdapt(this->m_left);
+	return std::bigEndianAdapt(m_left);
 }
 
 template<typename Header>
@@ -386,12 +380,12 @@ void FileStore<Header>::Inode::setRight(typename Header::FsSize_t right) {
 
 template<typename Header>
 typename Header::FsSize_t FileStore<Header>::Inode::getRight() {
-	return std::bigEndianAdapt(this->m_right);
+	return std::bigEndianAdapt(m_right);
 }
 
 template<typename Header>
 void FileStore<Header>::Inode::setData(void *data, typename Header::FsSize_t size) {
-	ox_memcpy(this->getData(), data, size);
+	ox_memcpy(getData(), data, size);
 	setDataLen(size);
 }
 
@@ -630,17 +624,16 @@ typename FileStore<Header>::Inode *FileStore<Header>::getInodeParent(Inode *root
 
 template<typename Header>
 typename Header::FsSize_t FileStore<Header>::nextInodeAddr() {
-	typename Header::FsSize_t next = ptr(lastInode()) + lastInode()->size();
-	return next;
+	return lastInode() + ptr<Inode*>(lastInode())->size();
 }
 
 template<typename Header>
 void *FileStore<Header>::alloc(typename Header::FsSize_t size) {
-	typename Header::FsSize_t next = nextInodeAddr();
-	if ((next + size) > (uint64_t) end()) {
+	auto next = nextInodeAddr();
+	if ((next + size) > ptr(end())) {
 		compact();
 		next = nextInodeAddr();
-		if ((next + size) > (uint64_t) end()) {
+		if ((next + size) > ptr(end())) {
 			return nullptr;
 		}
 	}
@@ -649,7 +642,7 @@ void *FileStore<Header>::alloc(typename Header::FsSize_t size) {
 	const auto inode = ptr<Inode*>(retval);
 	ox_memset(inode, 0, size);
 	inode->setPrev(ptr<Inode*>(firstInode())->getPrev());
-	inode->setNext(retval + size);
+	inode->setNext(firstInode());
 	m_header.setMemUsed(m_header.getMemUsed() + size);
 	ptr<Inode*>(firstInode())->setPrev(retval);
 	return inode;
@@ -698,11 +691,6 @@ bool FileStore<Header>::insert(Inode *root, Inode *insertValue) {
 }
 
 template<typename Header>
-typename Header::FsSize_t FileStore<Header>::iterator() {
-	return ptr(lastInode()) + lastInode()->size();
-}
-
-template<typename Header>
 typename Header::FsSize_t FileStore<Header>::ptr(void *ptr) {
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
@@ -719,8 +707,8 @@ typename Header::FsSize_t FileStore<Header>::firstInode() {
 }
 
 template<typename Header>
-typename FileStore<Header>::Inode *FileStore<Header>::lastInode() {
-	return ptr<Inode*>(ptr<Inode*>(firstInode())->getPrev());
+typename Header::FsSize_t FileStore<Header>::lastInode() {
+	return ptr<Inode*>(firstInode())->getPrev();
 }
 
 template<typename Header>
@@ -744,7 +732,7 @@ uint8_t *FileStore<Header>::format(uint8_t *buffer, typename Header::FsSize_t si
 	fs->m_header.setMemUsed(sizeof(FileStore<Header>) + sizeof(Inode));
 	fs->m_header.setRootInode(sizeof(FileStore<Header>));
 	((Inode*) (fs + 1))->setPrev(sizeof(FileStore<Header>));
-	fs->lastInode()->setNext(sizeof(FileStore<Header>));
+	((Inode*) (fs + 1))->setNext(sizeof(FileStore<Header>));
 
 	return (uint8_t*) buffer;
 }

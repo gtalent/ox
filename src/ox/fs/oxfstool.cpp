@@ -55,8 +55,9 @@ size_t bytes(const char *str) {
 	auto size = ::ox_strlen(str);
 	const auto lastChar = str[size-1];
 	auto multiplier = 1;
-	auto copy = new char[size];
-	ox_memcpy(copy, str, size);
+	char copy[size + 1];
+	ox_memcpy(copy, str, size + 1);
+	// parse size unit
 	if (lastChar < '0' || lastChar > '9') {
 		copy[size-1] = 0;
 		switch (lastChar) {
@@ -76,9 +77,7 @@ size_t bytes(const char *str) {
 				multiplier = -1;
 		}
 	}
-	const auto retval = ((size_t) ox_atoi(copy)) * multiplier;
-	delete []copy;
-	return  retval;
+	return ox_atoi(copy) * multiplier;
 }
 
 int format(int argc, char **args) {
@@ -86,13 +85,10 @@ int format(int argc, char **args) {
 	auto err = 0;
 	if (argc >= 5) {
 		auto type = ox_atoi(args[2]);
-		cout << args[3] << endl;
 		auto size = bytes(args[3]);
 		auto path = args[4];
 		auto buff = (uint8_t*) malloc(size);
 
-		cout << "Size: " << size << " bytes\n";
-		cout << "Type: " << type << endl;
 
 		if (size < sizeof(FileStore64)) {
 			err = 1;
@@ -198,10 +194,11 @@ int write(int argc, char **args, bool expand) {
 			if (itemsRead) {
 				auto srcBuff = loadFileBuff(srcPath, &srcSize);
 				if (srcBuff) {
+					auto expanded = false;
 					auto fs = createFileSystem(fsBuff);
 					if (fs) {
 						if (expand && fs->available() <= srcSize) {
-							auto needed = fs->spaceNeeded(inode, srcSize);
+							auto needed = fs->size() + fs->spaceNeeded(inode, srcSize);
 							auto cloneBuff = new uint8_t[needed];
 							ox_memcpy(cloneBuff, fsBuff, fsSize);
 
@@ -214,6 +211,12 @@ int write(int argc, char **args, bool expand) {
 							fs->resize(fsSize);
 						}
 						err |= fs->write(inode, srcBuff, srcSize);
+
+						// compact the file system if it was expanded
+						if (expanded) {
+							fs->resize();
+						}
+
 						if (err) {
 							fprintf(stderr, "Could not write to file system.\n");
 						}
