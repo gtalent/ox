@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 #include <map>
+#include <string>
 #include <ox/std/std.hpp>
 
 using namespace std;
