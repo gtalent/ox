@@ -35,7 +35,7 @@ char *loadFileBuff(FILE *file, ::size_t *sizeOut = nullptr) {
 		fseek(file, 0, SEEK_END);
 		const auto size = ftell(file);
 		rewind(file);
-		auto buff = (char*) malloc(size);
+		auto buff = new char[size];
 		auto itemsRead = fread(buff, size, 1, file);
 		fclose(file);
 		if (sizeOut) {
@@ -87,7 +87,7 @@ int format(int argc, char **args) {
 		auto type = ox_atoi(args[2]);
 		auto size = bytes(args[3]);
 		auto path = args[4];
-		auto buff = (uint8_t*) malloc(size);
+		auto buff = new uint8_t[size];
 
 
 		if (size < sizeof(FileStore64)) {
@@ -125,7 +125,7 @@ int format(int argc, char **args) {
 			}
 		}
 
-		free(buff);
+		delete []buff;
 
 		if (err == 0) {
 			fprintf(stderr, "Created file system %s\n", path);
@@ -160,7 +160,7 @@ int read(int argc, char **args) {
 				}
 
 				delete fs;
-				free(fsBuff);
+				delete []fsBuff;
 			} else {
 				fprintf(stderr, "Invalid file system type: %d.\n", *(uint32_t*) fsBuff);
 			}
@@ -199,16 +199,8 @@ int write(int argc, char **args, bool expand) {
 					if (fs) {
 						if (expand && fs->available() <= srcSize) {
 							auto needed = fs->size() + fs->spaceNeeded(inode, srcSize);
-							auto cloneBuff = new uint8_t[needed];
-							ox_memcpy(cloneBuff, fsBuff, fsSize);
-
-							delete fs;
-							delete []fsBuff;
-
-							fsBuff = cloneBuff;
-							fs = createFileSystem(fsBuff);
 							fsSize = needed;
-							fs->resize(fsSize);
+							fs = expandCopyCleanup(fs, needed);
 						}
 						err |= fs->write(inode, srcBuff, srcSize);
 
@@ -239,7 +231,7 @@ int write(int argc, char **args, bool expand) {
 							err = 1;
 						}
 					}
-					free(srcBuff);
+					delete []fsBuff;
 				} else {
 					err = 1;
 					fprintf(stderr, "Could not load source file: %s.\n", srcPath);
@@ -285,7 +277,7 @@ int compact(int argc, char **args) {
 			}
 
 			delete fs;
-			free(fsBuff);
+			delete []fsBuff;
 		} else {
 			fprintf(stderr, "Could not open file: %s\n", fsPath);
 		}
@@ -328,7 +320,7 @@ int remove(int argc, char **args) {
 			}
 
 			delete fs;
-			free(fsBuff);
+			delete []fsBuff;
 		} else {
 			fprintf(stderr, "Could not open file: %s\n", fsPath);
 		}

@@ -51,9 +51,22 @@ class FileSystem {
 		virtual uint64_t available() = 0;
 
 		virtual uint64_t size() = 0;
+
+		virtual uint8_t *buff() = 0;
 };
 
 FileSystem *createFileSystem(void *buff);
+
+/**
+ * Creates a larger version of the given FileSystem.
+ */
+FileSystem *expandCopy(FileSystem *src);
+
+/**
+ * Calls expandCopy and deletes the original FileSystem and buff a resize was
+ * performed.
+ */
+FileSystem *expandCopyCleanup(FileSystem *fs, size_t size);
 
 template<typename FileStore, FsType FS_TYPE>
 class FileSystemTemplate: public FileSystem {
@@ -116,6 +129,8 @@ class FileSystemTemplate: public FileSystem {
 		uint64_t available() override;
 
 		uint64_t size() override;
+
+		uint8_t *buff() override;
 
 		static uint8_t *format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories);
 };
@@ -231,6 +246,11 @@ uint64_t FileSystemTemplate<FileStore, FS_TYPE>::available() {
 template<typename FileStore, FsType FS_TYPE>
 uint64_t FileSystemTemplate<FileStore, FS_TYPE>::size() {
 	return store->size();
+}
+
+template<typename FileStore, FsType FS_TYPE>
+uint8_t *FileSystemTemplate<FileStore, FS_TYPE>::buff() {
+	return (uint8_t*) store;
 }
 
 #ifdef _MSC_VER
