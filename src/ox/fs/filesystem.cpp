@@ -34,7 +34,7 @@ FileSystem *createFileSystem(void *buff, size_t buffSize) {
 			break;
 	}
 
-	if (fs->size() > buffSize) {
+	if (fs && fs->size() > buffSize) {
 		delete fs;
 		fs = nullptr;
 	}
@@ -62,7 +62,7 @@ FileSystem *expandCopyCleanup(FileSystem *fs, size_t size) {
 	auto out = expandCopy(fs, size);
 
 	if (out) {
-		delete fs->buff();
+		delete[] fs->buff();
 		delete fs;
 	} else {
 		out = fs;
