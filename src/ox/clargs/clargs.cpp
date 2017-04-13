@@ -6,25 +6,50 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+#include <ox/std/strops.hpp>
 #include "clargs.hpp"
 
 namespace ox {
 namespace clargs {
 
+using ::std::string;
+using namespace ::std;
+
 ClArgs::ClArgs(int argc, const char **args) {
 	for (int i = 0; i < argc; i++) {
-		std::string arg = args[i];
+		string arg = args[i];
 		if (arg[0] == '-') {
 			while (arg[0] == '-' && arg.size()) {
 				arg = arg.substr(1);
 			}
-			m_args[arg] = true;
+			m_bools[arg.c_str()] = true;
+
+			// parse additional arguments
+			if (i < argc) {
+				string val = args[i + 1];
+				if (val[i] != '-') {
+					if (val == "false") {
+						m_bools[arg.c_str()] = false;
+					}
+					m_strings[arg.c_str()] = val.c_str();
+					m_ints[arg.c_str()] = ox_atoi(val.c_str());
+					i++;
+				}
+			}
 		}
 	}
 }
 
-bool ClArgs::operator[](std::string arg) {
-	return m_args[arg];
+bool ClArgs::getBool(const char *arg) {
+	return m_bools[arg];
+}
+
+const char *ClArgs::getString(const char *arg) {
+	return m_strings[arg];
+}
+
+int ClArgs::getInt(const char *arg) {
+	return m_ints[arg];
 }
 
 }
