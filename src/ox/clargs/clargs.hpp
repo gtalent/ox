@@ -17,7 +17,7 @@ namespace clargs {
 class ClArgs {
 	private:
 		::std::map<::std::string, bool> m_bools;
-		::std::map<::std::string, const char*> m_strings;
+		::std::map<::std::string, ::std::string> m_strings;
 		::std::map<::std::string, int> m_ints;
 
 	public:
@@ -25,7 +25,7 @@ class ClArgs {
 
 		bool getBool(const char *arg);
 
-		const char *getString(const char *arg);
+		::std::string getString(const char *arg);
 
 		int getInt(const char *arg);
 };

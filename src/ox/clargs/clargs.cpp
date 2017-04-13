@@ -44,7 +44,7 @@ bool ClArgs::getBool(const char *arg) {
 	return m_bools[arg];
 }
 
-const char *ClArgs::getString(const char *arg) {
+string ClArgs::getString(const char *arg) {
 	return m_strings[arg];
 }
 
