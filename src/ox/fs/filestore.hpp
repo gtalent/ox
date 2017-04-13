@@ -200,7 +200,7 @@ class FileStore {
 		 * @param size the size of the data to insert
 		 * @return the space currently available in this file store.
 		 */
-		typename Header::FsSize_t spaceNeeded(InodeId_t id, typename Header::FsSize_t size);
+		typename Header::FsSize_t spaceNeeded(typename Header::FsSize_t size);
 
 		/**
 		 * Returns the size of the file store.
@@ -564,7 +564,7 @@ typename FileStore<Header>::StatInfo FileStore<Header>::stat(InodeId_t id) {
 }
 
 template<typename Header>
-typename Header::FsSize_t FileStore<Header>::spaceNeeded(InodeId_t id, typename Header::FsSize_t size) {
+typename Header::FsSize_t FileStore<Header>::spaceNeeded(typename Header::FsSize_t size) {
 	return sizeof(Inode) + size;
 }
 

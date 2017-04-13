@@ -198,7 +198,7 @@ int write(int argc, char **args, bool expand) {
 					auto fs = createFileSystem(fsBuff, fsSize);
 					if (fs) {
 						if (expand && fs->available() <= srcSize) {
-							auto needed = fs->size() + fs->spaceNeeded(inode, srcSize);
+							auto needed = fs->size() + fs->spaceNeeded(srcSize);
 							fsSize = needed;
 							fs = expandCopyCleanup(fs, needed);
 						}
