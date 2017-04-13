@@ -12,7 +12,6 @@
 namespace ox {
 namespace clargs {
 
-using ::std::string;
 using namespace ::std;
 
 ClArgs::ClArgs(int argc, const char **args) {
@@ -22,17 +21,17 @@ ClArgs::ClArgs(int argc, const char **args) {
 			while (arg[0] == '-' && arg.size()) {
 				arg = arg.substr(1);
 			}
-			m_bools[arg.c_str()] = true;
+			m_bools[arg] = true;
 
 			// parse additional arguments
-			if (i < argc) {
+			if (i < argc && args[i + 1]) {
 				string val = args[i + 1];
-				if (val[i] != '-') {
+				if (val.size() && val[i] != '-') {
 					if (val == "false") {
-						m_bools[arg.c_str()] = false;
+						m_bools[arg] = false;
 					}
-					m_strings[arg.c_str()] = val.c_str();
-					m_ints[arg.c_str()] = ox_atoi(val.c_str());
+					m_strings[arg] = val;
+					m_ints[arg] = ox_atoi(val.c_str());
 					i++;
 				}
 			}
