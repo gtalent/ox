@@ -148,7 +148,7 @@ int read(int argc, char **args) {
 		auto fsBuff = loadFileBuff(fsPath, &fsSize);
 		
 		if (fsBuff) {
-			auto fs = createFileSystem(fsBuff);
+			auto fs = createFileSystem(fsBuff, fsSize);
 
 			if (fs) {
 				auto output = fs->read(inode, &fileSize);
@@ -195,7 +195,7 @@ int write(int argc, char **args, bool expand) {
 				auto srcBuff = loadFileBuff(srcPath, &srcSize);
 				if (srcBuff) {
 					auto expanded = false;
-					auto fs = createFileSystem(fsBuff);
+					auto fs = createFileSystem(fsBuff, fsSize);
 					if (fs) {
 						if (expand && fs->available() <= srcSize) {
 							auto needed = fs->size() + fs->spaceNeeded(inode, srcSize);
@@ -206,7 +206,7 @@ int write(int argc, char **args, bool expand) {
 							delete []fsBuff;
 
 							fsBuff = cloneBuff;
-							fs = createFileSystem(fsBuff);
+							fs = createFileSystem(fsBuff, fsSize);
 							fsSize = needed;
 							fs->resize(fsSize);
 						}
@@ -264,7 +264,7 @@ int compact(int argc, char **args) {
 
 		auto fsBuff = loadFileBuff(fsPath, &fsSize);
 		if (fsBuff) {
-			auto fs = createFileSystem(fsBuff);
+			auto fs = createFileSystem(fsBuff, fsSize);
 
 			if (fs) {
 				fs->resize();
@@ -304,7 +304,7 @@ int remove(int argc, char **args) {
 
 		auto fsBuff = loadFileBuff(fsPath, &fsSize);
 		if (fsBuff) {
-			auto fs = createFileSystem(fsBuff);
+			auto fs = createFileSystem(fsBuff, fsSize);
 
 			if (fs) {
 				err = fs->remove(inode);

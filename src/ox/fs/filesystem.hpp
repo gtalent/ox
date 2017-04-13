@@ -53,7 +53,7 @@ class FileSystem {
 		virtual uint64_t size() = 0;
 };
 
-FileSystem *createFileSystem(void *buff);
+FileSystem *createFileSystem(void *buff, size_t buffSize);
 
 template<typename FileStore, FsType FS_TYPE>
 class FileSystemTemplate: public FileSystem {

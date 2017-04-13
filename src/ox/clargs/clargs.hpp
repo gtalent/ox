@@ -16,12 +16,12 @@ namespace clargs {
 
 class ClArgs {
 	private:
-		std::map<std::string, bool> m_args;
+		::std::map<::std::string, bool> m_args;
 
 	public:
 		ClArgs(int argc, const char **args);
 
-		bool operator[](std::string arg);
+		bool operator[](::std::string arg);
 };
 
 }

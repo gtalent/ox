@@ -10,7 +10,7 @@
 namespace ox {
 namespace fs {
 
-FileSystem *createFileSystem(void *buff) {
+FileSystem *createFileSystem(void *buff, size_t buffSize) {
 	auto version = ((FileStore16*) buff)->version();
 	auto type = ((FileStore16*) buff)->fsType();
 	FileSystem *fs = nullptr;
@@ -31,6 +31,11 @@ FileSystem *createFileSystem(void *buff) {
 			break;
 		default:
 			break;
+	}
+
+	if (fs->size() > buffSize) {
+		delete fs;
+		fs = nullptr;
 	}
 
 	return fs;
