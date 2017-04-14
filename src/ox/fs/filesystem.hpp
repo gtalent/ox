@@ -34,7 +34,9 @@ class FileSystem {
 	public:
 		virtual ~FileSystem() {};
 
-		virtual int read(uint64_t inode, void *buffer, size_t size) = 0;
+		virtual int read(uint64_t inode, void *buffer, size_t *size) = 0;
+
+		virtual int read(uint64_t inode, size_t readStart, size_t readSize, void *buffer, size_t *size) = 0;
 
 		virtual uint8_t *read(uint64_t inode, size_t *size) = 0;
 
@@ -110,9 +112,11 @@ class FileSystemTemplate: public FileSystem {
 
 		int read(const char *path, void *buffer);
 
-		uint8_t *read(uint64_t inode, size_t *size) override;
+		int read(uint64_t inode, void *buffer, size_t *size) override;
 
-		int read(uint64_t inode, void *buffer, size_t size) override;
+		int read(uint64_t inode, size_t readStart, size_t readSize, void *buffer, size_t *size);
+
+		uint8_t *read(uint64_t inode, size_t *size) override;
 
 		void resize(uint64_t size = 0) override;
 
@@ -174,16 +178,33 @@ FileStat FileSystemTemplate<FileStore, FS_TYPE>::stat(uint64_t inode) {
 #pragma warning(disable:4244)
 #endif
 template<typename FileStore, FsType FS_TYPE>
-int FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, void *buffer, size_t size) {
-	auto err = 1;
-	auto s = store->stat(inode);
-	if (size == s.size) {
-		err = store->read(inode, buffer, nullptr);
+int FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, void *buffer, size_t *size) {
+	if (size) {
+		auto stat = store->stat(inode);
+		*size = stat.size;
 	}
-	return err;
+	return store->read(inode, buffer, nullptr);
+;
 }
 #ifdef _MSC_VER
 #pragma warning(default:4244)
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(disable:4244)
+#endif
+template<typename FileStore, FsType FS_TYPE>
+int FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, size_t readStart,
+                                                 size_t readSize, void *buffer,
+                                                 size_t *size) {
+	if (size) {
+		auto stat = store->stat(inode);
+		*size = stat.size;
+	}
+	return store->read(inode, readStart, readSize, buffer, nullptr);
+}
+#ifdef _MSC_VER
+#pragma warning(disable:4244)
 #endif
 
 #ifdef _MSC_VER

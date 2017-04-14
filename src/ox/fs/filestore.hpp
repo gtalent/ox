@@ -103,7 +103,7 @@ class FileStore {
 
 		struct StatInfo {
 			InodeId_t inodeId;
-			typename Header::FsSize_t  size;
+			typename Header::FsSize_t size;
 			uint8_t fileType;
 		};
 
@@ -143,7 +143,7 @@ class FileStore {
 				typename Header::FsSize_t getRight();
 
 				void setData(void *data, typename Header::FsSize_t size);
-				void *getData();
+				uint8_t *getData();
 		};
 
 		Header m_header;
@@ -185,6 +185,20 @@ class FileStore {
 		 * @return 0 if read is a success
 		 */
 		int read(InodeId_t id, void *data, typename Header::FsSize_t *size);
+
+		/**
+		 * Reads the "file" at the given id. You are responsible for freeing
+		 * the data when done with it.
+		 * @param id id of the "file"
+		 * @param readStart where in the data to start reading
+		 * @param readSize how much data to read
+		 * @param data pointer to the pointer where the data is stored
+		 * @param size pointer to a value that will be assigned the size of data
+		 * @return 0 if read is a success
+		 */
+		int read(InodeId_t id, typename Header::FsSize_t readStart,
+			      typename Header::FsSize_t readSize, void *data,
+					typename Header::FsSize_t *size);
 
 		/**
 		 * Reads the stat information of the inode of the given inode id.
@@ -239,6 +253,20 @@ class FileStore {
 		 * @return the requested Inode, if available
 		 */
 		Inode *getInodeParent(Inode *root, InodeId_t id, typename Header::FsSize_t targetAddr);
+
+		/**
+		 * Reads the "file" at the given id. You are responsible for freeing
+		 * the data when done with it.
+		 * @param inode inode of the "file"
+		 * @param readStart where in the data to start reading
+		 * @param readSize how much data to read
+		 * @param data pointer to the pointer where the data is stored
+		 * @param size pointer to a value that will be assigned the size of data
+		 * @return 0 if read is a success
+		 */
+		int read(Inode *inode, typename Header::FsSize_t readStart,
+			      typename Header::FsSize_t readSize, void *data,
+					typename Header::FsSize_t *size);
 
 		/**
 		 * Removes the inode of the given ID.
@@ -391,8 +419,8 @@ void FileStore<Header>::Inode::setData(void *data, typename Header::FsSize_t siz
 
 
 template<typename Header>
-void *FileStore<Header>::Inode::getData() {
-	return this + 1;
+uint8_t *FileStore<Header>::Inode::getData() {
+	return (uint8_t*) (this + 1);
 }
 
 
@@ -538,14 +566,29 @@ void FileStore<Header>::updateInodeAddress(InodeId_t id, typename Header::FsSize
 template<typename Header>
 int FileStore<Header>::read(InodeId_t id, void *data, typename Header::FsSize_t *size) {
 	auto inode = getInode(ptr<Inode*>(m_header.getRootInode()), id);
+	return inode ? read(inode, 0, inode->getDataLen(), data, size) : 1;
+}
+
+template<typename Header>
+int FileStore<Header>::read(InodeId_t id, typename Header::FsSize_t readStart,
+		typename Header::FsSize_t readSize, void *data, typename Header::FsSize_t *size) {
+	auto inode = getInode(ptr<Inode*>(m_header.getRootInode()), id);
+	return inode ? read(inode, readStart, readSize, data, size) : 1;
+}
+
+template<typename Header>
+int FileStore<Header>::read(Inode *inode, typename Header::FsSize_t readStart,
+		typename Header::FsSize_t readSize, void *data, typename Header::FsSize_t *size) {
 	int retval = 1;
-	if (inode) {
-		if (size) {
-			*size = inode->getDataLen();
-		}
-		ox_memcpy(data, inode->getData(), inode->getDataLen());
-		retval = 0;
+	// be sure read size is not greater than what is available to read
+	if (inode->getDataLen() + readStart < readSize) {
+		readSize = inode->getDataLen();
 	}
+	if (size) {
+		*size = readSize;
+	}
+	ox_memcpy(data, inode->getData() + readStart, inode->getDataLen());
+	retval = 0;
 	return retval;
 }
 

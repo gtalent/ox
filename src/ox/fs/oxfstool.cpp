@@ -201,6 +201,7 @@ int write(int argc, char **args, bool expand) {
 							auto needed = fs->size() + fs->spaceNeeded(srcSize);
 							fsSize = needed;
 							fs = expandCopyCleanup(fs, needed);
+							fsBuff = fs->buff();
 						}
 						err |= fs->write(inode, srcBuff, srcSize);
 
@@ -231,7 +232,7 @@ int write(int argc, char **args, bool expand) {
 							err = 1;
 						}
 					}
-					delete []fsBuff;
+					delete []srcBuff;
 				} else {
 					err = 1;
 					fprintf(stderr, "Could not load source file: %s.\n", srcPath);
