@@ -197,8 +197,8 @@ class FileStore {
 		 * @return 0 if read is a success
 		 */
 		int read(InodeId_t id, typename Header::FsSize_t readStart,
-			      typename Header::FsSize_t readSize, void *data,
-					typename Header::FsSize_t *size);
+		         typename Header::FsSize_t readSize, void *data,
+		         typename Header::FsSize_t *size);
 
 		/**
 		 * Reads the stat information of the inode of the given inode id.
@@ -265,8 +265,8 @@ class FileStore {
 		 * @return 0 if read is a success
 		 */
 		int read(Inode *inode, typename Header::FsSize_t readStart,
-			      typename Header::FsSize_t readSize, void *data,
-					typename Header::FsSize_t *size);
+		         typename Header::FsSize_t readSize, void *data,
+		         typename Header::FsSize_t *size);
 
 		/**
 		 * Removes the inode of the given ID.
@@ -579,17 +579,15 @@ int FileStore<Header>::read(InodeId_t id, typename Header::FsSize_t readStart,
 template<typename Header>
 int FileStore<Header>::read(Inode *inode, typename Header::FsSize_t readStart,
 		typename Header::FsSize_t readSize, void *data, typename Header::FsSize_t *size) {
-	int retval = 1;
 	// be sure read size is not greater than what is available to read
-	if (inode->getDataLen() + readStart < readSize) {
-		readSize = inode->getDataLen();
+	if (inode->getDataLen() - readStart < readSize) {
+		readSize = inode->getDataLen() - readStart;
 	}
 	if (size) {
 		*size = readSize;
 	}
-	ox_memcpy(data, inode->getData() + readStart, inode->getDataLen());
-	retval = 0;
-	return retval;
+	ox_memcpy(data, inode->getData() + readStart, readSize);
+	return 0;
 }
 
 template<typename Header>

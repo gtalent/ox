@@ -34,7 +34,7 @@ class FileSystem {
 	public:
 		virtual ~FileSystem() {};
 
-		virtual int read(uint64_t inode, void *buffer, size_t *size) = 0;
+		virtual int read(uint64_t inode, void *buffer, size_t size) = 0;
 
 		virtual int read(uint64_t inode, size_t readStart, size_t readSize, void *buffer, size_t *size) = 0;
 
@@ -112,9 +112,9 @@ class FileSystemTemplate: public FileSystem {
 
 		int read(const char *path, void *buffer);
 
-		int read(uint64_t inode, void *buffer, size_t *size) override;
+		int read(uint64_t inode, void *buffer, size_t buffSize) override;
 
-		int read(uint64_t inode, size_t readStart, size_t readSize, void *buffer, size_t *size);
+		int read(uint64_t inode, size_t readStart, size_t readSize, void *buffer, size_t *size) override;
 
 		uint8_t *read(uint64_t inode, size_t *size) override;
 
@@ -178,12 +178,12 @@ FileStat FileSystemTemplate<FileStore, FS_TYPE>::stat(uint64_t inode) {
 #pragma warning(disable:4244)
 #endif
 template<typename FileStore, FsType FS_TYPE>
-int FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, void *buffer, size_t *size) {
-	if (size) {
-		auto stat = store->stat(inode);
-		*size = stat.size;
+int FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, void *buffer, size_t buffSize) {
+	auto stat = store->stat(inode);
+	if (stat.size <= buffSize) {
+		return store->read(inode, buffer, nullptr);
 	}
-	return store->read(inode, buffer, nullptr);
+	return 0;
 ;
 }
 #ifdef _MSC_VER
