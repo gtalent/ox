@@ -106,7 +106,7 @@ class FileSystemTemplate: public FileSystem {
 		FileStore *store = nullptr;
 
 	public:
-		FileSystemTemplate(void *buff);
+		explicit FileSystemTemplate(void *buff);
 
 		int mkdir(const char *path);
 
