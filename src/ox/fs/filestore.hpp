@@ -13,7 +13,7 @@ namespace ox {
 namespace fs {
 
 template<typename FsT, typename InodeId>
-struct FileStoreHeader {
+struct __attribute__((packed)) FileStoreHeader {
 	public:
 		typedef InodeId InodeId_t;
 		typedef FsT FsSize_t;
@@ -108,15 +108,17 @@ class FileStore {
 		};
 
 	private:
-		struct Inode {
+		struct __attribute__((packed)) Inode {
 			private:
 				// the next Inode in memory
-				typename Header::FsSize_t m_prev, m_next;
+				typename Header::FsSize_t m_prev;
+				typename Header::FsSize_t m_next;
 				typename Header::FsSize_t m_dataLen;
 
 				InodeId_t m_id;
 				uint8_t m_fileType;
-				typename Header::FsSize_t m_left, m_right;
+				typename Header::FsSize_t m_left;
+				typename Header::FsSize_t m_right;
 
 			public:
 				typename Header::FsSize_t size();
