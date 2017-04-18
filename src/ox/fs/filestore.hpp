@@ -13,7 +13,7 @@ namespace ox {
 namespace fs {
 
 template<typename FsT, typename InodeId>
-struct FileStoreHeader {
+struct __attribute__((packed)) FileStoreHeader {
 	public:
 		typedef InodeId InodeId_t;
 		typedef FsT FsSize_t;
@@ -108,15 +108,17 @@ class FileStore {
 		};
 
 	private:
-		struct Inode {
+		struct __attribute__((packed)) Inode {
 			private:
 				// the next Inode in memory
-				typename Header::FsSize_t m_prev, m_next;
+				typename Header::FsSize_t m_prev;
+				typename Header::FsSize_t m_next;
 				typename Header::FsSize_t m_dataLen;
 
 				InodeId_t m_id;
 				uint8_t m_fileType;
-				typename Header::FsSize_t m_left, m_right;
+				typename Header::FsSize_t m_left;
+				typename Header::FsSize_t m_right;
 
 			public:
 				typename Header::FsSize_t size();
@@ -201,6 +203,21 @@ class FileStore {
 		         typename Header::FsSize_t *size);
 
 		/**
+		 * Reads the "file" at the given id. You are responsible for freeing
+		 * the data when done with it.
+		 * @param id id of the "file"
+		 * @param readStart where in the data to start reading
+		 * @param readSize how much data to read
+		 * @param data pointer to the pointer where the data is stored
+		 * @param size pointer to a value that will be assigned the size of data
+		 * @return 0 if read is a success
+		 */
+		template<typename T>
+		int read(InodeId_t id, typename Header::FsSize_t readStart,
+		         typename Header::FsSize_t readSize, T *data,
+		         typename Header::FsSize_t *size);
+
+		/**
 		 * Reads the stat information of the inode of the given inode id.
 		 * If the returned inode id is 0, then the requested inode was not found.
 		 * @param id id of the inode to stat
@@ -264,8 +281,9 @@ class FileStore {
 		 * @param size pointer to a value that will be assigned the size of data
 		 * @return 0 if read is a success
 		 */
+		template<typename T>
 		int read(Inode *inode, typename Header::FsSize_t readStart,
-		         typename Header::FsSize_t readSize, void *data,
+		         typename Header::FsSize_t readSize, T *data,
 		         typename Header::FsSize_t *size);
 
 		/**
@@ -566,19 +584,28 @@ void FileStore<Header>::updateInodeAddress(InodeId_t id, typename Header::FsSize
 template<typename Header>
 int FileStore<Header>::read(InodeId_t id, void *data, typename Header::FsSize_t *size) {
 	auto inode = getInode(ptr<Inode*>(m_header.getRootInode()), id);
-	return inode ? read(inode, 0, inode->getDataLen(), data, size) : 1;
+	return inode ? read(inode, 0, inode->getDataLen(), (uint8_t*) data, size) : 1;
 }
 
 template<typename Header>
 int FileStore<Header>::read(InodeId_t id, typename Header::FsSize_t readStart,
 		typename Header::FsSize_t readSize, void *data, typename Header::FsSize_t *size) {
 	auto inode = getInode(ptr<Inode*>(m_header.getRootInode()), id);
+	return inode ? read<uint8_t>(inode, readStart, readSize, (uint8_t*) data, size) : 1;
+}
+
+template<typename Header>
+template<typename T>
+int FileStore<Header>::read(InodeId_t id, typename Header::FsSize_t readStart,
+		typename Header::FsSize_t readSize, T *data, typename Header::FsSize_t *size) {
+	auto inode = getInode(ptr<Inode*>(m_header.getRootInode()), id);
 	return inode ? read(inode, readStart, readSize, data, size) : 1;
 }
 
 template<typename Header>
+template<typename T>
 int FileStore<Header>::read(Inode *inode, typename Header::FsSize_t readStart,
-		typename Header::FsSize_t readSize, void *data, typename Header::FsSize_t *size) {
+		typename Header::FsSize_t readSize, T *data, typename Header::FsSize_t *size) {
 	// be sure read size is not greater than what is available to read
 	if (inode->getDataLen() - readStart < readSize) {
 		readSize = inode->getDataLen() - readStart;
@@ -586,7 +613,12 @@ int FileStore<Header>::read(Inode *inode, typename Header::FsSize_t readStart,
 	if (size) {
 		*size = readSize;
 	}
-	ox_memcpy(data, inode->getData() + readStart, readSize);
+
+	readSize /= sizeof(T);
+	T *it = (T*) &(inode->getData()[readStart]);
+	for (typename Header::FsSize_t i = 0; i < readSize; i++) {
+		*(data++) = *(it++);
+	}
 	return 0;
 }
 
