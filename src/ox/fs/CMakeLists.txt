@@ -5,6 +5,13 @@ add_library(
 		filesystem.cpp
 )
 
+set_property(
+	TARGET
+		OxFS
+	PROPERTY
+		POSITION_INDEPENDENT_CODE ON
+)
+
 if(OX_BUILD_EXEC STREQUAL "ON")
 	add_executable(
 		oxfstool
