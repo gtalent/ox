@@ -29,6 +29,7 @@ add_test("Test\\ ox_strcmp\\ read\\ !=\\ resize" StrOpsTest "read < resize")
 add_test("Test\\ ox_strcmp\\ resize\\ !=\\ read" StrOpsTest "resize > read")
 add_test("Test\\ ox_strcmp\\ resize\\ ==\\ resize" StrOpsTest "resize == resize")
 add_test("Test\\ ox_strcmp\\ resize\\ ==\\ resize" StrOpsTest " == ")
+add_test("Test\\ ox_strchr\\ 0" StrOpsTest "ox_strchr 0")
 
 
 ################################################################################

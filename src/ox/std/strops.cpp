@@ -30,19 +30,29 @@ int ox_strlen(const char *str1) {
 	return len;
 }
 
-const char *ox_strchar(const char *str, int character, size_t maxLen) {
-	for (size_t i = 0; i < maxLen && str[i]; i++) {
+int ox_strlen(char *str1) {
+	int len;
+	for (len = 0; str1[len]; len++);
+	return len;
+}
+
+const char *ox_strchr(const char *str, int character, size_t maxLen) {
+	for (size_t i = 0; i <= maxLen; i++) {
 		if (str[i] == character) {
 			return &str[i];
+		} else if (str[i] == 0) {
+			return nullptr;
 		}
 	}
 	return nullptr;
 }
 
-char *ox_strchar(char *str, int character, size_t maxLen) {
-	for (size_t i = 0; i < maxLen && str[i]; i++) {
+char *ox_strchr(char *str, int character, size_t maxLen) {
+	for (size_t i = 0; i < maxLen; i++) {
 		if (str[i] == character) {
 			return &str[i];
+		} else if (str[i] == 0) {
+			return nullptr;
 		}
 	}
 	return nullptr;

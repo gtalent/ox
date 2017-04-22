@@ -16,8 +16,8 @@ namespace fs {
 class PathIterator {
 	private:
 		const char *m_path = nullptr;
-		int m_iterator = 0;
-		int m_maxSize = 0;
+		size_t m_iterator = 0;
+		size_t m_maxSize = 0;
 
 	public:
 		PathIterator(const char *path, size_t maxSize);

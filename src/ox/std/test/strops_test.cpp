@@ -49,6 +49,13 @@ map<string, function<int()>> tests = {
 			return !(ox_strcmp("", "") == 0);
 		}
 	},
+	{
+		"ox_strchr 0",
+		[]() {
+			auto testStr = "asdf";
+			return !(ox_strchr(testStr, 0, 4) == &testStr[4]);
+		}
+	},
 };
 
 int main(int argc, const char **args) {
