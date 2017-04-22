@@ -5,6 +5,13 @@ add_library(
 		clargs.cpp
 )
 
+set_property(
+	TARGET
+		OxClArgs
+	PROPERTY
+		POSITION_INDEPENDENT_CODE ON
+)
+
 install(
 	FILES
 		clargs.hpp

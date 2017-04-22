@@ -74,7 +74,7 @@ template<typename FileStore, FsType FS_TYPE>
 class FileSystemTemplate: public FileSystem {
 
 	private:
-		struct DirectoryEntry {
+		struct __attribute__((packed)) DirectoryEntry {
 			typename FileStore::InodeId_t inode;
 
 			char *getName() {
@@ -89,7 +89,7 @@ class FileSystemTemplate: public FileSystem {
 			}
 		};
 
-		struct Directory {
+		struct __attribute__((packed)) Directory {
 			/**
 			 * Number of files in this directory.
 			 */
@@ -106,11 +106,11 @@ class FileSystemTemplate: public FileSystem {
 		FileStore *store = nullptr;
 
 	public:
-		FileSystemTemplate(void *buff);
+		explicit FileSystemTemplate(void *buff);
 
 		int mkdir(const char *path);
 
-		int read(const char *path, void *buffer);
+		int read(const char *path, void *buffer, size_t buffSize);
 
 		int read(uint64_t inode, void *buffer, size_t buffSize) override;
 
@@ -169,6 +169,17 @@ FileStat FileSystemTemplate<FileStore, FS_TYPE>::stat(uint64_t inode) {
 	stat.inode = s.inodeId;
 	stat.fileType = s.fileType;
 	return stat;
+}
+#ifdef _MSC_VER
+#pragma warning(default:4244)
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(disable:4244)
+#endif
+template<typename FileStore, FsType FS_TYPE>
+int FileSystemTemplate<FileStore, FS_TYPE>::read(const char *path, void *buffer, size_t buffSize) {
+	return 0;
 }
 #ifdef _MSC_VER
 #pragma warning(default:4244)

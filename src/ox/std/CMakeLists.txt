@@ -7,6 +7,13 @@ add_library(
 		strops.cpp
 )
 
+set_property(
+	TARGET
+		OxStd
+	PROPERTY
+		POSITION_INDEPENDENT_CODE ON
+)
+
 install(
 	FILES
 		byteswap.hpp

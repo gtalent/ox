@@ -16,7 +16,7 @@ FileSystem *createFileSystem(void *buff, size_t buffSize) {
 	FileSystem *fs = nullptr;
 
 	switch (version) {
-		case 4:
+		case 5:
 			switch (type) {
 				case ox::fs::OxFS_16:
 					fs = new FileSystem16(buff);

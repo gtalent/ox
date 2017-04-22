@@ -28,6 +28,7 @@ add_test("Test\\ ox_strcmp\\ hijk\\ !=\\ asdf" StrOpsTest "hijk > asdf")
 add_test("Test\\ ox_strcmp\\ read\\ !=\\ resize" StrOpsTest "read < resize")
 add_test("Test\\ ox_strcmp\\ resize\\ !=\\ read" StrOpsTest "resize > read")
 add_test("Test\\ ox_strcmp\\ resize\\ ==\\ resize" StrOpsTest "resize == resize")
+add_test("Test\\ ox_strcmp\\ resize\\ ==\\ resize" StrOpsTest " == ")
 
 
 ################################################################################

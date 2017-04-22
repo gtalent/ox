@@ -43,6 +43,12 @@ map<string, function<int()>> tests = {
 			return !(ox_strcmp("resize", "resize") == 0);
 		}
 	},
+	{
+		" == ",
+		[]() {
+			return !(ox_strcmp("", "") == 0);
+		}
+	},
 };
 
 int main(int argc, const char **args) {
