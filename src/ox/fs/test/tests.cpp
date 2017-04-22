@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+#include <assert.h>
 #include <map>
 #include <string>
 #include <ox/fs/filesystem.hpp>
@@ -24,11 +25,12 @@ map<string, int(*)(string)> tests = {
 				int retval = 0;
 				string path = "/usr/share/charset.gbag";
 				PathIterator it(path.c_str(), path.size());
-				const auto buffSize = path.size() + 1;
+				const auto buffSize = 1024;
 				char buff[buffSize];
-				retval |= !(it.next(buff, buffSize) == 0 && ox_strcmp(buff, "usr") == 0);
-				retval |= !(it.next(buff, buffSize) == 0 && ox_strcmp(buff, "share") == 0);
-				retval |= !(it.next(buff, buffSize) == 0 && ox_strcmp(buff, "charset.gbag") == 0);
+				assert(buffSize >= path.size());
+				retval |= !(it.next(buff, path.size()) == 0 && ox_strcmp(buff, "usr") == 0);
+				retval |= !(it.next(buff, path.size()) == 0 && ox_strcmp(buff, "share") == 0);
+				retval |= !(it.next(buff, path.size()) == 0 && ox_strcmp(buff, "charset.gbag") == 0);
 				return retval;
 			}
 		},
@@ -38,10 +40,11 @@ map<string, int(*)(string)> tests = {
 				int retval = 0;
 				string path = "/usr/share/";
 				PathIterator it(path.c_str(), path.size());
-				const auto buffSize = path.size() + 1;
+				const auto buffSize = 1024;
 				char buff[buffSize];
-				retval |= !(it.next(buff, buffSize) == 0 && ox_strcmp(buff, "usr") == 0);
-				retval |= !(it.next(buff, buffSize) == 0 && ox_strcmp(buff, "share") == 0);
+				assert(buffSize >= path.size());
+				retval |= !(it.next(buff, path.size()) == 0 && ox_strcmp(buff, "usr") == 0);
+				retval |= !(it.next(buff, path.size()) == 0 && ox_strcmp(buff, "share") == 0);
 				return retval;
 			}
 		},
@@ -51,9 +54,10 @@ map<string, int(*)(string)> tests = {
 				int retval = 0;
 				string path = "/";
 				PathIterator it(path.c_str(), path.size());
-				const auto buffSize = path.size() + 1;
+				const auto buffSize = 1024;
 				char buff[buffSize];
-				retval |= !(it.next(buff, buffSize) == 0 && ox_strcmp(buff, "\0") == 0);
+				assert(buffSize >= path.size());
+				retval |= !(it.next(buff, path.size()) == 0 && ox_strcmp(buff, "\0") == 0);
 				return retval;
 			}
 		},
