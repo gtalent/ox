@@ -13,4 +13,8 @@ int ox_strcmp(const char *str1, const char *str2);
 
 int ox_strlen(const char *str1);
 
+const char *ox_strchar(const char *str, int character, size_t maxLen = 0xFFFFFFFFFFFFFF);
+
+char *ox_strchar(char *str, int character, size_t maxLen = 0xFFFFFFFFFFFFFF);
+
 int ox_atoi(const char *str);
