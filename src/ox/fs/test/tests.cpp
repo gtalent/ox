@@ -19,7 +19,7 @@ using namespace ox::std;
 
 map<string, int(*)(string)> tests = {
 	{
-		{ 
+		{
 			"PathIterator1",
 			[](string) {
 				int retval = 0;
@@ -34,7 +34,7 @@ map<string, int(*)(string)> tests = {
 				return retval;
 			}
 		},
-		{ 
+		{
 			"PathIterator2",
 			[](string) {
 				int retval = 0;
@@ -48,7 +48,7 @@ map<string, int(*)(string)> tests = {
 				return retval;
 			}
 		},
-		{ 
+		{
 			"PathIterator3",
 			[](string) {
 				int retval = 0;
@@ -58,6 +58,35 @@ map<string, int(*)(string)> tests = {
 				char buff[buffSize];
 				assert(buffSize >= path.size());
 				retval |= !(it.next(buff, path.size()) == 0 && ox_strcmp(buff, "\0") == 0);
+				return retval;
+			}
+		},
+		{
+			"PathIterator4",
+			[](string) {
+				int retval = 0;
+				string path = "usr/share/charset.gbag";
+				PathIterator it(path.c_str(), path.size());
+				const auto buffSize = 1024;
+				char buff[buffSize];
+				assert(buffSize >= path.size());
+				retval |= !(it.next(buff, path.size()) == 0 && ox_strcmp(buff, "usr") == 0);
+				retval |= !(it.next(buff, path.size()) == 0 && ox_strcmp(buff, "share") == 0);
+				retval |= !(it.next(buff, path.size()) == 0 && ox_strcmp(buff, "charset.gbag") == 0);
+				return retval;
+			}
+		},
+		{
+			"PathIterator5",
+			[](string) {
+				int retval = 0;
+				string path = "usr/share/";
+				PathIterator it(path.c_str(), path.size());
+				const auto buffSize = 1024;
+				char buff[buffSize];
+				assert(buffSize >= path.size());
+				retval |= !(it.next(buff, path.size()) == 0 && ox_strcmp(buff, "usr") == 0);
+				retval |= !(it.next(buff, path.size()) == 0 && ox_strcmp(buff, "share") == 0);
 				return retval;
 			}
 		},

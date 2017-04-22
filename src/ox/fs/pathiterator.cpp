@@ -20,24 +20,26 @@ PathIterator::PathIterator(const char *path, size_t maxSize) {
 
 int PathIterator::next(char *pathOut, size_t pathOutSize) {
 	size_t size = 0;
-	const char *substr = ox_strchr(m_path + m_iterator, '/', m_maxSize - m_iterator);
-	if (substr) {
-		m_iterator = (substr - m_path) + 1;
-		if (m_iterator < m_maxSize) {
-			size_t start = m_iterator;
-			// end is at the next /
-			substr = ox_strchr(&m_path[start], '/', m_maxSize - start);
-			// correct end if it is invalid, which happens if there is no next /
-			if (!substr) {
-				substr = ox_strchr(&m_path[start], 0, m_maxSize - start);
-			}
-			size_t end = substr - m_path;
-			size = end - start;
-			ox_memcpy(pathOut, &m_path[start], size);
+	int retval = 1;
+	if (m_iterator < m_maxSize && ox_strlen(&m_path[m_iterator])) {
+		retval = 0;
+		if (m_path[m_iterator] == '/') {
+			m_iterator++;
 		}
+		size_t start = m_iterator;
+		// end is at the next /
+		const char *substr = ox_strchr(&m_path[start], '/', m_maxSize - start);
+		// correct end if it is invalid, which happens if there is no next /
+		if (!substr) {
+			substr = ox_strchr(&m_path[start], 0, m_maxSize - start);
+		}
+		size_t end = substr - m_path;
+		size = end - start;
+		ox_memcpy(pathOut, &m_path[start], size);
 	}
 	pathOut[size] = 0; // end with null terminator
-	return 0;
+	m_iterator += size;
+	return retval;
 }
 
 }
