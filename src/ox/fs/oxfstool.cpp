@@ -99,13 +99,13 @@ int format(int argc, char **args) {
 			// format
 			switch (type) {
 				case 16:
-					FileStore16::format(buff, (FileStore16::FsSize_t) size, ox::fs::OxFS_16);
+					FileStore16::format(buff, (FileStore16::FsSize_t) size, true);
 					break;
 				case 32:
-					FileStore32::format(buff, (FileStore32::FsSize_t) size, ox::fs::OxFS_32);
+					FileStore32::format(buff, (FileStore32::FsSize_t) size, true);
 					break;
 				case 64:
-					FileStore64::format(buff, size, ox::fs::OxFS_64);
+					FileStore64::format(buff, size, true);
 					break;
 				default:
 					err = 1;
