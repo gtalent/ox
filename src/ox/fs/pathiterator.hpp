@@ -22,7 +22,12 @@ class PathIterator {
 	public:
 		PathIterator(const char *path, size_t maxSize);
 
+		/**
+		 * @return 0 if no error
+		 */
 		int next(char *pathOut, size_t pathOutSize);
+
+		bool hasNext();
 };
 
 }

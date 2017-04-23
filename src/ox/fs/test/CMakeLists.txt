@@ -32,3 +32,6 @@ add_test("Test\\ PathIterator1" FSTests PathIterator1)
 add_test("Test\\ PathIterator2" FSTests PathIterator2)
 add_test("Test\\ PathIterator3" FSTests PathIterator3)
 add_test("Test\\ PathIterator4" FSTests PathIterator4)
+add_test("Test\\ PathIterator5" FSTests PathIterator5)
+
+add_test("Test\\ FileSystem32::findInodeOf" FSTests FileSystem32::findInodeOf)

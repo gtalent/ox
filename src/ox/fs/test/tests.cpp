@@ -90,6 +90,19 @@ map<string, int(*)(string)> tests = {
 				return retval;
 			}
 		},
+		{
+			"FileSystem32::findInodeOf",
+			[](string) {
+				int retval = 0;
+				const auto size = 1024;
+				uint8_t buff[size];
+				FileSystem32::format(buff, (FileStore32::FsSize_t) size, true);
+				auto fs = (FileSystem32*) createFileSystem(buff, size);
+				retval |= !(fs->findInodeOf("/") == FileSystem32::INODE_ROOT_DIR);
+				delete fs;
+				return retval;
+			}
+		},
 	},
 };
 

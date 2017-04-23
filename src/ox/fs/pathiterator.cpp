@@ -42,5 +42,22 @@ int PathIterator::next(char *pathOut, size_t pathOutSize) {
 	return retval;
 }
 
+bool PathIterator::hasNext() {
+	size_t size = 0;
+	if (m_iterator < m_maxSize && ox_strlen(&m_path[m_iterator])) {
+		size_t start = m_iterator;
+		// end is at the next /
+		const char *substr = ox_strchr(&m_path[start], '/', m_maxSize - start);
+		// correct end if it is invalid, which happens if there is no next /
+		if (!substr) {
+			substr = ox_strchr(&m_path[start], 0, m_maxSize - start);
+		}
+		size_t end = substr - m_path;
+		size = end - start;
+	}
+	m_iterator += size;
+	return size > 0;
+}
+
 }
 }
