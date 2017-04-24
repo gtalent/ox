@@ -16,7 +16,7 @@
 using namespace std;
 using namespace ox::fs;
 
-map<string, function<int(string)>> tests = {
+map<string, int(*)(string)> tests = {
 	{
 		{
 			"PathIterator::next1",
