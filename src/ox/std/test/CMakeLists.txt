@@ -30,6 +30,7 @@ add_test("Test\\ ox_strcmp\\ resize\\ !=\\ read" StrOpsTest "resize > read")
 add_test("Test\\ ox_strcmp\\ resize\\ ==\\ resize" StrOpsTest "resize == resize")
 add_test("Test\\ ox_strcmp\\ resize\\ ==\\ resize" StrOpsTest " == ")
 add_test("Test\\ ox_strchr\\ 0" StrOpsTest "ox_strchr 0")
+add_test("Test\\ ox_lastIndexOf\\ aaaa\\ a" StrOpsTest "ox_lastIndexOf aaaa a")
 
 
 ################################################################################

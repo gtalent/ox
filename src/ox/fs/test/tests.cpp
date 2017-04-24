@@ -15,12 +15,11 @@
 
 using namespace std;
 using namespace ox::fs;
-using namespace ox::std;
 
-map<string, int(*)(string)> tests = {
+map<string, function<int(string)>> tests = {
 	{
 		{
-			"PathIterator1",
+			"PathIterator::next1",
 			[](string) {
 				int retval = 0;
 				string path = "/usr/share/charset.gbag";
@@ -35,7 +34,7 @@ map<string, int(*)(string)> tests = {
 			}
 		},
 		{
-			"PathIterator2",
+			"PathIterator::next2",
 			[](string) {
 				int retval = 0;
 				string path = "/usr/share/";
@@ -49,7 +48,7 @@ map<string, int(*)(string)> tests = {
 			}
 		},
 		{
-			"PathIterator3",
+			"PathIterator::next3",
 			[](string) {
 				int retval = 0;
 				string path = "/";
@@ -62,7 +61,7 @@ map<string, int(*)(string)> tests = {
 			}
 		},
 		{
-			"PathIterator4",
+			"PathIterator::next4",
 			[](string) {
 				int retval = 0;
 				string path = "usr/share/charset.gbag";
@@ -77,7 +76,7 @@ map<string, int(*)(string)> tests = {
 			}
 		},
 		{
-			"PathIterator5",
+			"PathIterator::next5",
 			[](string) {
 				int retval = 0;
 				string path = "usr/share/";
@@ -91,7 +90,33 @@ map<string, int(*)(string)> tests = {
 			}
 		},
 		{
-			"FileSystem32::findInodeOf",
+			"PathIterator::dirPath",
+			[] (string) {
+				int retval = 0;
+				string path = "/usr/share/charset.gbag";
+				PathIterator it(path.c_str(), path.size());
+				const auto buffSize = 1024;
+				char buff[buffSize];
+				assert(buffSize >= path.size());
+				retval |= !(it.dirPath(buff, path.size()) == 0 && ox_strcmp(buff, "/usr/share/") == 0);
+				return retval;
+			}
+		},
+		{
+			"PathIterator::fileName",
+			[](string) {
+				int retval = 0;
+				string path = "/usr/share/charset.gbag";
+				PathIterator it(path.c_str(), path.size());
+				const auto buffSize = 1024;
+				char buff[buffSize];
+				assert(buffSize >= path.size());
+				retval |= !(it.fileName(buff, path.size()) == 0 && ox_strcmp(buff, "charset.gbag") == 0);
+				return retval;
+			}
+		},
+		{
+			"FileSystem32::findInodeOf /",
 			[](string) {
 				int retval = 0;
 				const auto size = 1024;
@@ -99,6 +124,29 @@ map<string, int(*)(string)> tests = {
 				FileSystem32::format(buff, (FileStore32::FsSize_t) size, true);
 				auto fs = (FileSystem32*) createFileSystem(buff, size);
 				retval |= !(fs->findInodeOf("/") == FileSystem32::INODE_ROOT_DIR);
+				delete fs;
+				return retval;
+			}
+		},
+		{
+			"FileSystem32::write(string)",
+			[](string) {
+				// this value will likely need to change if anything about the
+				// random number generator changes
+				const auto targetInode = 58542;
+
+				int retval = 0;
+				auto path = "/charset.gbag";
+				auto data = "test";
+
+				const auto size = 1024;
+				uint8_t buff[size];
+				FileSystem32::format(buff, (FileStore32::FsSize_t) size, true);
+				auto fs = (FileSystem32*) createFileSystem(buff, size);
+
+				retval |= fs->write(path, &data, ox_strlen(data));
+				retval |= !(fs->findInodeOf(path) == targetInode);
+
 				delete fs;
 				return retval;
 			}

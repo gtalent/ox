@@ -20,4 +20,8 @@ const char *ox_strchr(const char *str, int character, size_t maxLen = 0xFFFFFFFF
 
 char *ox_strchr(char *str, int character, size_t maxLen = 0xFFFFFFFF);
 
+int ox_lastIndexOf(const char *str, int character, int maxLen = 0xFFFFFFFF);
+
+int ox_lastIndexOf(char *str, int character, int maxLen = 0xFFFFFFFF);
+
 int ox_atoi(const char *str);

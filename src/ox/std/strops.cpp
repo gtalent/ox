@@ -58,6 +58,26 @@ char *ox_strchr(char *str, int character, size_t maxLen) {
 	return nullptr;
 }
 
+int ox_lastIndexOf(const char *str, int character, int maxLen) {
+	int retval = -1;
+	for (int i = 0; i < maxLen && str[i]; i++) {
+		if (str[i] == character) {
+			retval = i;
+		}
+	}
+	return retval;
+}
+
+int ox_lastIndexOf(char *str, int character, int maxLen) {
+	int retval = -1;
+	for (int i = 0; i < maxLen && str[i]; i++) {
+		if (str[i] == character) {
+			retval = i;
+		}
+	}
+	return retval;
+}
+
 int ox_atoi(const char *str) {
 	int total = 0;
 	int multiplier = 1;

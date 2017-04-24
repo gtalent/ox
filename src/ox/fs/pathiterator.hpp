@@ -25,6 +25,16 @@ class PathIterator {
 		/**
 		 * @return 0 if no error
 		 */
+		int dirPath(char *pathOut, size_t pathOutSize);
+
+		/**
+		 * @return 0 if no error
+		 */
+		int fileName(char *out, size_t outSize);
+
+		/**
+		 * @return 0 if no error
+		 */
 		int next(char *pathOut, size_t pathOutSize);
 
 		bool hasNext();
