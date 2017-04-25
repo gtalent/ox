@@ -19,6 +19,7 @@ Random::Random(RandomSeed seed) {
 }
 
 uint64_t Random::gen() {
+	// An implementation of the Xoroshiro128+ algorithm
 	auto s0 = m_seed[0];
 	auto s1 = m_seed[1];
 	auto retval = s0 + s1;
