@@ -487,8 +487,15 @@ int FileStore<Header>::write(InodeId_t id, void *data, typename Header::FsSize_t
 			auto root = ptr<Inode*>(m_header.getRootInode());
 			if (insert(root, inode) || root == inode) {
 				retval = 0;
+			} else {
+				dealloc(inode);
+				retval = 2;
 			}
+		} else {
+			retval = 3;
 		}
+	} else {
+		retval = 4;
 	}
 	return retval;
 }
@@ -504,41 +511,37 @@ int FileStore<Header>::remove(Inode *root, InodeId_t id) {
 
 	if (root->getId() > id) {
 		if (root->getLeft()) {
-			auto node = ptr<Inode*>(root->getLeft());
-			if (node->getId() != id) {
-				err = remove(node, id);
+			auto left = ptr<Inode*>(root->getLeft());
+			if (left->getId() != id) {
+				err = remove(left, id);
 			} else {
 				root->setLeft(0);
-				if (node->getRight()) {
-					insert(root, ptr<Inode*>(node->getRight()));
+				// pass children to parent
+				if (left->getRight()) {
+					insert(root, ptr<Inode*>(left->getRight()));
 				}
-				if (node->getLeft()) {
-					insert(root, ptr<Inode*>(node->getLeft()));
+				if (left->getLeft()) {
+					insert(root, ptr<Inode*>(left->getLeft()));
 				}
-				dealloc(node);
-				node->setId(0);
-				node->setLeft(0);
-				node->setRight(0);
+				dealloc(left);
 				err = 0;
 			}
 		}
 	} else if (root->getId() < id) {
 		if (root->getRight()) {
-			auto node = ptr<Inode*>(root->getRight());
-			if (node->getId() != id) {
-				err = remove(node, id);
+			auto right = ptr<Inode*>(root->getRight());
+			if (right->getId() != id) {
+				err = remove(right, id);
 			} else {
 				root->setRight(0);
-				if (node->getRight()) {
-					insert(root, ptr<Inode*>(node->getRight()));
+				// pass children to parent
+				if (right->getRight()) {
+					insert(root, ptr<Inode*>(right->getRight()));
 				}
-				if (node->getLeft()) {
-					insert(root, ptr<Inode*>(node->getLeft()));
+				if (right->getLeft()) {
+					insert(root, ptr<Inode*>(right->getLeft()));
 				}
-				dealloc(node);
-				node->setId(0);
-				node->setLeft(0);
-				node->setRight(0);
+				dealloc(right);
 				err = 0;
 			}
 		}
@@ -548,9 +551,6 @@ int FileStore<Header>::remove(Inode *root, InodeId_t id) {
 			insert(ptr<Inode*>(m_header.getRootInode()), ptr<Inode*>(root->getLeft()));
 		}
 		dealloc(root);
-		root->setId(0);
-		root->setLeft(0);
-		root->setRight(0);
 		err = 0;
 	}
 
@@ -717,6 +717,7 @@ void *FileStore<Header>::alloc(typename Header::FsSize_t size) {
 	inode->setPrev(ptr<Inode*>(firstInode())->getPrev());
 	inode->setNext(firstInode());
 	m_header.setMemUsed(m_header.getMemUsed() + size);
+	ptr<Inode*>(lastInode())->setNext(retval);
 	ptr<Inode*>(firstInode())->setPrev(retval);
 	return inode;
 }
