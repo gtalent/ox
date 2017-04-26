@@ -95,15 +95,15 @@ class FileSystemTemplate: public FileSystem {
 				data[nameLen] = 0;
 			}
 
+			static uint64_t spaceNeeded(const char *fileName) {
+				return sizeof(DirectoryEntry) + ox_strlen(fileName) + 1;
+			}
+
 			/**
 			 * The size in bytes.
 			 */
 			uint64_t size() {
-				return sizeof(DirectoryEntry) + ox_strlen(getName());
-			}
-
-			static uint64_t spaceNeeded(const char *fileName) {
-				return sizeof(DirectoryEntry) + ox_strlen(fileName) + 1;
+				return spaceNeeded(getName());
 			}
 		};
 
@@ -118,6 +118,8 @@ class FileSystemTemplate: public FileSystem {
 			}
 
 			uint64_t getFileInode(const char *name, uint64_t buffSize);
+
+			int rmFile(const char *name);
 		};
 
 		FileStore *m_store = nullptr;
@@ -161,6 +163,11 @@ class FileSystemTemplate: public FileSystem {
 		uint64_t size() override;
 
 		uint8_t *buff() override;
+
+		/**
+		 * Removes an entry from a directory. This does not delete the referred to file.
+		 */
+		int rmDirectoryEntry(const char *dirPath);
 
 		static uint8_t *format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories);
 
@@ -455,13 +462,14 @@ template<typename FileStore, FsType FS_TYPE>
 int FileSystemTemplate<FileStore, FS_TYPE>::insertDirectoryEntry(const char *dirPath, const char *fileName, uint64_t inode) {
 	auto s = stat(dirPath);
 	if (s.inode) {
-		size_t dirBuffSize = s.size + DirectoryEntry::spaceNeeded(fileName);
+		auto spaceNeeded = DirectoryEntry::spaceNeeded(fileName);
+		size_t dirBuffSize = s.size + spaceNeeded;
 		uint8_t dirBuff[dirBuffSize];
 		int err = read(s.inode, dirBuff, dirBuffSize);
 
 		if (!err) {
 			auto dir = (Directory*) dirBuff;
-			dir->size++;
+			dir->size += spaceNeeded;
 			auto entry = (DirectoryEntry*) &dirBuff[s.size];
 			entry->inode = inode;
 			entry->setName(fileName);
@@ -477,6 +485,40 @@ int FileSystemTemplate<FileStore, FS_TYPE>::insertDirectoryEntry(const char *dir
 #pragma warning(default:4244)
 #endif
 
+template<typename FileStore, FsType FS_TYPE>
+int FileSystemTemplate<FileStore, FS_TYPE>::rmDirectoryEntry(const char *path) {
+	int err = 0;
+	size_t pathLen = ox_strlen(path);
+	char dirPath[pathLen];
+	char fileName[pathLen];
+	PathIterator pathReader(path, pathLen);
+	err |= pathReader.fileName(fileName, pathLen);
+	err |= pathReader.dirPath(dirPath, pathLen);
+	if (err) {
+		return err;
+	}
+
+	auto dirStat = stat(dirPath);
+	auto dirBuffLen = dirStat.size;
+	uint8_t dirBuff[dirBuffLen];
+
+	err = read(dirStat.inode, dirBuff, dirBuffLen);
+	if (err) {
+		return err;
+	}
+
+	auto dir = (Directory*) dirBuff;
+	err = dir->rmFile(fileName);
+
+	if (err) {
+		return err;
+	}
+
+	err = write(dirStat.inode, dirBuff, dirBuffLen - DirectoryEntry::spaceNeeded(fileName));
+
+	return err;
+}
+
 
 // Directory
 
@@ -485,7 +527,8 @@ uint64_t FileSystemTemplate<FileStore, FS_TYPE>::Directory::getFileInode(const c
 	uint64_t inode = 0;
 	auto current = files();
 	if (current) {
-		for (uint64_t i = 1; ox_strcmp(current->getName(), name) != 0; i++) {
+		for (uint64_t i = 0; ox_strcmp(current->getName(), name) != 0;) {
+			i += current->size();
 			if (i < this->size) {
 				current = (DirectoryEntry*) (((uint8_t*) current) + current->size());
 			} else {
@@ -498,6 +541,27 @@ uint64_t FileSystemTemplate<FileStore, FS_TYPE>::Directory::getFileInode(const c
 		}
 	}
 	return inode;
+}
+
+template<typename FileStore, FsType FS_TYPE>
+int FileSystemTemplate<FileStore, FS_TYPE>::Directory::rmFile(const char *name) {
+	int err = 1;
+	auto current = files();
+	if (current) {
+		for (uint64_t i = 0; i < this->size;) {
+			i += current->size();
+			if (ox_strcmp(current->getName(), name) == 0) {
+				auto dest = (uint8_t*) current;
+				auto src = dest + current->size();
+				ox_memcpy(dest, src, this->size - i);
+				this->size -= i;
+				err = 0;
+				break;
+			}
+			current = (DirectoryEntry*) (((uint8_t*) current) + current->size());
+		}
+	}
+	return err;
 }
 
 typedef FileSystemTemplate<FileStore16, OxFS_16> FileSystem16;
