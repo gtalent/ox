@@ -136,7 +136,7 @@ map<string, int(*)(string)> tests = {
 				auto path = "/usr/share/test.txt";
 				auto dataIn = "test string";
 				auto dataOutLen = ox_strlen(dataIn) + 1;
-				char dataOut[dataOutLen];
+				auto dataOut = new char[dataOutLen];
 
 				const auto size = 1024 * 1024 * 10;
 				auto buff = new uint8_t[size];
@@ -153,6 +153,7 @@ map<string, int(*)(string)> tests = {
 
 				delete fs;
 				delete []buff;
+				delete []dataOut;
 
 				return retval;
 			}
