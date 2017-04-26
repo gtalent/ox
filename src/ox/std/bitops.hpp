@@ -5,11 +5,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+
 #pragma once
 
-#include "bitops.hpp"
-#include "byteswap.hpp"
-#include "memops.hpp"
-#include "random.hpp"
-#include "strops.hpp"
 #include "types.hpp"
+
+namespace ox {
+
+inline uint64_t rotateLeft(uint64_t i, int shift) {
+	return (i << shift) | (i >> (64 - shift));
+}
+
+}

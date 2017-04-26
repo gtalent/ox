@@ -1,4 +1,4 @@
-ifneq ($(which gmake 2>&1),)
+ifneq ($(shell which gmake),)
 	MAKE=gmake -j
 else
 	MAKE=make

@@ -43,6 +43,29 @@ map<string, function<int()>> tests = {
 			return !(ox_strcmp("resize", "resize") == 0);
 		}
 	},
+	{
+		" == ",
+		[]() {
+			return !(ox_strcmp("", "") == 0);
+		}
+	},
+	{
+		"ox_strchr 0",
+		[]() {
+			auto testStr = "asdf";
+			return !(ox_strchr(testStr, 0, 4) == &testStr[4]);
+		}
+	},
+	{
+		"ox_lastIndexOf aaaa a",
+		[]() {
+			int retval = 0;
+			auto testStr = "aaaa";
+			retval |= !(ox_lastIndexOf((char*) testStr, 'a', ox_strlen(testStr)) == 3);
+			retval |= !(ox_lastIndexOf((const char*) testStr, 'a', ox_strlen(testStr)) == 3);
+			return retval;
+		}
+	},
 };
 
 int main(int argc, const char **args) {

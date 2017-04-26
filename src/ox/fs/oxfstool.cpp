@@ -30,13 +30,12 @@ const static auto usage = "usage:\n"
 "\toxfs compact <FS file>\n"
 "\toxfs version\n";
 
-char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
-	auto file = fopen(path, "rb");
+char *loadFileBuff(FILE *file, ::size_t *sizeOut = nullptr) {
 	if (file) {
 		fseek(file, 0, SEEK_END);
 		const auto size = ftell(file);
 		rewind(file);
-		auto buff = (char*) malloc(size);
+		auto buff = new char[size];
 		auto itemsRead = fread(buff, size, 1, file);
 		fclose(file);
 		if (sizeOut) {
@@ -48,12 +47,17 @@ char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
 	}
 }
 
+char *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
+	return loadFileBuff(fopen(path, "rb"), sizeOut);
+}
+
 size_t bytes(const char *str) {
 	auto size = ::ox_strlen(str);
 	const auto lastChar = str[size-1];
 	auto multiplier = 1;
-	auto copy = new char[size];
-	ox_memcpy(copy, str, size);
+	char copy[size + 1];
+	ox_memcpy(copy, str, size + 1);
+	// parse size unit
 	if (lastChar < '0' || lastChar > '9') {
 		copy[size-1] = 0;
 		switch (lastChar) {
@@ -73,9 +77,7 @@ size_t bytes(const char *str) {
 				multiplier = -1;
 		}
 	}
-	const auto retval = ((size_t) ox_atoi(copy)) * multiplier;
-	delete []copy;
-	return  retval;
+	return ox_atoi(copy) * multiplier;
 }
 
 int format(int argc, char **args) {
@@ -83,13 +85,10 @@ int format(int argc, char **args) {
 	auto err = 0;
 	if (argc >= 5) {
 		auto type = ox_atoi(args[2]);
-		cout << args[3] << endl;
 		auto size = bytes(args[3]);
 		auto path = args[4];
-		auto buff = (uint8_t*) malloc(size);
+		auto buff = new uint8_t[size];
 
-		cout << "Size: " << size << " bytes\n";
-		cout << "Type: " << type << endl;
 
 		if (size < sizeof(FileStore64)) {
 			err = 1;
@@ -100,13 +99,13 @@ int format(int argc, char **args) {
 			// format
 			switch (type) {
 				case 16:
-					FileStore16::format(buff, (FileStore16::FsSize_t) size, ox::fs::OxFS_16);
+					FileStore16::format(buff, (FileStore16::FsSize_t) size, true);
 					break;
 				case 32:
-					FileStore32::format(buff, (FileStore32::FsSize_t) size, ox::fs::OxFS_32);
+					FileStore32::format(buff, (FileStore32::FsSize_t) size, true);
 					break;
 				case 64:
-					FileStore64::format(buff, size, ox::fs::OxFS_64);
+					FileStore64::format(buff, size, true);
 					break;
 				default:
 					err = 1;
@@ -126,7 +125,7 @@ int format(int argc, char **args) {
 			}
 		}
 
-		free(buff);
+		delete []buff;
 
 		if (err == 0) {
 			fprintf(stderr, "Created file system %s\n", path);
@@ -149,7 +148,7 @@ int read(int argc, char **args) {
 		auto fsBuff = loadFileBuff(fsPath, &fsSize);
 		
 		if (fsBuff) {
-			auto fs = createFileSystem(fsBuff);
+			auto fs = createFileSystem(fsBuff, fsSize);
 
 			if (fs) {
 				auto output = fs->read(inode, &fileSize);
@@ -161,7 +160,7 @@ int read(int argc, char **args) {
 				}
 
 				delete fs;
-				free(fsBuff);
+				delete []fsBuff;
 			} else {
 				fprintf(stderr, "Invalid file system type: %d.\n", *(uint32_t*) fsBuff);
 			}
@@ -195,22 +194,22 @@ int write(int argc, char **args, bool expand) {
 			if (itemsRead) {
 				auto srcBuff = loadFileBuff(srcPath, &srcSize);
 				if (srcBuff) {
-					auto fs = createFileSystem(fsBuff);
+					auto expanded = false;
+					auto fs = createFileSystem(fsBuff, fsSize);
 					if (fs) {
 						if (expand && fs->available() <= srcSize) {
-							auto needed = fs->spaceNeeded(inode, srcSize);
-							auto cloneBuff = new uint8_t[needed];
-							ox_memcpy(cloneBuff, fsBuff, fsSize);
-
-							delete fs;
-							delete []fsBuff;
-
-							fsBuff = cloneBuff;
-							fs = createFileSystem(fsBuff);
+							auto needed = fs->size() + fs->spaceNeeded(srcSize);
 							fsSize = needed;
-							fs->resize(fsSize);
+							fs = expandCopyCleanup(fs, needed);
+							fsBuff = fs->buff();
 						}
 						err |= fs->write(inode, srcBuff, srcSize);
+
+						// compact the file system if it was expanded
+						if (expanded) {
+							fs->resize();
+						}
+
 						if (err) {
 							fprintf(stderr, "Could not write to file system.\n");
 						}
@@ -233,7 +232,7 @@ int write(int argc, char **args, bool expand) {
 							err = 1;
 						}
 					}
-					free(srcBuff);
+					delete []srcBuff;
 				} else {
 					err = 1;
 					fprintf(stderr, "Could not load source file: %s.\n", srcPath);
@@ -258,7 +257,7 @@ int compact(int argc, char **args) {
 
 		auto fsBuff = loadFileBuff(fsPath, &fsSize);
 		if (fsBuff) {
-			auto fs = createFileSystem(fsBuff);
+			auto fs = createFileSystem(fsBuff, fsSize);
 
 			if (fs) {
 				fs->resize();
@@ -279,7 +278,7 @@ int compact(int argc, char **args) {
 			}
 
 			delete fs;
-			free(fsBuff);
+			delete []fsBuff;
 		} else {
 			fprintf(stderr, "Could not open file: %s\n", fsPath);
 		}
@@ -298,7 +297,7 @@ int remove(int argc, char **args) {
 
 		auto fsBuff = loadFileBuff(fsPath, &fsSize);
 		if (fsBuff) {
-			auto fs = createFileSystem(fsBuff);
+			auto fs = createFileSystem(fsBuff, fsSize);
 
 			if (fs) {
 				err = fs->remove(inode);
@@ -322,7 +321,7 @@ int remove(int argc, char **args) {
 			}
 
 			delete fs;
-			free(fsBuff);
+			delete []fsBuff;
 		} else {
 			fprintf(stderr, "Could not open file: %s\n", fsPath);
 		}

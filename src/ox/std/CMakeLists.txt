@@ -3,11 +3,20 @@ cmake_minimum_required(VERSION 2.8)
 add_library(
 	OxStd
 		memops.cpp
+		random.cpp
 		strops.cpp
+)
+
+set_property(
+	TARGET
+		OxStd
+	PROPERTY
+		POSITION_INDEPENDENT_CODE ON
 )
 
 install(
 	FILES
+		byteswap.hpp
 		memops.hpp
 		strops.hpp
 		std.hpp

@@ -11,7 +11,7 @@
 int ox_strcmp(const char *str1, const char *str2) {
 	auto retval = 0;
 	auto i = 0;
-	do {
+	while (str1[i] || str2[i]) {
 		if (str1[i] < str2[i]) {
 			retval = -1;
 			break;
@@ -20,7 +20,7 @@ int ox_strcmp(const char *str1, const char *str2) {
 			break;
 		}
 		i++;
-	} while (str1[i] || str2[i]);
+	}
 	return retval;
 }
 
@@ -28,6 +28,54 @@ int ox_strlen(const char *str1) {
 	int len;
 	for (len = 0; str1[len]; len++);
 	return len;
+}
+
+int ox_strlen(char *str1) {
+	int len;
+	for (len = 0; str1[len]; len++);
+	return len;
+}
+
+const char *ox_strchr(const char *str, int character, size_t maxLen) {
+	for (size_t i = 0; i <= maxLen; i++) {
+		if (str[i] == character) {
+			return &str[i];
+		} else if (str[i] == 0) {
+			return nullptr;
+		}
+	}
+	return nullptr;
+}
+
+char *ox_strchr(char *str, int character, size_t maxLen) {
+	for (size_t i = 0; i < maxLen; i++) {
+		if (str[i] == character) {
+			return &str[i];
+		} else if (str[i] == 0) {
+			return nullptr;
+		}
+	}
+	return nullptr;
+}
+
+int ox_lastIndexOf(const char *str, int character, int maxLen) {
+	int retval = -1;
+	for (int i = 0; i < maxLen && str[i]; i++) {
+		if (str[i] == character) {
+			retval = i;
+		}
+	}
+	return retval;
+}
+
+int ox_lastIndexOf(char *str, int character, int maxLen) {
+	int retval = -1;
+	for (int i = 0; i < maxLen && str[i]; i++) {
+		if (str[i] == character) {
+			retval = i;
+		}
+	}
+	return retval;
 }
 
 int ox_atoi(const char *str) {

@@ -23,11 +23,9 @@ typedef unsigned long      uint64_t;
 #endif
 
 namespace ox {
-namespace std {
 
 typedef uint32_t Error;
 
-}
 }
 
 #if defined(_LP64) || defined(__ppc64__) || defined(__aarch64__)
