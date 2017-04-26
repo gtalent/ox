@@ -134,7 +134,14 @@ map<string, int(*)(string)> tests = {
 			[](string) {
 				// this value will likely need to change if anything about the
 				// random number generator changes
-				//const auto targetInode = ox_rand();
+				const auto targetInode = [](int count) {
+					ox::Random rand;
+					uint64_t retval = 0;
+					for (int i = 0; i < count; i++) {
+						retval = rand.gen();
+					}
+					return retval >> 48;
+				};
 
 				int retval = 0;
 				auto path = "/usr/share/test.txt";
@@ -145,26 +152,12 @@ map<string, int(*)(string)> tests = {
 				FileSystem32::format(buff, (FileStore32::FsSize_t) size, true);
 				auto fs = (FileSystem32*) createFileSystem(buff, size);
 
-				fs->mkdir("/usr");
-				fs->mkdir("/usr/share");
-				fs->mkdir("/usr/lib");
-				cout << fs->mkdir("/usr/src") << endl;
+				retval |= fs->mkdir("/usr");
+				retval |= fs->mkdir("/usr/share");
+				retval |= fs->mkdir("/usr/lib");
 
 				retval |= fs->write(path, &data, ox_strlen(data) + 1);
-
-				auto inode = fs->findInodeOf("/");
-				cout << "/ inode: " << inode << endl;
-
-				inode = fs->findInodeOf("/usr");
-				cout << "/usr inode: " << inode << endl;
-
-				inode = fs->findInodeOf("/usr/share");
-				cout << "/usr/share inode: " << inode << endl;
-
-				inode = fs->findInodeOf(path);
-				cout << path << " inode: " << inode << endl;
-
-				//retval |= !(fs->findInodeOf(path) == targetInode);
+				retval |= !(fs->findInodeOf(path) == targetInode(5));
 
 				delete fs;
 				delete []buff;
