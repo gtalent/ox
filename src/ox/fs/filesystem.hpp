@@ -47,6 +47,8 @@ class FileSystem {
 
 		virtual int remove(uint64_t inode) = 0;
 
+		virtual int remove(const char *path) = 0;
+
 		virtual void resize(uint64_t size = 0) = 0;
 
 		virtual int write(const char *path, void *buffer, uint64_t size, uint8_t fileType = NormalFile) = 0;
@@ -145,6 +147,8 @@ class FileSystemTemplate: public FileSystem {
 		void resize(uint64_t size = 0) override;
 
 		int remove(uint64_t inode) override;
+
+		int remove(const char *path) override;
 
 		int write(const char *path, void *buffer, uint64_t size, uint8_t fileType = NormalFile) override;
 
@@ -292,6 +296,22 @@ uint8_t *FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, size_t *si
 		buff = nullptr;
 	}
 	return buff;
+}
+#ifdef _MSC_VER
+#pragma warning(default:4244)
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(disable:4244)
+#endif
+template<typename FileStore, FsType FS_TYPE>
+int FileSystemTemplate<FileStore, FS_TYPE>::remove(const char *path) {
+	auto inode = findInodeOf(path);
+	if (inode) {
+		return remove(inode) | rmDirectoryEntry(path);
+	} else {
+		return 1;
+	}
 }
 #ifdef _MSC_VER
 #pragma warning(default:4244)

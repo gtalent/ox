@@ -190,6 +190,38 @@ map<string, int(*)(string)> tests = {
 				return retval;
 			}
 		},
+		{
+			"FileSystem32::remove(string)",
+			[](string) {
+				int retval = 0;
+				auto path = "/usr/share/test.txt";
+				auto dataIn = "test string";
+				auto dataOutLen = ox_strlen(dataIn) + 1;
+				auto dataOut = new char[dataOutLen];
+
+				const auto size = 1024 * 1024 * 10;
+				auto buff = new uint8_t[size];
+				FileSystem32::format(buff, (FileStore32::FsSize_t) size, true);
+				auto fs = (FileSystem32*) createFileSystem(buff, size);
+
+				retval |= fs->mkdir("/usr");
+				retval |= fs->mkdir("/usr/share");
+
+				retval |= fs->write(path, (void*) dataIn, ox_strlen(dataIn) + 1);
+				retval |= fs->read(path, dataOut, dataOutLen);
+				retval |= ox_strcmp(dataIn, dataOut) != 0;
+
+				retval |= fs->rmDirectoryEntry(path);
+				// the lookup should fail
+				retval |= fs->read(path, dataOut, dataOutLen) == 0;
+
+				delete fs;
+				delete []buff;
+				delete []dataOut;
+
+				return retval;
+			}
+		},
 	},
 };
 
