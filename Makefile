@@ -2,22 +2,29 @@ OS=$(shell uname | tr [:upper:] [:lower:])
 HOST_ENV=${OS}-$(shell uname -m)
 DEVENV=devenv$(shell pwd | sed 's/\//-/g')
 DEVENV_IMAGE=wombatant/devenv
-ifeq ($(shell docker inspect --format="{{.State.Status}}" ${DEVENV} 2>&1),running)
-	ENV_RUN=docker exec -i -t --user $(shell id -u ${USER}) ${DEVENV}
+ifneq ($(shell which gmake),)
+	MAKE=gmake
+else
+	MAKE=make
+endif
+ifneq ($(shell which docker 2>&1),)
+	ifeq ($(shell docker inspect --format="{{.State.Status}}" ${DEVENV} 2>&1),running)
+		ENV_RUN=docker exec -i -t --user $(shell id -u ${USER}) ${DEVENV}
+	endif
 endif
 
 make:
-	${ENV_RUN} make -j -C build HOST_ENV=${HOST_ENV}
+	${ENV_RUN} ${MAKE} -j -C build HOST_ENV=${HOST_ENV}
 preinstall:
-	${ENV_RUN} make -j -C build ARGS="preinstall" HOST_ENV=${HOST_ENV}
+	${ENV_RUN} ${MAKE} -j -C build ARGS="preinstall" HOST_ENV=${HOST_ENV}
 install:
-	${ENV_RUN} make -j -C build ARGS="install" HOST_ENV=${HOST_ENV}
+	${ENV_RUN} ${MAKE} -j -C build ARGS="install" HOST_ENV=${HOST_ENV}
 clean:
-	${ENV_RUN} make -j -C build ARGS="clean" HOST_ENV=${HOST_ENV}
+	${ENV_RUN} ${MAKE} -j -C build ARGS="clean" HOST_ENV=${HOST_ENV}
 purge:
 	${ENV_RUN} rm -rf $(shell find build -mindepth 1 -maxdepth 1 -type d)
 test:
-	${ENV_RUN} make -j -C build ARGS="test" HOST_ENV=${HOST_ENV}
+	${ENV_RUN} ${MAKE} -j -C build ARGS="test" HOST_ENV=${HOST_ENV}
 run: make
 	./build/current/src/wombat/wombat -debug
 gdb: make
