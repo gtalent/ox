@@ -9,6 +9,7 @@
 #include <iostream>
 #include <assert.h>
 #include <map>
+#include <vector>
 #include <string>
 #include <ox/fs/filesystem.hpp>
 #include <ox/fs/pathiterator.hpp>
@@ -138,7 +139,7 @@ map<string, int(*)(string)> tests = {
 				auto dataOutLen = ox_strlen(dataIn) + 1;
 				auto dataOut = new char[dataOutLen];
 
-				const auto size = 1024 * 1024 * 10;
+				const auto size = 1024 * 1024;
 				auto buff = new uint8_t[size];
 				FileSystem32::format(buff, (FileStore32::FsSize_t) size, true);
 				auto fs = (FileSystem32*) createFileSystem(buff, size);
@@ -191,29 +192,33 @@ map<string, int(*)(string)> tests = {
 			}
 		},
 		{
-			"FileSystem32::remove(string)",
+			"FileSystem32::remove(string, true)",
 			[](string) {
 				int retval = 0;
-				auto path = "/usr/share/test.txt";
 				auto dataIn = "test string";
-				auto dataOutLen = ox_strlen(dataIn) + 1;
+				auto dataOutLen = 1024 * 64;
 				auto dataOut = new char[dataOutLen];
+				vector<uint64_t> inodes;
 
-				const auto size = 1024 * 1024 * 10;
+				const auto size = 1024 * 1024;
 				auto buff = new uint8_t[size];
 				FileSystem32::format(buff, (FileStore32::FsSize_t) size, true);
 				auto fs = (FileSystem32*) createFileSystem(buff, size);
 
 				retval |= fs->mkdir("/usr");
 				retval |= fs->mkdir("/usr/share");
+				retval |= fs->write("/usr/share/test.txt", (void*) dataIn, ox_strlen(dataIn) + 1);
 
-				retval |= fs->write(path, (void*) dataIn, ox_strlen(dataIn) + 1);
-				retval |= fs->read(path, dataOut, dataOutLen);
-				retval |= ox_strcmp(dataIn, dataOut) != 0;
+				inodes.push_back(fs->stat("/usr").inode);
+				inodes.push_back(fs->stat("/usr/share").inode);
+				inodes.push_back(fs->stat("/usr/share/test.txt").inode);
 
-				retval |= fs->rmDirectoryEntry(path);
+				retval |= fs->remove("/usr", true);
+
 				// the lookup should fail
-				retval |= fs->read(path, dataOut, dataOutLen) == 0;
+				for (auto inode : inodes) {
+					retval |= fs->read(inode, dataOut, dataOutLen) == 0;
+				}
 
 				delete fs;
 				delete []buff;

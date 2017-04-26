@@ -45,9 +45,9 @@ class FileSystem {
 
 		virtual uint8_t *read(uint64_t inode, size_t *size) = 0;
 
-		virtual int remove(uint64_t inode) = 0;
+		virtual int remove(uint64_t inode, bool recursive = false) = 0;
 
-		virtual int remove(const char *path) = 0;
+		virtual int remove(const char *path, bool recursive = false) = 0;
 
 		virtual void resize(uint64_t size = 0) = 0;
 
@@ -114,12 +114,15 @@ class FileSystemTemplate: public FileSystem {
 			 * Number of bytes after this Directory struct.
 			 */
 			typename FileStore::FsSize_t size = 0;
+			typename FileStore::FsSize_t children = 0;
 
 			DirectoryEntry *files() {
 				return size ? (DirectoryEntry*) (this + 1) : nullptr;
 			}
 
 			uint64_t getFileInode(const char *name, uint64_t buffSize);
+
+			int getChildrenInodes(typename FileStore::InodeId_t *inodes, size_t inodesLen);
 
 			int rmFile(const char *name);
 		};
@@ -146,9 +149,9 @@ class FileSystemTemplate: public FileSystem {
 
 		void resize(uint64_t size = 0) override;
 
-		int remove(uint64_t inode) override;
+		int remove(uint64_t inode, bool recursive = false) override;
 
-		int remove(const char *path) override;
+		int remove(const char *path, bool recursive = false) override;
 
 		int write(const char *path, void *buffer, uint64_t size, uint8_t fileType = NormalFile) override;
 
@@ -301,28 +304,51 @@ uint8_t *FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, size_t *si
 #pragma warning(default:4244)
 #endif
 
-#ifdef _MSC_VER
-#pragma warning(disable:4244)
-#endif
 template<typename FileStore, FsType FS_TYPE>
-int FileSystemTemplate<FileStore, FS_TYPE>::remove(const char *path) {
+int FileSystemTemplate<FileStore, FS_TYPE>::remove(const char *path, bool recursive) {
 	auto inode = findInodeOf(path);
 	if (inode) {
-		return remove(inode) | rmDirectoryEntry(path);
+		return remove(inode, recursive) | rmDirectoryEntry(path);
 	} else {
 		return 1;
 	}
 }
-#ifdef _MSC_VER
-#pragma warning(default:4244)
-#endif
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
 template<typename FileStore, FsType FS_TYPE>
-int FileSystemTemplate<FileStore, FS_TYPE>::remove(uint64_t inode) {
-	return m_store->remove(inode);
+int FileSystemTemplate<FileStore, FS_TYPE>::remove(uint64_t inode, bool recursive) {
+	auto fileType = stat(inode).fileType;
+	if (fileType != FileType::Directory) {
+		return m_store->remove(inode);
+	} else if (fileType == FileType::Directory && recursive) {
+		int err = 0;
+		auto dirStat = stat(inode);
+		auto dirBuffLen = dirStat.size;
+		uint8_t dirBuff[dirBuffLen];
+		auto dir = (Directory*) dirBuff;
+
+		err = read(dirStat.inode, dirBuff, dirBuffLen);
+		if (err) {
+			return 1;
+		}
+
+		typename FileStore::InodeId_t inodes[dir->children];
+		dir->getChildrenInodes(inodes, dir->children);
+
+		for (auto i : inodes) {
+			err |= remove(i, true);
+		}
+
+		if (!err) {
+			err |= m_store->remove(inode);
+		}
+
+		return err;
+	} else {
+		return 1;
+	}
 }
 #ifdef _MSC_VER
 #pragma warning(default:4244)
@@ -490,6 +516,7 @@ int FileSystemTemplate<FileStore, FS_TYPE>::insertDirectoryEntry(const char *dir
 		if (!err) {
 			auto dir = (Directory*) dirBuff;
 			dir->size += spaceNeeded;
+			dir->children++;
 			auto entry = (DirectoryEntry*) &dirBuff[s.size];
 			entry->inode = inode;
 			entry->setName(fileName);
@@ -564,6 +591,24 @@ uint64_t FileSystemTemplate<FileStore, FS_TYPE>::Directory::getFileInode(const c
 }
 
 template<typename FileStore, FsType FS_TYPE>
+int FileSystemTemplate<FileStore, FS_TYPE>::Directory::getChildrenInodes(typename FileStore::InodeId_t *inodes, size_t inodesLen) {
+	if (inodesLen >= this->children) {
+		auto current = files();
+		if (current) {
+			for (uint64_t i = 0; i < this->children; i++) {
+				inodes[i] = current->inode;
+				current = (DirectoryEntry*) (((uint8_t*) current) + current->size());
+			}
+			return 0;
+		} else {
+			return 1;
+		}
+	} else {
+		return 2;
+	}
+}
+
+template<typename FileStore, FsType FS_TYPE>
 int FileSystemTemplate<FileStore, FS_TYPE>::Directory::rmFile(const char *name) {
 	int err = 1;
 	auto current = files();
@@ -574,7 +619,8 @@ int FileSystemTemplate<FileStore, FS_TYPE>::Directory::rmFile(const char *name) 
 				auto dest = (uint8_t*) current;
 				auto src = dest + current->size();
 				ox_memcpy(dest, src, this->size - i);
-				this->size -= i;
+				this->size -= current->size();
+				this->children--;
 				err = 0;
 				break;
 			}
