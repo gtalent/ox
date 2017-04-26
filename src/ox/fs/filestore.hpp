@@ -812,8 +812,8 @@ uint8_t *FileStore<Header>::format(uint8_t *buffer, typename Header::FsSize_t si
 }
 
 typedef FileStore<FileStoreHeader<uint16_t, uint16_t>> FileStore16;
-typedef FileStore<FileStoreHeader<uint32_t, uint16_t>> FileStore32;
-typedef FileStore<FileStoreHeader<uint64_t, uint16_t>> FileStore64;
+typedef FileStore<FileStoreHeader<uint32_t, uint64_t>> FileStore32;
+typedef FileStore<FileStoreHeader<uint64_t, uint64_t>> FileStore64;
 
 }
 }

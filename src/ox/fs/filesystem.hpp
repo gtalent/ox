@@ -124,7 +124,9 @@ class FileSystemTemplate: public FileSystem {
 
 	public:
 		// static members
+		static typename FileStore::InodeId_t INODE_RANDOM;
 		static typename FileStore::InodeId_t INODE_ROOT_DIR;
+		static typename FileStore::InodeId_t INODE_RESERVED_END;
 
 		explicit FileSystemTemplate(void *buff);
 
@@ -163,6 +165,8 @@ class FileSystemTemplate: public FileSystem {
 		static uint8_t *format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories);
 
 	private:
+		uint64_t generateInodeId();
+
 		int insertDirectoryEntry(const char *dirPath, const char *fileName, uint64_t inode);
 };
 
@@ -172,7 +176,13 @@ FileSystemTemplate<FileStore, FS_TYPE>::FileSystemTemplate(void *buff) {
 }
 
 template<typename FileStore, FsType FS_TYPE>
+typename FileStore::InodeId_t FileSystemTemplate<FileStore, FS_TYPE>::INODE_RANDOM = 1;
+
+template<typename FileStore, FsType FS_TYPE>
 typename FileStore::InodeId_t FileSystemTemplate<FileStore, FS_TYPE>::INODE_ROOT_DIR = 2;
+
+template<typename FileStore, FsType FS_TYPE>
+typename FileStore::InodeId_t FileSystemTemplate<FileStore, FS_TYPE>::INODE_RESERVED_END = 100;
 
 template<typename FileStore, FsType FS_TYPE>
 int FileSystemTemplate<FileStore, FS_TYPE>::mkdir(const char *path) {
@@ -310,14 +320,7 @@ int FileSystemTemplate<FileStore, FS_TYPE>::write(const char *path, void *buffer
 	uint64_t inode = findInodeOf(path);
 	// find an inode value for the given path
 	if (!inode) {
-		while (!inode) {
-			inode = ox_rand() >> 48;
-			// make sure this does not already exist
-			if (stat(inode).inode) {
-				// that result was unusable, try again
-				inode = 0;
-			}
-		}
+		inode = generateInodeId();
 		err = insertDirectoryEntry(dirPath, fileName, inode);
 	}
 
@@ -421,6 +424,29 @@ uint8_t *FileSystemTemplate<FileStore, FS_TYPE>::format(void *buffer, typename F
 #ifdef _MSC_VER
 #pragma warning(default:4244)
 #endif
+
+template<typename FileStore, FsType FS_TYPE>
+uint64_t FileSystemTemplate<FileStore, FS_TYPE>::generateInodeId() {
+	Random rand;
+	read(INODE_RANDOM, &rand, sizeof(rand));
+
+	uint64_t inode = 0;
+	// find an inode value for the given path
+	while (!inode) {
+		inode = rand.gen();
+		inode >>= 64 -  8 * sizeof(typename FileStore::InodeId_t);
+
+		// make sure this does not already exist
+		if (inode < INODE_RESERVED_END || stat(inode).inode) {
+			// that result was unusable, try again
+			inode = 0;
+		}
+	}
+
+	write(INODE_RANDOM, &rand, sizeof(rand));
+
+	return inode;
+}
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
