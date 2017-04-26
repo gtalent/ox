@@ -24,10 +24,15 @@ if(NOT MSVC)
 		-fno-rtti
 		-Wsign-compare
 		-Wunused-variable
-		-Werror
 		#--analyze
 		#-Os # GCC size optimization flag
 	)
+
+	if (CMAKE_BUILD_TYPE STREQUAL "Release")
+		add_definitions(
+			-Werror
+		)
+	endif()
 endif(NOT MSVC)
 
 enable_testing()
