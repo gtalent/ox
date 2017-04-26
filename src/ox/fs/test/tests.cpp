@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+#include <iostream>
 #include <assert.h>
 #include <map>
 #include <string>
@@ -133,21 +134,41 @@ map<string, int(*)(string)> tests = {
 			[](string) {
 				// this value will likely need to change if anything about the
 				// random number generator changes
-				const auto targetInode = 58542;
+				//const auto targetInode = ox_rand();
 
 				int retval = 0;
-				auto path = "/charset.gbag";
+				auto path = "/usr/share/test.txt";
 				auto data = "test";
 
-				const auto size = 1024;
-				uint8_t buff[size];
+				const auto size = 1024 * 1024 * 10;
+				auto buff = new uint8_t[size];
 				FileSystem32::format(buff, (FileStore32::FsSize_t) size, true);
 				auto fs = (FileSystem32*) createFileSystem(buff, size);
 
-				retval |= fs->write(path, &data, ox_strlen(data));
-				retval |= !(fs->findInodeOf(path) == targetInode);
+				fs->mkdir("/usr");
+				fs->mkdir("/usr/share");
+				fs->mkdir("/usr/lib");
+				cout << fs->mkdir("/usr/src") << endl;
+
+				retval |= fs->write(path, &data, ox_strlen(data) + 1);
+
+				auto inode = fs->findInodeOf("/");
+				cout << "/ inode: " << inode << endl;
+
+				inode = fs->findInodeOf("/usr");
+				cout << "/usr inode: " << inode << endl;
+
+				inode = fs->findInodeOf("/usr/share");
+				cout << "/usr/share inode: " << inode << endl;
+
+				inode = fs->findInodeOf(path);
+				cout << path << " inode: " << inode << endl;
+
+				//retval |= !(fs->findInodeOf(path) == targetInode);
 
 				delete fs;
+				delete []buff;
+
 				return retval;
 			}
 		},

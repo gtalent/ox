@@ -35,6 +35,8 @@ class FileSystem {
 	public:
 		virtual ~FileSystem() {};
 
+		virtual int mkdir(const char *path) = 0;
+
 		virtual int read(const char *path, void *buffer, size_t buffSize) = 0;
 
 		virtual int read(uint64_t inode, void *buffer, size_t size) = 0;
@@ -107,7 +109,7 @@ class FileSystemTemplate: public FileSystem {
 
 		struct __attribute__((packed)) Directory {
 			/**
-			 * Number of files in this directory.
+			 * Number of bytes after this Directory struct.
 			 */
 			typename FileStore::FsSize_t size = 0;
 
@@ -126,7 +128,7 @@ class FileSystemTemplate: public FileSystem {
 
 		explicit FileSystemTemplate(void *buff);
 
-		int mkdir(const char *path);
+		int mkdir(const char *path) override;
 
 		int read(const char *path, void *buffer, size_t buffSize) override;
 
@@ -174,7 +176,8 @@ typename FileStore::InodeId_t FileSystemTemplate<FileStore, FS_TYPE>::INODE_ROOT
 
 template<typename FileStore, FsType FS_TYPE>
 int FileSystemTemplate<FileStore, FS_TYPE>::mkdir(const char *path) {
-	return 0;
+	Directory dir;
+	return write(path, &dir, sizeof(dir), FileType::Directory);
 }
 
 template<typename FileStore, FsType FS_TYPE>
@@ -316,10 +319,12 @@ int FileSystemTemplate<FileStore, FS_TYPE>::write(const char *path, void *buffer
 				inode = 0;
 			}
 		}
-		insertDirectoryEntry(dirPath, fileName, inode);
+		err = insertDirectoryEntry(dirPath, fileName, inode);
 	}
 
-	err = write(inode, buffer, size, fileType);
+	if (!err) {
+		err = write(inode, buffer, size, fileType);
+	}
 
 	return err;
 }
@@ -348,8 +353,8 @@ uint64_t FileSystemTemplate<FileStore, FS_TYPE>::findInodeOf(const char *path) {
 	char fileName[pathLen];
 	uint64_t inode = INODE_ROOT_DIR;
 	while (it.hasNext()) {
-		auto dirStat = m_store->stat(inode);
-		if (dirStat.size >= sizeof(Directory)) {
+		auto dirStat = stat(inode);
+		if (dirStat.inode && dirStat.size >= sizeof(Directory)) {
 			uint8_t dirBuffer[dirStat.size];
 			auto dir = (Directory*) dirBuffer;
 			if (read(inode, dirBuffer, dirStat.size) == 0) {
@@ -405,10 +410,10 @@ uint8_t *FileSystemTemplate<FileStore, FS_TYPE>::buff() {
 template<typename FileStore, FsType FS_TYPE>
 uint8_t *FileSystemTemplate<FileStore, FS_TYPE>::format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories) {
 	buffer = FileStore::format((uint8_t*) buffer, size, (uint16_t) FS_TYPE);
-	FileSystemTemplate<FileStore, FS_TYPE> fs(buffer);
 
 	if (buffer && useDirectories) {
 		Directory dir;
+		FileSystemTemplate<FileStore, FS_TYPE> fs(buffer);
 		fs.write(INODE_ROOT_DIR, &dir, sizeof(dir), FileType::Directory);
 	}
 
@@ -425,13 +430,13 @@ template<typename FileStore, FsType FS_TYPE>
 int FileSystemTemplate<FileStore, FS_TYPE>::insertDirectoryEntry(const char *dirPath, const char *fileName, uint64_t inode) {
 	auto s = stat(dirPath);
 	if (s.inode) {
-		size_t dirBuffSize = s.size + DirectoryEntry::spaceNeeded(fileName) + 100;
+		size_t dirBuffSize = s.size + DirectoryEntry::spaceNeeded(fileName);
 		uint8_t dirBuff[dirBuffSize];
 		int err = read(s.inode, dirBuff, dirBuffSize);
 
 		if (!err) {
 			auto dir = (Directory*) dirBuff;
-			dir->size += DirectoryEntry::spaceNeeded(fileName);
+			dir->size++;
 			auto entry = (DirectoryEntry*) &dirBuff[s.size];
 			entry->inode = inode;
 			entry->setName(fileName);
@@ -455,11 +460,12 @@ uint64_t FileSystemTemplate<FileStore, FS_TYPE>::Directory::getFileInode(const c
 	uint64_t inode = 0;
 	auto current = files();
 	if (current) {
-		auto end = (DirectoryEntry*) (((uint8_t*) files()) + buffSize);
-		while (current && ox_strcmp(current->getName(), name) != 0) {
-			current = (DirectoryEntry*) (((uint8_t*) current) + current->size());
-			if (current >= end) {
+		for (uint64_t i = 1; ox_strcmp(current->getName(), name) != 0; i++) {
+			if (i < this->size) {
+				current = (DirectoryEntry*) (((uint8_t*) current) + current->size());
+			} else {
 				current = nullptr;
+				break;
 			}
 		}
 		if (current) {
