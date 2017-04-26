@@ -144,7 +144,7 @@ class FileSystemTemplate: public FileSystem {
 
 		int write(const char *path, void *buffer, uint64_t size, uint8_t fileType = NormalFile) override;
 
-		int write(uint64_t inode, void *buffer, uint64_t size, uint8_t fileType) override;
+		int write(uint64_t inode, void *buffer, uint64_t size, uint8_t fileType = NormalFile) override;
 
 		FileStat stat(const char *path);
 
@@ -219,7 +219,7 @@ int FileSystemTemplate<FileStore, FS_TYPE>::read(const char *path, void *buffer,
 
 	// if inode exists, read the data into buffer
 	if (inode) {
-		read(inode, buffer, buffSize);
+		retval = read(inode, buffer, buffSize);
 	}
 
 	return retval;
@@ -238,7 +238,6 @@ int FileSystemTemplate<FileStore, FS_TYPE>::read(uint64_t inode, void *buffer, s
 		return m_store->read(inode, buffer, nullptr);
 	}
 	return -1;
-;
 }
 #ifdef _MSC_VER
 #pragma warning(default:4244)

@@ -132,20 +132,11 @@ map<string, int(*)(string)> tests = {
 		{
 			"FileSystem32::write(string)",
 			[](string) {
-				// this value will likely need to change if anything about the
-				// random number generator changes
-				const auto targetInode = [](int count) {
-					ox::Random rand;
-					uint64_t retval = 0;
-					for (int i = 0; i < count; i++) {
-						retval = rand.gen();
-					}
-					return retval >> 48;
-				};
-
 				int retval = 0;
 				auto path = "/usr/share/test.txt";
-				auto data = "test";
+				auto dataIn = "test string";
+				auto dataOutLen = ox_strlen(dataIn) + 1;
+				char dataOut[dataOutLen];
 
 				const auto size = 1024 * 1024 * 10;
 				auto buff = new uint8_t[size];
@@ -156,8 +147,9 @@ map<string, int(*)(string)> tests = {
 				retval |= fs->mkdir("/usr/share");
 				retval |= fs->mkdir("/usr/lib");
 
-				retval |= fs->write(path, &data, ox_strlen(data) + 1);
-				retval |= !(fs->findInodeOf(path) == targetInode(5));
+				retval |= fs->write(path, (void*) dataIn, ox_strlen(dataIn) + 1);
+				retval |= fs->read(path, dataOut, dataOutLen);
+				retval |= ox_strcmp(dataIn, dataOut) != 0;
 
 				delete fs;
 				delete []buff;
