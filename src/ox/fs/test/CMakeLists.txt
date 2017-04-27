@@ -41,3 +41,5 @@ add_test("Test\\ FileSystem32::findInodeOf\\ /" FSTests "FileSystem32::findInode
 add_test("Test\\ FileSystem32::write\\(string\\)" FSTests "FileSystem32::write(string)")
 add_test("Test\\ FileSystem32::rmDirectoryEntry\\(string\\)" FSTests "FileSystem32::rmDirectoryEntry(string)")
 add_test("Test\\ FileSystem32::remove\\(string,\\ true\\)" FSTests "FileSystem32::remove(string, true)")
+add_test("Test\\ FileSystem32::move" FSTests "FileSystem32::move")
+add_test("Test\\ FileSystem32::stripDirectories" FSTests "FileSystem32::stripDirectories")

@@ -227,6 +227,70 @@ map<string, int(*)(string)> tests = {
 				return retval;
 			}
 		},
+		{
+			"FileSystem32::move",
+			[](string) {
+				int retval = 0;
+				auto dataIn = "test string";
+				auto dataOutLen = ox_strlen(dataIn) + 1;
+				auto dataOut = new char[dataOutLen];
+				vector<uint64_t> inodes;
+
+				const auto size = 1024 * 1024;
+				auto buff = new uint8_t[size];
+				FileSystem32::format(buff, (FileStore32::FsSize_t) size, true);
+				auto fs = (FileSystem32*) createFileSystem(buff, size);
+
+				retval |= fs->mkdir("/usr");
+				retval |= fs->mkdir("/usr/share");
+				retval |= fs->write("/usr/share/test.txt", (void*) dataIn, ox_strlen(dataIn) + 1);
+
+				retval |= fs->move("/usr/share", "/share");
+				retval |= fs->read("/share/test.txt", dataOut, dataOutLen);
+				retval |= !(ox_strcmp(dataIn, dataOut) == 0);
+
+				delete fs;
+				delete []buff;
+				delete []dataOut;
+
+				return retval;
+			}
+		},
+		{
+			"FileSystem32::stripDirectories",
+			[](string) {
+				int retval = 0;
+				auto dataIn = "test string";
+				auto dataOutLen = ox_strlen(dataIn) + 1;
+				auto dataOut = new char[dataOutLen];
+				vector<uint64_t> inodes;
+
+				const auto size = 1024 * 1024;
+				auto buff = new uint8_t[size];
+				FileSystem32::format(buff, (FileStore32::FsSize_t) size, true);
+				auto fs = (FileSystem32*) createFileSystem(buff, size);
+
+				retval |= fs->mkdir("/usr");
+				retval |= fs->mkdir("/usr/share");
+				retval |= fs->write("/usr/share/test.txt", (void*) dataIn, ox_strlen(dataIn) + 1);
+
+				auto inode = fs->stat("/usr/share/test.txt").inode;
+
+				retval |= fs->stripDirectories();
+
+				// make sure normal file is still there and the directories are gone
+				retval |= fs->read(inode, dataOut, dataOutLen);
+				retval |= !(ox_strcmp(dataIn, dataOut) == 0);
+				retval |= !(fs->stat("/usr").inode == 0);
+				retval |= !(fs->stat("/usr/share").inode == 0);
+
+				delete fs;
+				delete []buff;
+				delete []dataOut;
+
+				return retval;
+			}
+		},
 	},
 };
 

@@ -180,6 +180,12 @@ class FileStore {
 		int remove(InodeId_t id);
 
 		/**
+		 * Removes all inodes of the type.
+		 * @param fileType the type of file to remove
+		 */
+		int removeAllType(uint8_t fileType);
+
+		/**
 		 * Reads the "file" at the given id. You are responsible for freeing
 		 * the data when done with it.
 		 * @param id id of the "file"
@@ -553,6 +559,31 @@ int FileStore<Header>::remove(Inode *root, InodeId_t id) {
 		}
 		dealloc(root);
 		err = 0;
+	}
+
+	return err;
+}
+
+template<typename Header>
+int FileStore<Header>::removeAllType(uint8_t fileType) {
+	int err = 0;
+	auto first = ptr<Inode*>(firstInode());
+	// skip the first inode for now, because removing the first inode will cause compact to run
+	auto current = first;
+	auto next = ptr<Inode*>(current->getNext());
+
+	while (next != first) {
+		current = next;
+		// get next before current is possibly cleared
+		next = ptr<Inode*>(current->getNext());
+
+		if (current->getFileType() == fileType) {
+			err |= remove(current->getId());
+		}
+	}
+
+	if (first->getFileType() == fileType) {
+		err |= remove(first->getId());
 	}
 
 	return err;

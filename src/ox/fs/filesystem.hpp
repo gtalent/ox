@@ -35,6 +35,8 @@ class FileSystem {
 	public:
 		virtual ~FileSystem() {};
 
+		virtual int stripDirectories() = 0;
+
 		virtual int mkdir(const char *path) = 0;
 
 		virtual int read(const char *path, void *buffer, size_t buffSize) = 0;
@@ -137,6 +139,8 @@ class FileSystemTemplate: public FileSystem {
 
 		explicit FileSystemTemplate(void *buff);
 
+		int stripDirectories() override;
+
 		int mkdir(const char *path) override;
 
 		int read(const char *path, void *buffer, size_t buffSize) override;
@@ -172,9 +176,16 @@ class FileSystemTemplate: public FileSystem {
 		uint8_t *buff() override;
 
 		/**
+		 * Moves an entry from one directory to another.
+		 * @param src the path to the file
+		 * @param dest the path of the destination directory
+		 */
+		int move(const char *src, const char *dest);
+
+		/**
 		 * Removes an entry from a directory. This does not delete the referred to file.
 		 */
-		int rmDirectoryEntry(const char *dirPath);
+		int rmDirectoryEntry(const char *path);
 
 		static uint8_t *format(void *buffer, typename FileStore::FsSize_t size, bool useDirectories);
 
@@ -197,6 +208,11 @@ typename FileStore::InodeId_t FileSystemTemplate<FileStore, FS_TYPE>::INODE_ROOT
 
 template<typename FileStore, FsType FS_TYPE>
 typename FileStore::InodeId_t FileSystemTemplate<FileStore, FS_TYPE>::INODE_RESERVED_END = 100;
+
+template<typename FileStore, FsType FS_TYPE>
+int FileSystemTemplate<FileStore, FS_TYPE>::stripDirectories() {
+	return m_store->removeAllType(FileType::Directory);
+}
 
 template<typename FileStore, FsType FS_TYPE>
 int FileSystemTemplate<FileStore, FS_TYPE>::mkdir(const char *path) {
@@ -531,6 +547,48 @@ int FileSystemTemplate<FileStore, FS_TYPE>::insertDirectoryEntry(const char *dir
 #ifdef _MSC_VER
 #pragma warning(default:4244)
 #endif
+
+template<typename FileStore, FsType FS_TYPE>
+int FileSystemTemplate<FileStore, FS_TYPE>::move(const char *src, const char *dest) {
+	auto inode = stat(src).inode;
+	if (inode && !stat(dest).inode) {
+		int err = 0;
+
+		size_t srcLen = ox_strlen(src);
+		char srcDirPath[srcLen];
+		char srcFileName[srcLen];
+		PathIterator srcPathReader(src, srcLen);
+		err |= srcPathReader.fileName(srcFileName, srcLen);
+		err |= srcPathReader.dirPath(srcDirPath, srcLen);
+		if (err) {
+			return err;
+		}
+
+		size_t destLen = ox_strlen(dest);
+		char destDirPath[destLen];
+		char destFileName[destLen];
+		PathIterator destPathReader(dest, destLen);
+		err |= destPathReader.fileName(destFileName, destLen);
+		err |= destPathReader.dirPath(destDirPath, destLen);
+		if (err) {
+			return err;
+		}
+
+		err = rmDirectoryEntry(src);
+		if (err) {
+			return err;
+		}
+
+		err = insertDirectoryEntry(destDirPath, destFileName, inode);
+		if (!err) {
+			return err;
+		}
+
+		return 0;
+	} else {
+		return 1;
+	}
+}
 
 template<typename FileStore, FsType FS_TYPE>
 int FileSystemTemplate<FileStore, FS_TYPE>::rmDirectoryEntry(const char *path) {
