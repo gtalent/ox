@@ -16,8 +16,10 @@ set_property(
 
 install(
 	FILES
+		bitops.hpp
 		byteswap.hpp
 		memops.hpp
+		random.hpp
 		strops.hpp
 		std.hpp
 		types.hpp
