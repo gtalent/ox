@@ -12,4 +12,5 @@
 #include "memops.hpp"
 #include "random.hpp"
 #include "strops.hpp"
+#include "string.hpp"
 #include "types.hpp"

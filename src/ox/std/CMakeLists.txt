@@ -20,6 +20,7 @@ install(
 		byteswap.hpp
 		memops.hpp
 		random.hpp
+		string.hpp
 		strops.hpp
 		std.hpp
 		types.hpp
