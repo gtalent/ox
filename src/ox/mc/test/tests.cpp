@@ -59,9 +59,15 @@ map<string, int(*)(string)> tests = {
 				// This test doesn't confirm much, but it does show that the writer
 				// doesn't segfault
 				size_t buffLen = 1024;
-				uint8_t buff[buffLen];
+				auto buff = new uint8_t[buffLen];
+				int err = 0;
 				TestStruct ts;
-				return write(buff, buffLen, &ts);
+
+				err |= write(buff, buffLen, &ts);
+
+				delete []buff;
+
+				return err;
 			}
 		},
 		{
@@ -69,7 +75,7 @@ map<string, int(*)(string)> tests = {
 			[](string) {
 				int err = 0;
 				size_t buffLen = 1024;
-				uint8_t buff[buffLen];
+				auto buff = new uint8_t[buffLen];
 				TestStruct testIn, testOut;
 
 				testIn.Bool = true;
@@ -88,6 +94,8 @@ map<string, int(*)(string)> tests = {
 				err |= !(testIn.Struct.Bool   == testOut.Struct.Bool);
 				err |= !(testIn.Struct.Int    == testOut.Struct.Int);
 				err |= !(testIn.Struct.String == testOut.Struct.String);
+
+				delete []buff;
 
 				return err;
 			}
