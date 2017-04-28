@@ -8,28 +8,12 @@
 
 #pragma once
 
+#include <ox/std/string.hpp>
 #include <ox/std/types.hpp>
+#include "err.hpp"
+#include "presencemask.hpp"
 
 namespace ox {
-namespace mc {
-
-enum {
-	MC_PRESENCEMASKOUTBOUNDS = 1,
-	MC_BUFFENDED = 2
-};
-
-class FieldPresenseMask {
-	private:
-		uint8_t *m_mask;
-		int m_maxLen = 0;
-
-	public:
-		FieldPresenseMask(uint8_t *mask, size_t maxLen);
-
-		int set(int i, bool on);
-
-		void setMaxLen(int);
-};
 
 class MetalClawWriter {
 
@@ -54,14 +38,11 @@ class MetalClawWriter {
 
 		int op(const char*, bool *val);
 
-		/**
-		 *
-		 * @param len the length of the string, not including the null terminator
-		 */
-		int op(const char*, const char **val, size_t len);
-
 		template<typename T>
 		int op(const char*, T **val, size_t len);
+
+		template<size_t L>
+		int op(const char*, ox::bstring<L> *val);
 
 		template<typename T>
 		int op(const char*, T *val);
@@ -73,55 +54,89 @@ class MetalClawWriter {
 		int appendInteger(I val);
 };
 
+template<size_t L>
+int MetalClawWriter::op(const char*, ox::bstring<L> *val) {
+	int err = 0;
+	bool fieldSet = false;
+	if (val->len()) {
+		// write the length
+		typedef uint32_t StringLength;
+		if (m_buffIt + sizeof(StringLength) + val->size() < m_buffLen) {
+			*((StringLength*) &m_buff[m_buffIt]) = ox::std::bigEndianAdapt((StringLength) val->size());
+			m_buffIt += sizeof(StringLength);
+
+			// write the string
+			ox_memcpy(&m_buff[m_buffIt], val, val->size());
+			m_buffIt += val->size();
+			fieldSet = true;
+		} else {
+			err = 1;
+		}
+	}
+	err |= m_fieldPresence.set(m_field, fieldSet);
+	m_field++;
+	return err;
+};
+
 template<typename T>
 int MetalClawWriter::op(const char*, T *val) {
-	MetalClawWriter reader(m_buff, m_buffLen - m_buffLen);
-	return ioOp(&reader, val);
+	int err = 0;
+	MetalClawWriter writer(m_buff + m_buffIt, m_buffLen - m_buffIt);
+	err |= ioOp(&writer, val);
+	m_buffIt += writer.m_buffIt;
+	return err;
 };
 
 template<typename I>
 int MetalClawWriter::appendInteger(I val) {
 	int err = 0;
+	bool fieldSet = false;
 	if (val) {
 		if (m_buffIt + sizeof(I) < m_buffLen) {
 			*((I*) &m_buff[m_buffIt]) = ox::std::bigEndianAdapt(val);
-			err |= m_fieldPresence.set(m_field, true);
-			m_field++;
+			fieldSet = true;
 			m_buffIt += sizeof(I);
 		} else {
-			err = MC_BUFFENDED;
+			err |= MC_BUFFENDED;
 		}
 	}
+	err |= m_fieldPresence.set(m_field, fieldSet);
+	m_field++;
 	return err;
 };
 
 template<typename T>
 int MetalClawWriter::op(const char *fieldName, T **val, size_t len) {
 	int err = 0;
-	if (val) {
-		// write the length
-		typedef uint32_t ArrayLength;
-		if (m_buffIt + sizeof(ArrayLength) < m_buffLen) {
-			*((ArrayLength*) &m_buff[m_buffIt]) = ox::std::bigEndianAdapt((ArrayLength) len);
-			m_field++;
-			m_buffIt += sizeof(ArrayLength);
-		} else {
-			err = MC_BUFFENDED;
-		}
+	bool fieldSet = false;
+	MetalClawWriter writer(m_buff + m_buffIt, m_buffLen - m_buffIt);
+	writer.setFields(len);
 
-		// write the string
-		for (size_t i = 0; i < len; i++) {
-			err |= op(val[i]);
-		}
+	// write the length
+	typedef uint32_t ArrayLength;
+	if (m_buffIt + sizeof(ArrayLength) < m_buffLen) {
+		*((T*) &m_buff[m_buffIt]) = ox::std::bigEndianAdapt((ArrayLength) len);
+		m_buffIt += sizeof(ArrayLength);
+	} else {
+		err = MC_BUFFENDED;
 	}
+
+	// write the string
+	for (size_t i = 0; i < len; i++) {
+		err |= writer.op("", val[i]);
+	}
+
+	fieldSet = true;
+
+	err |= m_fieldPresence.set(m_field, fieldSet);
+	m_field++;
 	return err;
 };
 
 template<typename T>
-int read(uint8_t *buff, size_t buffLen, T *val) {
+int write(uint8_t *buff, size_t buffLen, T *val) {
 	MetalClawWriter writer(buff, buffLen);
 	return ioOp(&writer, val);
 }
 
-}
 }

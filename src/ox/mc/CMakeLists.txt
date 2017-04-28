@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 add_library(
 	OxMetalClaw
+		presencemask.cpp
 		read.cpp
 		write.cpp
 )
@@ -15,6 +16,8 @@ set_property(
 
 install(
 	FILES
+		err.hpp
+		presencemask.hpp
 		read.hpp
 		write.hpp
 	DESTINATION
