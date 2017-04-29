@@ -72,7 +72,6 @@ int MetalClawReader::op(const char*, ox::bstring<L> *val) {
 		size_t size = 0;
 		if (m_buffIt + sizeof(StringLength) < m_buffLen) {
 			size = ox::std::bigEndianAdapt(*((StringLength*) &m_buff[m_buffIt]));
-			m_field++;
 			m_buffIt += sizeof(StringLength);
 		} else {
 			err |= MC_BUFFENDED;
@@ -83,7 +82,6 @@ int MetalClawReader::op(const char*, ox::bstring<L> *val) {
 			if (m_buffIt + size < m_buffLen) {
 				ox_memcpy(val, &m_buff[m_buffIt], size);
 				m_buffIt += size;
-				m_field++;
 			} else {
 				err |= MC_BUFFENDED;
 			}
