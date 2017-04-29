@@ -39,7 +39,7 @@ class MetalClawReader {
 		int op(const char*, bool *val);
 
 		template<typename T>
-		int op(const char*, T **val, size_t len);
+		int op(const char*, T *val, size_t len);
 
 		template<typename T>
 		int op(const char*, T *val);
@@ -111,7 +111,7 @@ int MetalClawReader::readInteger(I *val) {
 };
 
 template<typename T>
-int MetalClawReader::op(const char*, T **val, size_t valLen) {
+int MetalClawReader::op(const char*, T *val, size_t valLen) {
 	int err = 0;
 	if (m_fieldPresence.get(m_field)) {
 		// read the length
@@ -131,6 +131,7 @@ int MetalClawReader::op(const char*, T **val, size_t valLen) {
 			for (size_t i = 0; i < len; i++) {
 				err |= reader.op("", &val[i]);
 			}
+			m_buffIt += reader.m_buffIt;
 		} else {
 			err = MC_OUTBUFFENDED;
 		}

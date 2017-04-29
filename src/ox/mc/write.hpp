@@ -39,7 +39,7 @@ class MetalClawWriter {
 		int op(const char*, bool *val);
 
 		template<typename T>
-		int op(const char*, T **val, size_t len);
+		int op(const char*, T *val, size_t len);
 
 		template<size_t L>
 		int op(const char*, ox::bstring<L> *val);
@@ -106,11 +106,9 @@ int MetalClawWriter::appendInteger(I val) {
 };
 
 template<typename T>
-int MetalClawWriter::op(const char *fieldName, T **val, size_t len) {
+int MetalClawWriter::op(const char*, T *val, size_t len) {
 	int err = 0;
 	bool fieldSet = false;
-	MetalClawWriter writer(m_buff + m_buffIt, m_buffLen - m_buffIt);
-	writer.setFields(len);
 
 	// write the length
 	typedef uint32_t ArrayLength;
@@ -121,11 +119,15 @@ int MetalClawWriter::op(const char *fieldName, T **val, size_t len) {
 		err = MC_BUFFENDED;
 	}
 
+	MetalClawWriter writer(m_buff + m_buffIt, m_buffLen - m_buffIt);
+	writer.setFields(len);
+
 	// write the string
 	for (size_t i = 0; i < len; i++) {
-		err |= writer.op("", val[i]);
+		err |= writer.op("", &val[i]);
 	}
 
+	m_buffIt += writer.m_buffIt;
 	fieldSet = true;
 
 	err |= m_fieldPresence.set(m_field, fieldSet);

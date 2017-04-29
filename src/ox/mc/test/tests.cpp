@@ -27,6 +27,7 @@ struct TestStruct {
 	bool Bool = false;
 	int32_t Int = 0;
 	bstring<32> String = "";
+	int List[4] = {0, 0, 0 , 0};
 	TestStructNest Struct;
 };
 
@@ -47,6 +48,7 @@ int ioOp(T *io, TestStruct *obj) {
 	err |= io->op("Bool", &obj->Bool);
 	err |= io->op("Int", &obj->Int);
 	err |= io->op("String", &obj->String);
+	err |= io->op("List", obj->List, 4);
 	err |= io->op("Struct", &obj->Struct);
 	return err;
 }
@@ -81,6 +83,10 @@ map<string, int(*)(string)> tests = {
 				testIn.Bool = true;
 				testIn.Int = 42;
 				testIn.String = "Test String 1";
+				testIn.List[0] = 1;
+				testIn.List[1] = 2;
+				testIn.List[2] = 3;
+				testIn.List[3] = 4;
 				testIn.Struct.Bool = false;
 				testIn.Struct.Int = 300;
 				testIn.Struct.String = "Test String 2";
@@ -91,6 +97,10 @@ map<string, int(*)(string)> tests = {
 				err |= !(testIn.Bool          == testOut.Bool);
 				err |= !(testIn.Int           == testOut.Int);
 				err |= !(testIn.String        == testOut.String);
+				err |= !(testIn.List[0]       == testOut.List[0]);
+				err |= !(testIn.List[1]       == testOut.List[1]);
+				err |= !(testIn.List[2]       == testOut.List[2]);
+				err |= !(testIn.List[3]       == testOut.List[3]);
 				err |= !(testIn.Struct.Bool   == testOut.Struct.Bool);
 				err |= !(testIn.Struct.Int    == testOut.Struct.Int);
 				err |= !(testIn.Struct.String == testOut.Struct.String);
