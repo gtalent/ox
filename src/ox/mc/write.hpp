@@ -70,7 +70,7 @@ int MetalClawWriter::op(const char*, ox::bstring<L> *val) {
 			m_buffIt += val->size();
 			fieldSet = true;
 		} else {
-			err = 1;
+			err = MC_BUFFENDED;
 		}
 	}
 	err |= m_fieldPresence.set(m_field, fieldSet);
@@ -84,6 +84,7 @@ int MetalClawWriter::op(const char*, T *val) {
 	MetalClawWriter writer(m_buff + m_buffIt, m_buffLen - m_buffIt);
 	err |= ioOp(&writer, val);
 	m_buffIt += writer.m_buffIt;
+	m_field++;
 	return err;
 };
 
@@ -110,25 +111,27 @@ int MetalClawWriter::op(const char*, T *val, size_t len) {
 	int err = 0;
 	bool fieldSet = false;
 
-	// write the length
-	typedef uint32_t ArrayLength;
-	if (m_buffIt + sizeof(ArrayLength) < m_buffLen) {
-		*((T*) &m_buff[m_buffIt]) = ox::std::bigEndianAdapt((ArrayLength) len);
-		m_buffIt += sizeof(ArrayLength);
-	} else {
-		err = MC_BUFFENDED;
+	if (len) {
+		// write the length
+		typedef uint32_t ArrayLength;
+		if (m_buffIt + sizeof(ArrayLength) < m_buffLen) {
+			*((T*) &m_buff[m_buffIt]) = ox::std::bigEndianAdapt((ArrayLength) len);
+			m_buffIt += sizeof(ArrayLength);
+		} else {
+			err = MC_BUFFENDED;
+		}
+
+		MetalClawWriter writer(m_buff + m_buffIt, m_buffLen - m_buffIt);
+		writer.setFields(len);
+
+		// write the array
+		for (size_t i = 0; i < len; i++) {
+			err |= writer.op("", &val[i]);
+		}
+
+		m_buffIt += writer.m_buffIt;
+		fieldSet = true;
 	}
-
-	MetalClawWriter writer(m_buff + m_buffIt, m_buffLen - m_buffIt);
-	writer.setFields(len);
-
-	// write the string
-	for (size_t i = 0; i < len; i++) {
-		err |= writer.op("", &val[i]);
-	}
-
-	m_buffIt += writer.m_buffIt;
-	fieldSet = true;
 
 	err |= m_fieldPresence.set(m_field, fieldSet);
 	m_field++;

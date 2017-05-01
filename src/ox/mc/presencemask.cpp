@@ -10,6 +10,9 @@
 #include "err.hpp"
 #include "presencemask.hpp"
 
+#include <iostream>
+using namespace std;
+
 namespace ox {
 
 FieldPresenseMask::FieldPresenseMask(uint8_t *mask, size_t maxLen) {
@@ -26,9 +29,12 @@ bool FieldPresenseMask::get(int i) {
 }
 
 int FieldPresenseMask::set(int i, bool on) {
-	uint8_t val = on ? 1 : 0; // normalize to 0 or 1
 	if (i / 8 < m_maxLen) {
-		m_mask[i / 8] |= val << (i % 8);
+		if (on) {
+			m_mask[i / 8] |= 1 << (i % 8);
+		} else {
+			m_mask[i / 8] &= ~(1 << (i % 8));
+		}
 		return 0;
 	} else {
 		return MC_PRESENCEMASKOUTBOUNDS;
