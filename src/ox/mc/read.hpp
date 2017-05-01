@@ -60,6 +60,7 @@ int MetalClawReader::op(const char*, T *val) {
 	MetalClawReader reader(m_buff + m_buffIt, m_buffLen - m_buffIt);
 	err |= ioOp(&reader, val);
 	m_buffIt += reader.m_buffIt;
+	m_field++;
 	return err;
 };
 
@@ -88,6 +89,8 @@ int MetalClawReader::op(const char*, ox::bstring<L> *val) {
 		} else {
 			err |= MC_OUTBUFFENDED;
 		}
+	} else {
+		*val = "";
 	}
 	m_field++;
 	return err;
@@ -103,6 +106,8 @@ int MetalClawReader::readInteger(I *val) {
 		} else {
 			err = MC_BUFFENDED;
 		}
+	} else {
+		*val = 0;
 	}
 	m_field++;
 	return err;
@@ -140,8 +145,8 @@ int MetalClawReader::op(const char*, T *val, size_t valLen) {
 
 template<typename T>
 int read(uint8_t *buff, size_t buffLen, T *val) {
-	MetalClawReader writer(buff, buffLen);
-	return ioOp(&writer, val);
+	MetalClawReader reader(buff, buffLen);
+	return ioOp(&reader, val);
 }
 
 }

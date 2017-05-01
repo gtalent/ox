@@ -26,6 +26,14 @@ struct TestStructNest {
 struct TestStruct {
 	bool Bool = false;
 	int32_t Int = 0;
+	int32_t Int1 = 0;
+	int32_t Int2 = 0;
+	int32_t Int3 = 0;
+	int32_t Int4 = 0;
+	int32_t Int5 = 0;
+	int32_t Int6 = 0;
+	int32_t Int7 = 0;
+	int32_t Int8 = 0;
 	bstring<32> String = "";
 	uint32_t List[4] = {0, 0, 0 , 0};
 	TestStructNest Struct;
@@ -44,9 +52,17 @@ int ioOp(T *io, TestStructNest *obj) {
 template<typename T>
 int ioOp(T *io, TestStruct *obj) {
 	int err = 0;
-	io->setFields(4);
+	io->setFields(13);
 	err |= io->op("Bool", &obj->Bool);
 	err |= io->op("Int", &obj->Int);
+	err |= io->op("Int1", &obj->Int1);
+	err |= io->op("Int2", &obj->Int2);
+	err |= io->op("Int3", &obj->Int3);
+	err |= io->op("Int4", &obj->Int4);
+	err |= io->op("Int5", &obj->Int5);
+	err |= io->op("Int6", &obj->Int6);
+	err |= io->op("Int7", &obj->Int7);
+	err |= io->op("Int8", &obj->Int8);
 	err |= io->op("String", &obj->String);
 	err |= io->op("List", obj->List, 4);
 	err |= io->op("Struct", &obj->Struct);
