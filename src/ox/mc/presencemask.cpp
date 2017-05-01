@@ -10,9 +10,6 @@
 #include "err.hpp"
 #include "presencemask.hpp"
 
-#include <iostream>
-using namespace std;
-
 namespace ox {
 
 FieldPresenseMask::FieldPresenseMask(uint8_t *mask, size_t maxLen) {
@@ -43,6 +40,10 @@ int FieldPresenseMask::set(int i, bool on) {
 
 void FieldPresenseMask::setMaxLen(int maxLen) {
 	m_maxLen = maxLen;
+}
+
+int FieldPresenseMask::getMaxLen() {
+	return m_maxLen;
 }
 
 }

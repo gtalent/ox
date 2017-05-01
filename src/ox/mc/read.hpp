@@ -57,9 +57,11 @@ class MetalClawReader {
 template<typename T>
 int MetalClawReader::op(const char*, T *val) {
 	int err = 0;
-	MetalClawReader reader(m_buff + m_buffIt, m_buffLen - m_buffIt);
-	err |= ioOp(&reader, val);
-	m_buffIt += reader.m_buffIt;
+	if (m_fieldPresence.get(m_field)) {
+		MetalClawReader reader(m_buff + m_buffIt, m_buffLen - m_buffIt);
+		err |= ioOp(&reader, val);
+		m_buffIt += reader.m_buffIt;
+	}
 	m_field++;
 	return err;
 };

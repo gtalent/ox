@@ -25,6 +25,8 @@ class FieldPresenseMask {
 		int set(int i, bool on);
 
 		void setMaxLen(int);
+
+		int getMaxLen();
 };
 
 }

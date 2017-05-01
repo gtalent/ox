@@ -81,9 +81,14 @@ int MetalClawWriter::op(const char*, ox::bstring<L> *val) {
 template<typename T>
 int MetalClawWriter::op(const char*, T *val) {
 	int err = 0;
+	bool fieldSet = false;
 	MetalClawWriter writer(m_buff + m_buffIt, m_buffLen - m_buffIt);
 	err |= ioOp(&writer, val);
-	m_buffIt += writer.m_buffIt;
+	if ((size_t) writer.m_fieldPresence.getMaxLen() < writer.m_buffIt) {
+		m_buffIt += writer.m_buffIt;
+		fieldSet = true;
+	}
+	err |= m_fieldPresence.set(m_field, fieldSet);
 	m_field++;
 	return err;
 };
