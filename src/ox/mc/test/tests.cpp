@@ -36,6 +36,7 @@ struct TestStruct {
 	int32_t Int8 = 0;
 	bstring<32> String = "";
 	uint32_t List[4] = {0, 0, 0 , 0};
+	TestStructNest EmptyStruct;
 	TestStructNest Struct;
 };
 
@@ -65,6 +66,7 @@ int ioOp(T *io, TestStruct *obj) {
 	err |= io->op("Int8", &obj->Int8);
 	err |= io->op("String", &obj->String);
 	err |= io->op("List", obj->List, 4);
+	err |= io->op("EmptyStruct", &obj->EmptyStruct);
 	err |= io->op("Struct", &obj->Struct);
 	return err;
 }
