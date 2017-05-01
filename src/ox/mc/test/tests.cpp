@@ -112,16 +112,27 @@ map<string, int(*)(string)> tests = {
 				err |= write(buff, buffLen, &testIn);
 				err |= read(buff, buffLen, &testOut);
 
-				err |= !(testIn.Bool          == testOut.Bool);
-				err |= !(testIn.Int           == testOut.Int);
-				err |= !(testIn.String        == testOut.String);
-				err |= !(testIn.List[0]       == testOut.List[0]);
-				err |= !(testIn.List[1]       == testOut.List[1]);
-				err |= !(testIn.List[2]       == testOut.List[2]);
-				err |= !(testIn.List[3]       == testOut.List[3]);
-				err |= !(testIn.Struct.Bool   == testOut.Struct.Bool);
-				err |= !(testIn.Struct.Int    == testOut.Struct.Int);
-				err |= !(testIn.Struct.String == testOut.Struct.String);
+				err |= !(testIn.Bool               == testOut.Bool);
+				err |= !(testIn.Int                == testOut.Int);
+				err |= !(testIn.Int1               == testOut.Int1);
+				err |= !(testIn.Int2               == testOut.Int2);
+				err |= !(testIn.Int3               == testOut.Int3);
+				err |= !(testIn.Int4               == testOut.Int4);
+				err |= !(testIn.Int5               == testOut.Int5);
+				err |= !(testIn.Int6               == testOut.Int6);
+				err |= !(testIn.Int7               == testOut.Int7);
+				err |= !(testIn.Int8               == testOut.Int8);
+				err |= !(testIn.String             == testOut.String);
+				err |= !(testIn.List[0]            == testOut.List[0]);
+				err |= !(testIn.List[1]            == testOut.List[1]);
+				err |= !(testIn.List[2]            == testOut.List[2]);
+				err |= !(testIn.List[3]            == testOut.List[3]);
+				err |= !(testIn.EmptyStruct.Bool   == testOut.EmptyStruct.Bool);
+				err |= !(testIn.EmptyStruct.Int    == testOut.EmptyStruct.Int);
+				err |= !(testIn.EmptyStruct.String == testOut.EmptyStruct.String);
+				err |= !(testIn.Struct.Int         == testOut.Struct.Int);
+				err |= !(testIn.Struct.String      == testOut.Struct.String);
+				err |= !(testIn.Struct.Bool        == testOut.Struct.Bool);
 
 				delete []buff;
 
