@@ -26,7 +26,6 @@ install(
 	FILES
 		filestore.hpp
 		filesystem.hpp
-		inodemgr.hpp
 		pathiterator.hpp
 	DESTINATION
 		include/ox/fs
