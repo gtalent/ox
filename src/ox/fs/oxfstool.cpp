@@ -20,7 +20,7 @@
 using namespace ox::fs;
 using namespace std;
 
-const static auto oxfstoolVersion = "1.2.0";
+const static auto oxfstoolVersion = "1.3.0";
 const static auto usage = "usage:\n"
 "\toxfs format [16,32,64] <size> <path>\n"
 "\toxfs read <FS file> <inode>\n"
@@ -99,13 +99,13 @@ int format(int argc, char **args) {
 			// format
 			switch (type) {
 				case 16:
-					FileStore16::format(buff, (FileStore16::FsSize_t) size, true);
+					FileSystem16::format(buff, (FileStore16::FsSize_t) size, true);
 					break;
 				case 32:
-					FileStore32::format(buff, (FileStore32::FsSize_t) size, true);
+					FileSystem32::format(buff, (FileStore32::FsSize_t) size, true);
 					break;
 				case 64:
-					FileStore64::format(buff, size, true);
+					FileSystem64::format(buff, size, true);
 					break;
 				default:
 					err = 1;
@@ -128,7 +128,9 @@ int format(int argc, char **args) {
 		delete []buff;
 
 		if (err == 0) {
-			fprintf(stderr, "Created file system %s\n", path);
+			cerr <<  "Created file system of type " << type << " " << path << endl;
+			cerr <<  "\ttype " << type << endl;
+			cerr <<  "\twrote " << size << " bytes\n";
 		}
 	} else {
 		fprintf(stderr, "Insufficient arguments\n");
