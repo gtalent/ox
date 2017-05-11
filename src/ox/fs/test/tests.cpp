@@ -16,7 +16,7 @@
 #include <ox/std/std.hpp>
 
 using namespace std;
-using namespace ox::fs;
+using namespace ox;
 
 map<string, int(*)(string)> tests = {
 	{

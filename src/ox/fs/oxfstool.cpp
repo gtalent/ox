@@ -17,7 +17,7 @@
 #pragma warning(disable:4996)
 #endif
 
-using namespace ox::fs;
+using namespace ox;
 using namespace std;
 
 const static auto oxfstoolVersion = "1.3.0";

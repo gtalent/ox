@@ -12,7 +12,6 @@
 #include "filestore.hpp"
 
 namespace ox {
-namespace fs {
 
 enum FsType {
 	OxFS_16 = 1,
@@ -692,5 +691,4 @@ typedef FileSystemTemplate<FileStore16, OxFS_16> FileSystem16;
 typedef FileSystemTemplate<FileStore32, OxFS_32> FileSystem32;
 typedef FileSystemTemplate<FileStore64, OxFS_64> FileSystem64;
 
-}
 }
