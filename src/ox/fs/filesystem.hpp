@@ -240,11 +240,14 @@ class FileSystem {
 
 template<typename List>
 int FileSystem::ls(const char *path, List *list) {
+	int err = 0;
 	auto s = stat(path);
-	uint8_t dirBuff[s.size * 4];
-	auto dir = (Directory<uint64_t, uint64_t>*) dirBuff;
-	auto err = readDirectory(path, dir);
-	err |= dir->ls(list);
+	if (s.fileType == FileType_Directory) {
+		uint8_t dirBuff[s.size * 4];
+		auto dir = (Directory<uint64_t, uint64_t>*) dirBuff;
+		err = readDirectory(path, dir);
+		err |= dir->ls(list);
+	}
 	return err;
 }
 
