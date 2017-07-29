@@ -120,7 +120,9 @@ int Directory<InodeId_t, FsSize_t>::getChildrenInodes(InodeId_t *inodes, size_t 
 		auto current = files();
 		if (current) {
 			for (uint64_t i = 0; i < this->children; i++) {
-				inodes[i] = current->inode;
+				if (ox_strcmp(current->getName(), ".") and ox_strcmp(current->getName(), "..")) {
+					inodes[i] = current->inode;
+				}
 				current = (DirectoryEntry<InodeId_t>*) (((uint8_t*) current) + current->size());
 			}
 			return 0;
@@ -200,6 +202,13 @@ class FileSystem {
 		virtual int stripDirectories() = 0;
 
 		virtual int mkdir(const char *path) = 0;
+
+		/**
+		 * Moves an entry from one directory to another.
+		 * @param src the path to the file
+		 * @param dest the path of the destination directory
+		 */
+		virtual int move(const char *src, const char *dest) = 0;
 
 		template<typename List>
 		int ls(const char *path, List *list);
@@ -316,13 +325,7 @@ class FileSystemTemplate: public FileSystem {
 		uint64_t size() override;
 
 		uint8_t *buff() override;
-
-		/**
-		 * Moves an entry from one directory to another.
-		 * @param src the path to the file
-		 * @param dest the path of the destination directory
-		 */
-		int move(const char *src, const char *dest);
+		int move(const char *src, const char *dest) override;
 
 		/**
 		 * Removes an entry from a directory. This does not delete the referred to file.
@@ -372,7 +375,31 @@ int FileSystemTemplate<FileStore, FS_TYPE>::stripDirectories() {
 template<typename FileStore, FsType FS_TYPE>
 int FileSystemTemplate<FileStore, FS_TYPE>::mkdir(const char *path) {
 	Directory<typename FileStore::InodeId_t, typename FileStore::FsSize_t> dir;
-	return write(path, &dir, sizeof(dir), FileType::FileType_Directory);
+	auto err = write(path, &dir, sizeof(dir), FileType::FileType_Directory);
+	if (err) {
+		return err;
+	}
+
+	// add . entry for self
+	auto inode = findInodeOf(path);
+	err = insertDirectoryEntry(path, ".", inode);
+	if (err) {
+		remove(inode);
+		return err;
+	}
+
+	// add .. entry for parent
+	size_t pathLen = ox_strlen(path);
+	char dirPath[pathLen];
+	PathIterator pathReader(path, pathLen);
+	err |= pathReader.dirPath(dirPath, pathLen);
+	err = insertDirectoryEntry(path, "..", findInodeOf(dirPath));
+	if (err) {
+		remove(inode);
+		return err;
+	}
+
+	return err;
 }
 
 template<typename FileStore, FsType FS_TYPE>
@@ -506,10 +533,13 @@ int FileSystemTemplate<FileStore, FS_TYPE>::remove(uint64_t inode, bool recursiv
 		}
 
 		typename FileStore::InodeId_t inodes[dir->children];
+		ox_memset(inodes, 0, sizeof(typename FileStore::InodeId_t) * dir->children);
 		dir->getChildrenInodes(inodes, dir->children);
 
 		for (auto i : inodes) {
-			err |= remove(i, true);
+			if (i) {
+				err |= remove(i, true);
+			}
 		}
 
 		if (!err) {
