@@ -26,6 +26,7 @@ enum FileType {
 
 struct FileStat {
 	uint64_t inode;
+	uint64_t links;
 	uint64_t size;
 	uint8_t  fileType;
 };
@@ -422,6 +423,7 @@ FileStat FileSystemTemplate<FileStore, FS_TYPE>::stat(uint64_t inode) {
 	auto s = m_store->stat(inode);
 	stat.size = s.size;
 	stat.inode = s.inodeId;
+	stat.links = s.links;
 	stat.fileType = s.fileType;
 	return stat;
 }

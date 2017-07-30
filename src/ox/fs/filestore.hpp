@@ -103,6 +103,7 @@ class FileStore {
 
 		struct StatInfo {
 			InodeId_t inodeId;
+			InodeId_t links;
 			typename Header::FsSize_t size;
 			uint8_t fileType;
 		};
@@ -719,6 +720,7 @@ typename FileStore<Header>::StatInfo FileStore<Header>::stat(InodeId_t id) {
 	if (inode) {
 		stat.size = inode->getDataLen();
 		stat.fileType = inode->getFileType();
+		stat.links = inode->getLinks();
 		stat.inodeId = id;
 	} else {
 		stat.inodeId = 0;
