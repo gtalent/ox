@@ -81,7 +81,7 @@ struct __attribute__((packed)) Directory {
 		return size ? (DirectoryEntry<InodeId_t>*) (this + 1) : nullptr;
 	}
 
-	uint64_t getFileInode(const char *name, uint64_t buffSize);
+	uint64_t getFileInode(const char *name);
 
 	int getChildrenInodes(InodeId_t *inodes, size_t inodesLen);
 
@@ -94,7 +94,7 @@ struct __attribute__((packed)) Directory {
 };
 
 template<typename InodeId_t, typename FsSize_t>
-uint64_t Directory<InodeId_t, FsSize_t>::getFileInode(const char *name, uint64_t buffSize) {
+uint64_t Directory<InodeId_t, FsSize_t>::getFileInode(const char *name) {
 	uint64_t inode = 0;
 	auto current = files();
 	if (current) {
@@ -506,7 +506,7 @@ template<typename FileStore, FsType FS_TYPE>
 int FileSystemTemplate<FileStore, FS_TYPE>::remove(const char *path, bool recursive) {
 	auto inode = findInodeOf(path);
 	if (inode) {
-		return remove(inode, recursive) | rmDirectoryEntry(path);
+		return rmDirectoryEntry(path) | remove(inode, recursive);
 	} else {
 		return 1;
 	}
@@ -575,7 +575,8 @@ int FileSystemTemplate<FileStore, FS_TYPE>::write(const char *path, void *buffer
 	// find an inode value for the given path
 	if (!inode) {
 		inode = generateInodeId();
-		err = insertDirectoryEntry(dirPath, fileName, inode);
+		err |= write(inode, buffer, 0, fileType); // ensure file exists before indexing it
+		err |= insertDirectoryEntry(dirPath, fileName, inode);
 	}
 
 	if (!err) {
@@ -620,7 +621,7 @@ uint64_t FileSystemTemplate<FileStore, FS_TYPE>::findInodeOf(const char *path) {
 			auto dir = (Directory<typename FileStore::InodeId_t, typename FileStore::FsSize_t>*) dirBuffer;
 			if (read(inode, dirBuffer, dirStat.size) == 0) {
 				if (dirStat.fileType == FileType::FileType_Directory && it.next(fileName, pathLen) == 0) {
-					inode = dir->getFileInode(fileName, dirStat.size);
+					inode = dir->getFileInode(fileName);
 				} else {
 					inode = 0; // null out inode and break
 					break;
@@ -726,7 +727,9 @@ int FileSystemTemplate<FileStore, FS_TYPE>::insertDirectoryEntry(const char *dir
 			auto entry = (DirectoryEntry<typename FileStore::InodeId_t>*) &dirBuff[s.size];
 			entry->inode = inode;
 			entry->setName(fileName);
-			return write(s.inode, dirBuff, dirBuffSize, FileType_Directory);
+			err = write(s.inode, dirBuff, dirBuffSize, FileType_Directory);
+			err |= m_store->incLinks(inode);
+			return err;
 		} else {
 			return 1;
 		}
@@ -803,7 +806,9 @@ int FileSystemTemplate<FileStore, FS_TYPE>::rmDirectoryEntry(const char *path) {
 	}
 
 	auto dir = (Directory<typename FileStore::InodeId_t, typename FileStore::FsSize_t>*) dirBuff;
-	err = dir->rmFile(fileName);
+	auto inode = dir->getFileInode(fileName);
+	err |= dir->rmFile(fileName);
+	err |= m_store->decLinks(inode);
 
 	if (err) {
 		return err;

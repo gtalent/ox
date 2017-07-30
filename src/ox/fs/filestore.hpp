@@ -17,7 +17,7 @@ struct __attribute__((packed)) FileStoreHeader {
 	public:
 		typedef InodeId InodeId_t;
 		typedef FsT FsSize_t;
-		const static auto VERSION = 5;
+		const static auto VERSION = 6;
 
 	private:
 		uint16_t m_version;
@@ -116,6 +116,7 @@ class FileStore {
 				typename Header::FsSize_t m_dataLen;
 
 				InodeId_t m_id;
+				InodeId_t m_links;
 				uint8_t m_fileType;
 				typename Header::FsSize_t m_left;
 				typename Header::FsSize_t m_right;
@@ -134,6 +135,9 @@ class FileStore {
 
 				void setId(InodeId_t);
 				InodeId_t getId();
+
+				void setLinks(InodeId_t);
+				InodeId_t getLinks();
 
 				void setFileType(uint8_t);
 				uint8_t getFileType();
@@ -177,6 +181,18 @@ class FileStore {
 		 * @param id the id of the file
 		 */
 		int remove(InodeId_t id);
+
+		/**
+		 * Increments the links of the inode of the given ID.
+		 * @param id the id of the inode
+		 */
+		int incLinks(InodeId_t id);
+
+		/**
+		 * Decrements the links of the inode of the given ID.
+		 * @param id the id of the inode
+		 */
+		int decLinks(InodeId_t id);
 
 		/**
 		 * Removes all inodes of the type.
@@ -268,7 +284,7 @@ class FileStore {
 		Inode *getInode(Inode *root, InodeId_t id);
 
 		/**
-		 * Gets the inode at the given id.
+		 * Gets the parent inode at the given id.
 		 * @param root the root node to start comparing on
 		 * @param id id of the "file"
 		 * @param pathLen number of characters in pathLen
@@ -406,6 +422,16 @@ typename Header::InodeId_t FileStore<Header>::Inode::getId() {
 }
 
 template<typename Header>
+void FileStore<Header>::Inode::setLinks(InodeId_t links) {
+	this->m_links = bigEndianAdapt(links);
+}
+
+template<typename Header>
+typename Header::InodeId_t FileStore<Header>::Inode::getLinks() {
+	return bigEndianAdapt(m_links);
+}
+
+template<typename Header>
 void FileStore<Header>::Inode::setFileType(uint8_t fileType) {
 	this->m_fileType = bigEndianAdapt(fileType);
 }
@@ -440,7 +466,6 @@ void FileStore<Header>::Inode::setData(void *data, typename Header::FsSize_t siz
 	ox_memcpy(getData(), data, size);
 	setDataLen(size);
 }
-
 
 template<typename Header>
 uint8_t *FileStore<Header>::Inode::getData() {
@@ -509,6 +534,36 @@ int FileStore<Header>::write(InodeId_t id, void *data, typename Header::FsSize_t
 template<typename Header>
 int FileStore<Header>::remove(InodeId_t id) {
 	return remove(ptr<Inode*>(m_header.getRootInode()), id);
+}
+
+/**
+ * Increments the links of the inode of the given ID.
+ * @param id the id of the inode
+ */
+template<typename Header>
+int FileStore<Header>::incLinks(InodeId_t id) {
+	auto inode = getInode(ptr<Inode*>(m_header.getRootInode()), id);
+	if (inode) {
+		inode->setLinks(inode->getLinks() + 1);
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+/**
+ * Decrements the links of the inode of the given ID.
+ * @param id the id of the inode
+ */
+template<typename Header>
+int FileStore<Header>::decLinks(InodeId_t id) {
+	auto inode = getInode(ptr<Inode*>(m_header.getRootInode()), id);
+	if (inode) {
+		inode->setLinks(inode->getLinks() - 1);
+		return 0;
+	} else {
+		return 1;
+	}
 }
 
 template<typename Header>
