@@ -273,7 +273,7 @@ class FileStore {
 		uint16_t fsType();
 
 		uint16_t version();
-		
+
 		static uint8_t *format(uint8_t *buffer, typename Header::FsSize_t size, uint16_t fsType = 0);
 
 	private:
@@ -893,11 +893,11 @@ template<typename Header>
 void FileStore<Header>::walk(int(*cb)(const char*, uint64_t start, uint64_t end)) {
 	auto err = cb("Header", 0, sizeof(Header));
 	auto inode = ptr<Inode*>(firstInode());
-	while (!err && inode != (Inode*) begin()) {
-		inode = ptr<Inode*>(inode->getNext());
+	do {
 		auto start = ptr(inode);
 		err = cb("Inode", start, start + inode->size());
-	}
+		inode = ptr<Inode*>(inode->getNext());
+	} while (!err && inode != ptr<Inode*>(firstInode()));
 }
 
 template<typename Header>
