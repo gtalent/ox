@@ -5,6 +5,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+
+#include <iomanip>
 #include <iostream>
 #include <string.h>
 #include <stdio.h>
@@ -342,11 +344,18 @@ int walk(int argc, char **args) {
 	if (fsBuff) {
 		auto fs = createFileSystem(fsBuff, fsSize);
 		if (fs) {
+			cout << setw(9) << "Type |";
+			cout << setw(10) << "Start |";
+			cout << setw(10) << "End |";
+			cout << setw(8) << "Size";
+			cout << endl;
+			cout << "-------------------------------------";
+			cout << endl;
 			fs->walk([](const char *type, uint64_t start, uint64_t end) {
-				cout << type;
-				cout << "\tstart: " << start;
-				cout << "\tend: " << end;
-				cout << "\tsize: " << (end - start);
+				cout << setw(7) << type << " |";
+				cout << setw(8) << start << " |";
+				cout << setw(8) << end << " |";
+				cout << setw(8) << (end - start);
 				cout << endl;
 				return 0;
 			});
