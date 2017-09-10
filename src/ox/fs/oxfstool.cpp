@@ -343,7 +343,11 @@ int walk(int argc, char **args) {
 		auto fs = createFileSystem(fsBuff, fsSize);
 		if (fs) {
 			fs->walk([](const char *type, uint64_t start, uint64_t end) {
-				cout << type << ", start: " << start << ", end: " << end << endl;
+				cout << type;
+				cout << "\tstart: " << start;
+				cout << "\tend: " << end;
+				cout << "\tsize: " << (end - start);
+				cout << endl;
 				return 0;
 			});
 			delete fs;
