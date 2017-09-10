@@ -268,6 +268,8 @@ class FileStore {
 		 */
 		typename Header::FsSize_t available();
 
+		void walk(int(*cb)(const char*, uint64_t start, uint64_t end));
+
 		uint16_t fsType();
 
 		uint16_t version();
@@ -886,6 +888,17 @@ template<typename Header>
 uint16_t FileStore<Header>::version() {
 	return m_header.getVersion();
 };
+
+template<typename Header>
+void FileStore<Header>::walk(int(*cb)(const char*, uint64_t start, uint64_t end)) {
+	auto err = cb("Header", 0, sizeof(Header));
+	auto inode = ptr<Inode*>(firstInode());
+	while (!err && inode != (Inode*) begin()) {
+		inode = ptr<Inode*>(inode->getNext());
+		auto start = ptr(inode);
+		err = cb("Inode", start, start + inode->size());
+	}
+}
 
 template<typename Header>
 uint8_t *FileStore<Header>::format(uint8_t *buffer, typename Header::FsSize_t size, uint16_t fsType) {

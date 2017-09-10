@@ -244,6 +244,8 @@ class FileSystem {
 
 		virtual uint8_t *buff() = 0;
 
+		virtual void walk(int(*cb)(const char*, uint64_t, uint64_t)) = 0;
+
 	protected:
 		virtual int readDirectory(const char *path, Directory<uint64_t, uint64_t> *dirOut) = 0;
 };
@@ -326,12 +328,15 @@ class FileSystemTemplate: public FileSystem {
 		uint64_t size() override;
 
 		uint8_t *buff() override;
+
 		int move(const char *src, const char *dest) override;
 
 		/**
 		 * Removes an entry from a directory. This does not delete the referred to file.
 		 */
 		int rmDirectoryEntry(const char *path);
+
+		void walk(int(*cb)(const char*, uint64_t, uint64_t)) override;
 
 		static uint8_t *format(uint8_t *buffer, typename FileStore::FsSize_t size, bool useDirectories);
 
@@ -847,6 +852,11 @@ void FileSystemTemplate<FileStore, FS_TYPE>::expand(uint64_t newSize) {
 		m_store = (FileStore*) newBuff;
 		resize(newSize);
 	}
+}
+
+template<typename FileStore, FsType FS_TYPE>
+void FileSystemTemplate<FileStore, FS_TYPE>::walk(int(*cb)(const char*, uint64_t, uint64_t)) {
+	m_store->walk(cb);
 }
 
 typedef FileSystemTemplate<FileStore16, OxFS_16> FileSystem16;
