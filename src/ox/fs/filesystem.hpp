@@ -43,6 +43,11 @@ struct DirectoryListing {
 	}
 };
 
+template<typename String>
+bool operator<(const DirectoryListing<String> &a, const DirectoryListing<String> &b) {
+	return a.name < b.name;
+}
+
 template<typename InodeId_t>
 struct __attribute__((packed)) DirectoryEntry {
 	InodeId_t inode;
@@ -380,32 +385,36 @@ int FileSystemTemplate<FileStore, FS_TYPE>::stripDirectories() {
 
 template<typename FileStore, FsType FS_TYPE>
 int FileSystemTemplate<FileStore, FS_TYPE>::mkdir(const char *path) {
-	Directory<typename FileStore::InodeId_t, typename FileStore::FsSize_t> dir;
-	auto err = write(path, &dir, sizeof(dir), FileType::FileType_Directory);
-	if (err) {
-		return err;
-	}
+	if (!stat(path).inode) {
+		Directory<typename FileStore::InodeId_t, typename FileStore::FsSize_t> dir;
+		auto err = write(path, &dir, sizeof(dir), FileType::FileType_Directory);
+		if (err) {
+			return err;
+		}
 
-	// add . entry for self
-	auto inode = findInodeOf(path);
-	err = insertDirectoryEntry(path, ".", inode);
-	if (err) {
-		remove(inode);
-		return err;
-	}
+		// add . entry for self
+		auto inode = findInodeOf(path);
+		err = insertDirectoryEntry(path, ".", inode);
+		if (err) {
+			remove(inode);
+			return err;
+		}
 
-	// add .. entry for parent
-	size_t pathLen = ox_strlen(path);
-	char dirPath[pathLen];
-	PathIterator pathReader(path, pathLen);
-	err |= pathReader.dirPath(dirPath, pathLen);
-	err = insertDirectoryEntry(path, "..", findInodeOf(dirPath));
-	if (err) {
-		remove(inode);
-		return err;
-	}
+		// add .. entry for parent
+		size_t pathLen = ox_strlen(path);
+		char dirPath[pathLen];
+		PathIterator pathReader(path, pathLen);
+		err |= pathReader.dirPath(dirPath, pathLen);
+		err = insertDirectoryEntry(path, "..", findInodeOf(dirPath));
+		if (err) {
+			remove(inode);
+			return err;
+		}
 
-	return err;
+		return err;
+	} else {
+		return 1;
+	}
 }
 
 template<typename FileStore, FsType FS_TYPE>
