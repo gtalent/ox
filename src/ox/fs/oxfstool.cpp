@@ -343,7 +343,6 @@ int walk(int argc, char **args) {
 		auto fs = createFileSystem(fsBuff, fsSize);
 		if (fs) {
 			fs->walk([](const char *type, uint64_t start, uint64_t end) {
-				cout << "narf\n";
 				cout << type << ", start: " << start << ", end: " << end << endl;
 				return 0;
 			});
