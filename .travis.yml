@@ -8,4 +8,5 @@ addons:
     apt:
         packages:
             - cmake
+            - libfuse-dev
 script: ./scripts/cibuild
