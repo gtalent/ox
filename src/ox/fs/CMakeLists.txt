@@ -23,7 +23,6 @@ if(OX_BUILD_EXEC STREQUAL "ON")
 	target_link_libraries(
 		oxfstool
 			OxFS
-			OxLog
 			OxStd
 	)
 endif()
