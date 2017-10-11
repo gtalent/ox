@@ -52,6 +52,7 @@ int PathIterator::fileName(char *out, size_t outSize) {
 	}
 }
 
+// Gets the next item in the path
 int PathIterator::next(char *pathOut, size_t pathOutSize) {
 	size_t size = 0;
 	int retval = 1;
@@ -69,7 +70,15 @@ int PathIterator::next(char *pathOut, size_t pathOutSize) {
 		}
 		size_t end = substr - m_path;
 		size = end - start;
+		// cannot fit the output in the output parameter
+		if (size >= pathOutSize) {
+			return -1;
+		}
 		ox_memcpy(pathOut, &m_path[start], size);
+	}
+	// truncate trailing /
+	if (size && pathOut[size - 1] == '/') {
+		size--;
 	}
 	pathOut[size] = 0; // end with null terminator
 	m_iterator += size;

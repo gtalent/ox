@@ -384,8 +384,18 @@ int FileSystemTemplate<FileStore, FS_TYPE>::stripDirectories() {
 }
 
 template<typename FileStore, FsType FS_TYPE>
-int FileSystemTemplate<FileStore, FS_TYPE>::mkdir(const char *path) {
-	if (!stat(path).inode) {
+int FileSystemTemplate<FileStore, FS_TYPE>::mkdir(const char *pathIn) {
+	if (!findInodeOf(pathIn)) {
+		auto pathLen = ox_strlen(pathIn);
+		char path[pathLen + 1];
+		ox_memcpy(path, pathIn, pathLen + 1);
+
+		// make sure last character does not end with /
+		if (pathLen >= 1 && path[pathLen - 1] == '/') {
+			path[pathLen - 1] = 0;
+			pathLen--;
+		}
+
 		Directory<typename FileStore::InodeId_t, typename FileStore::FsSize_t> dir;
 		auto err = write(path, &dir, sizeof(dir), FileType::FileType_Directory);
 		if (err) {
@@ -401,7 +411,6 @@ int FileSystemTemplate<FileStore, FS_TYPE>::mkdir(const char *path) {
 		}
 
 		// add .. entry for parent
-		size_t pathLen = ox_strlen(path);
 		char dirPath[pathLen];
 		PathIterator pathReader(path, pathLen);
 		err |= pathReader.dirPath(dirPath, pathLen);
@@ -630,13 +639,13 @@ uint64_t FileSystemTemplate<FileStore, FS_TYPE>::findInodeOf(const char *path) {
 	PathIterator it(path, pathLen);
 	char fileName[pathLen];
 	uint64_t inode = INODE_ROOT_DIR;
-	while (it.hasNext()) {
+	while (it.hasNext() && it.next(fileName, pathLen) == 0 && ox_strlen(fileName)) {
 		auto dirStat = stat(inode);
 		if (dirStat.inode && dirStat.size >= sizeof(Directory<typename FileStore::InodeId_t, typename FileStore::FsSize_t>)) {
 			uint8_t dirBuffer[dirStat.size];
 			auto dir = (Directory<typename FileStore::InodeId_t, typename FileStore::FsSize_t>*) dirBuffer;
 			if (read(inode, dirBuffer, dirStat.size) == 0) {
-				if (dirStat.fileType == FileType::FileType_Directory && it.next(fileName, pathLen) == 0) {
+				if (dirStat.fileType == FileType::FileType_Directory) {
 					inode = dir->getFileInode(fileName);
 				} else {
 					inode = 0; // null out inode and break
