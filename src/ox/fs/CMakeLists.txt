@@ -16,10 +16,16 @@ set_property(
 if(OX_BUILD_EXEC STREQUAL "ON")
 	add_executable(
 		oxfstool
+			toollib.cpp
 			oxfstool.cpp
 	)
 	set_target_properties(oxfstool PROPERTIES OUTPUT_NAME oxfs)
-	target_link_libraries(oxfstool OxFS OxStd)
+	target_link_libraries(
+		oxfstool
+			OxFS
+			OxLog
+			OxStd
+	)
 endif()
 
 install(
