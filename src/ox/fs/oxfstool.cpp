@@ -11,8 +11,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <map>
 #include <ox/std/strops.hpp>
 #include <ox/fs/filesystem.hpp>
+
+#include "toollib.hpp"
 
 // suppress warnings about using fopen
 #ifdef _MSC_VER
@@ -32,27 +35,6 @@ const static auto usage = "usage:\n"
 "\toxfs compact <FS file>\n"
 "\toxfs walk <FS file>\n"
 "\toxfs version\n";
-
-uint8_t *loadFileBuff(FILE *file, ::size_t *sizeOut = nullptr) {
-	if (file) {
-		fseek(file, 0, SEEK_END);
-		const auto size = ftell(file);
-		rewind(file);
-		auto buff = new uint8_t[size];
-		auto itemsRead = fread(buff, size, 1, file);
-		fclose(file);
-		if (sizeOut) {
-			*sizeOut = itemsRead ? size : 0;
-		}
-		return buff;
-	} else {
-		return nullptr;
-	}
-}
-
-uint8_t *loadFileBuff(const char *path, ::size_t *sizeOut = nullptr) {
-	return loadFileBuff(fopen(path, "rb"), sizeOut);
-}
 
 size_t bytes(const char *str) {
 	auto size = ::ox_strlen(str);
@@ -371,35 +353,43 @@ int walk(int argc, char **args) {
 	return err;
 }
 
+int help(int, char**) { 
+	cout << usage << endl;
+	return 0;
+}
+
+int version(int, char**) { 
+	cout << "oxfstool version " << oxfstoolVersion << endl;
+	cout << "oxfs format version " << FileStore16::VERSION << endl;
+	return 0;
+}
+
 int main(int argc, char **args) {
 	auto err = 0;
+	map<string, int(*)(int, char**)> cmdMap = {
+		{ "format", format },
+		{ "read", read },
+		{ "write", [](int argc, char **args) { return write(argc, args, false); } },
+		{ "write-expand", [](int argc, char **args) { return write(argc, args, true); } },
+		{ "compact", compact },
+		{ "rm", remove },
+		{ "walk", walk },
+		{ "help", help },
+		{ "version", version },
+	};
+
 	if (argc > 1) {
 		auto cmd = args[1];
-		if (ox_strcmp(cmd, "format") == 0) {
-			err = format(argc, args);
-		} else if (ox_strcmp(cmd, "read") == 0) {
-			err = read(argc, args);
-		} else if (ox_strcmp(cmd, "write") == 0) {
-			err = write(argc, args, false);
-		} else if (ox_strcmp(cmd, "write-expand") == 0) {
-			err = write(argc, args, true);
-		} else if (ox_strcmp(cmd, "compact") == 0) {
-			err = compact(argc, args);
-		} else if (ox_strcmp(cmd, "rm") == 0) {
-			err = remove(argc, args);
-		} else if (ox_strcmp(cmd, "walk") == 0) {
-			err = walk(argc, args);
-		} else if (ox_strcmp(cmd, "help") == 0) {
-			printf("%s\n", usage);
-		} else if (ox_strcmp(cmd, "version") == 0) {
-			printf("oxfstool version %s\n", oxfstoolVersion);
-			printf("oxfs format version %d\n", FileStore16::VERSION);
+		auto f = cmdMap[cmd];
+		if (f) {
+			err = f(argc, args);
 		} else {
-			printf("Command '%s' not recognized.\n", cmd);
+			cout << "Command '" << cmd << "' not recognized." << endl;
 			err = 1;
 		}
 	} else {
-		printf("%s\n", usage);
+		help(argc, args);
 	}
+
 	return err;
 }
