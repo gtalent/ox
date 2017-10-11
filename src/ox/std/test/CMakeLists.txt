@@ -5,7 +5,7 @@ add_executable(
 		tests.cpp
 )
 
-target_link_libraries(StdTest OxStd)
+target_link_libraries(StdTest OxLog OxStd)
 
 add_test("Test\\ ox_memcmp\\ ABCDEFG\\ !=\\ HIJKLMN" StdTest "ABCDEFG != HIJKLMN")
 add_test("Test\\ ox_memcmp\\ HIJKLMN\\ !=\\ ABCDEFG" StdTest "HIJKLMN != ABCDEFG")
@@ -21,14 +21,18 @@ add_executable(
 		strops_test.cpp
 )
 
-target_link_libraries(StrOpsTest OxStd)
+target_link_libraries(
+	StrOpsTest
+		OxStd
+		OxLog
+)
 
 add_test("Test\\ ox_strcmp\\ asdf\\ !=\\ hijk" StrOpsTest "asdf < hijk")
 add_test("Test\\ ox_strcmp\\ hijk\\ !=\\ asdf" StrOpsTest "hijk > asdf")
 add_test("Test\\ ox_strcmp\\ read\\ !=\\ resize" StrOpsTest "read < resize")
 add_test("Test\\ ox_strcmp\\ resize\\ !=\\ read" StrOpsTest "resize > read")
 add_test("Test\\ ox_strcmp\\ resize\\ ==\\ resize" StrOpsTest "resize == resize")
-add_test("Test\\ ox_strcmp\\ resize\\ ==\\ resize" StrOpsTest " == ")
+add_test("Test\\ ox_strcmp\\ ''\\ ==\\ ''" StrOpsTest " == ")
 add_test("Test\\ ox_strchr\\ 0" StrOpsTest "ox_strchr 0")
 add_test("Test\\ ox_lastIndexOf\\ aaaa\\ a" StrOpsTest "ox_lastIndexOf aaaa a")
 
@@ -41,7 +45,11 @@ add_executable(
 		byteswap_test.cpp
 )
 
-target_link_libraries(ByteSwapTest OxStd)
+target_link_libraries(
+	ByteSwapTest
+		OxStd
+		OxLog
+)
 
 add_test("Test\\ bigEndianAdapt\\ 0x00ff" ByteSwapTest bigEndianAdapt<uint16_t> 0x00ff)
 add_test("Test\\ bigEndianAdapt\\ 0xff00" ByteSwapTest bigEndianAdapt<uint16_t> 0xff00)

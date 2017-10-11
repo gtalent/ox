@@ -20,10 +20,33 @@ add_executable(
 		tests.cpp
 )
 
-target_link_libraries(FileStoreFormat OxFS OxStd)
-target_link_libraries(FileSystemFormat OxFS OxStd)
-target_link_libraries(FileStoreIO OxFS OxStd)
-target_link_libraries(FSTests OxFS OxStd)
+target_link_libraries(
+	FileStoreFormat
+		OxFS
+		OxStd
+		OxLog
+)
+
+target_link_libraries(
+	FileSystemFormat
+		OxFS
+		OxStd
+		OxLog
+)
+
+target_link_libraries(
+	FileStoreIO
+		OxFS
+		OxStd
+		OxLog
+)
+
+target_link_libraries(
+	FSTests
+		OxFS
+		OxStd
+		OxLog
+)
 
 add_test("FileStoreFormat" FileStoreFormat)
 add_test("FileSystemFormat" FileSystemFormat)
