@@ -15,6 +15,7 @@
 #include <ox/std/strops.hpp>
 #include <ox/fs/filesystem.hpp>
 
+#include "oxfs_fuse.hpp"
 #include "toollib.hpp"
 
 // suppress warnings about using fopen
@@ -34,6 +35,7 @@ const static auto usage = "usage:\n"
 "\toxfs rm <FS file> <inode>\n"
 "\toxfs compact <FS file>\n"
 "\toxfs walk <FS file>\n"
+"\toxfs mount <FS file> <mount point>\n"
 "\toxfs version\n";
 
 size_t bytes(const char *str) {
@@ -374,6 +376,7 @@ int main(int argc, char **args) {
 		{ "compact", compact },
 		{ "rm", remove },
 		{ "walk", walk },
+		{ "mount", mount },
 		{ "help", help },
 		{ "version", version },
 	};

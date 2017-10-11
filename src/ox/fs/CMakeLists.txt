@@ -16,6 +16,7 @@ set_property(
 if(OX_BUILD_EXEC STREQUAL "ON")
 	add_executable(
 		oxfstool
+			oxfs_fuse.cpp
 			toollib.cpp
 			oxfstool.cpp
 	)
@@ -25,6 +26,7 @@ if(OX_BUILD_EXEC STREQUAL "ON")
 			OxFS
 			OxLog
 			OxStd
+			fuse
 	)
 endif()
 
