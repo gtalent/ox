@@ -120,7 +120,7 @@ int MetalClawWriter::op(const char*, T *val, size_t len) {
 		// write the length
 		typedef uint32_t ArrayLength;
 		if (m_buffIt + sizeof(ArrayLength) < m_buffLen) {
-			*((T*) &m_buff[m_buffIt]) = ox::bigEndianAdapt((ArrayLength) len);
+			*((ArrayLength*) &m_buff[m_buffIt]) = ox::bigEndianAdapt((ArrayLength) len);
 			m_buffIt += sizeof(ArrayLength);
 		} else {
 			err = MC_BUFFENDED;
