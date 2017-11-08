@@ -49,6 +49,8 @@ class MetalClawWriter {
 
 		void setFields(int fields);
 
+		size_t size();
+
 	private:
 		template<typename I>
 		int appendInteger(I val);
@@ -144,9 +146,13 @@ int MetalClawWriter::op(const char*, T *val, size_t len) {
 };
 
 template<typename T>
-int write(uint8_t *buff, size_t buffLen, T *val) {
+int write(uint8_t *buff, size_t buffLen, T *val, size_t *sizeOut = nullptr) {
 	MetalClawWriter writer(buff, buffLen);
-	return ioOp(&writer, val);
+	auto err = ioOp(&writer, val);
+	if (sizeOut) {
+		*sizeOut = writer.size();
+	}
+	return err;
 }
 
 }

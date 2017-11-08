@@ -51,4 +51,8 @@ void MetalClawWriter::setFields(int fields) {
 	m_fieldPresence.setMaxLen(m_buffIt);
 }
 
+size_t MetalClawWriter::size() {
+	return m_buffIt;
+}
+
 }
